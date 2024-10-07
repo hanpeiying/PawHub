@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Lovers App</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            text-align: center;
+        }
+        .get-random-dog {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .dog-info {
+            padding: 20px;
+        }
+        .dog-image {
+            padding: 20px;
+        }
+        .rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: left;
+            padding: 0;
+            margin: 0;
+            list-style-type: none;
+        }
+        .rating input {
+            display: none;
+        }
+        .rating label {
+            cursor: pointer;
+            font-size: 2rem;
+            color: lightgray;
+        }
+        .rating label:before {
+            content: '★';
+        }
+        .rating input:checked ~ label,
+        .rating label:hover,
+        .rating label:hover ~ label,
+        .rating input:checked ~ label,
+        .rating input:checked ~ label ~ label {
+            color: gold;
+        }
+        #login-container, #register-container, #app-container, #ratings {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Login Form -->
+    <div id="login-container">
+        <h2>Login</h2>
+        <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="password" id="login-password" placeholder="Password" required>
+            <button type="submit">Login</button>
+            <p>Don't have an account? <a href="#" id="show-register">Register here</a></p>
+        </form>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-container">
+        <h2>Register</h2>
+        <form id="register-form">
+            <input type="email" id="register-email" placeholder="Email" required>
+            <input type="password" id="register-password" placeholder="Password" required>
+            <button type="submit">Register</button>
+            <p>Already have an account? <a href="#" id="show-login">Login here</a></p>
+        </form>
+    </div>
+
+    <!-- Protected Content -->
+    <div id="app-container">
+        <div class="header">
+            <h1>Dog Lovers App</h1>
+            <button id="logout-button" class="btn btn-danger">Logout</button>
+        </div>
+
+        <div class="get-random-dog">
+            <button class="btn btn-primary" onclick="getDogImage()">Get Random Dog</button>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 dog-info">
+                <p id="dogInfo">Dog info from Wikipedia here</p>
+            </div>
+            <div class="col-md-6 dog-image">
+                <img id="dogImg" src="https://via.placeholder.com/400x300" alt="Dog Image" class="img-fluid">
+            </div>
+        </div>
+
+        <!-- Diary and rating -->
+        <div class="row">
+            <div class="col-md-6">
+                <h1>Diary</h1>
+                <p>You must have come to this page with a longing for 
+                    companionship. Why not record down how you are feeling
+                    right this moment?
+                </p>
+                <textarea name="diary" id="diary"
+                          rows="6" cols="50"></textarea>
+                <button onclick="saveDiary()">Save Diary</button>
+            </div>
+            <div id="ratings" class="col-md-6">
+                <h1>Rate Dog Breeds</h1>
+                <p>Rate how much you like this dog breed: <span id="breed-name"></span></p>
+
+                <div id="rating-container">
+                    <ul class="rating">
+                        <li>
+                            <input type="radio" name="rating" id="star5" value="5">
+                            <label for="star5"></label>
+                        </li>
+                        <li>
+                            <input type="radio" name="rating" id="star4" value="4">
+                            <label for="star4"></label>
+                        </li>
+                        <li>
+                            <input type="radio" name="rating" id="star3" value="3">
+                            <label for="star3"></label>
+                        </li>
+                        <li>
+                            <input type="radio" name="rating" id="star2" value="2">
+                            <label for="star2"></label>
+                        </li>
+                        <li>
+                            <input type="radio" name="rating" id="star1" value="1">
+                            <label for="star1"></label>
+                        </li>
+                    </ul>
+                </div>
+
+                <button onclick="saveRating()">Save Rating</button>
+            </div>
+        </div>
+
+        <!-- Save dog photo -->
+        <div class="row">
+            <div class="col-md-6">
+                <h1>Save your dog's pic:</h1>
+                <p>Click or drag-and-drop your dog's pic into the space below
+                   to save its photo into our platform. 
+                </p>
+                <div id="uploadDogPic" class="upload-area" style="border: 2px dashed #ccc; padding: 20px; text-align: center;">
+                    Drop image here or click to upload
+                    <input type="file" id="fileInput" style="display:none" accept="image/*">
+                </div>
+            </div>
+            <div id="dogPic" class="col-md-6">
+                <img id="uploadedImage" src="https://via.placeholder.com/400x300" alt="Dog's pic will appear here" style="max-width:100%; height:auto; display:none;" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    // Add Firestore to setup
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    // Add Cloud Storage
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+
+    const firebaseConfig = {
+        // Add your own Firebase config here
+        apiKey: "AIzaSyApb-p_DzaRgN2FGcm6X7kXLHJIGQvmoOw",
+        authDomain: "pawhub-858e8.firebaseapp.com",
+        projectId: "pawhub-858e8",
+        storageBucket: "pawhub-858e8.appspot.com",
+        messagingSenderId: "1064105879369",
+        appId: "1:1064105879369:web:19229d362355cbdfa11c98",
+        measurementId: "G-4HCFE4PC1Q",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const loginContainer = document.getElementById('login-container');
+    const registerContainer = document.getElementById('register-container');
+    const appContainer = document.getElementById('app-container');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const showLogin = document.getElementById('show-login');
+    const showRegister = document.getElementById('show-register');
+    const logoutButton = document.getElementById('logout-button');
+
+    // Initialize Firestore
+    const db = getFirestore(app);
+
+    // Initialize Cloud Storage
+    const storage = getStorage(app);
+
+    showLogin.addEventListener('click', () => {
+        loginContainer.style.display = 'block';
+        registerContainer.style.display = 'none';
+    });
+
+    showRegister.addEventListener('click', () => {
+        loginContainer.style.display = 'none';
+        registerContainer.style.display = 'block';
+    });
+
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            alert('Registration successful. Please log in.');
+            showLogin.click();
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    logoutButton.addEventListener('click', async () => {
+        await signOut(auth);
+        // Clear dog image, info, and rating
+        imgElement.src = "https://via.placeholder.com/400x300";
+        dogInfoElement.innerHTML = "Dog info from Wikipedia here";
+        highlightStars(0);
+        document.getElementById('ratings').style.display = "none";
+        document.getElementById('breed-name').innerText = "";
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            loginContainer.style.display = 'none';
+            registerContainer.style.display = 'none';
+            appContainer.style.display = 'block';
+            window.currentUserUID = user.uid;
+
+            // if there was an existing diary entry, 
+            // load it.
+            loadDiary(); 
+            // if there was an existing dog image previously uploaded, 
+            // load it.            
+            loadUploadedDogImage();
+        } else {
+            loginContainer.style.display = 'block';
+            registerContainer.style.display = 'none';
+            appContainer.style.display = 'none';
+            window.currentUserUID = null;
+        }
+    });
+
+    // Function to save diary entry to Firestore
+    window.saveDiary = async function saveDiary() {
+        const userUID = window.currentUserUID;
+        const diaryEntry = document.getElementById('diary').value;
+
+        if (userUID && diaryEntry) {
+            try {
+                // Save the diary entry to Firestore under the logged-in user's document
+                const diaryRef = doc(db, 'diaries', userUID); // 'diaries' collection, one document per user
+                await setDoc(diaryRef, { diary: diaryEntry, timestamp: new Date() });
+                alert("Diary entry saved successfully!");
+            } catch (error) {
+                console.error("Error saving diary entry: ", error);
+                alert("Failed to save diary entry.");
+            }
+        } else {
+            alert("No user logged in or diary entry is empty.");
+        }
+    }
+
+    // Function to check if a diary entry exists and load it into the textarea
+    window.loadDiary = async function loadDiary() {
+        const userUID = window.currentUserUID;
+
+        if (userUID) {
+            try {
+                const diaryRef = doc(db, 'diaries', userUID);
+                const diarySnap = await getDoc(diaryRef);
+
+                if (diarySnap.exists()) {
+                    const diaryData = diarySnap.data();
+                    document.getElementById('diary').value = diaryData.diary || ""; // Load the diary entry
+                } else {
+                    console.log("No diary entry found for this user.");
+                }
+            } catch (error) {
+                console.error("Error loading diary entry: ", error);
+            }
+        }
+    }
+
+    // For uploading of image to Cloud Storage
+    const uploadArea = document.getElementById('uploadDogPic');
+    const fileInput = document.getElementById('fileInput');
+    const uploadedImage = document.getElementById('uploadedImage');
+
+    // Ensure the user is authenticated
+    function isAuthenticated() {
+        return window.currentUserUID != null;
+    }
+
+    // Handle drag-and-drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = 'green';
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#ccc';
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ccc';
+
+        if (!isAuthenticated()) {
+            alert("You must be logged in to upload a picture.");
+            return;
+        }
+
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            uploadImage(file);
+        }
+    });
+
+    // Handle click to upload
+    uploadArea.addEventListener('click', () => {
+        if (!isAuthenticated()) {
+            alert("You must be logged in to upload a picture.");
+            return;
+        }
+
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (!isAuthenticated()) {
+            alert("You must be logged in to upload a picture.");
+            return;
+        }
+
+        const file = e.target.files[0];
+        if (file) {
+            uploadImage(file);
+        }
+    });
+
+    // Function to upload image to Firebase Storage
+    async function uploadImage(file) {
+        const userUID = window.currentUserUID;
+
+        if (!userUID) {
+            alert("You must be logged in to upload a picture.");
+            return;
+        }
+
+        const storageRef = ref(storage, 'dogs/' + userUID + '/' + file.name);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                // Optional: Track upload progress
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                console.log('Upload is ' + progress + '% done');
+            },
+            (error) => {
+                console.error('Upload failed:', error);
+                alert('Failed to upload image.');
+            },
+            async () => {
+                // Handle successful upload
+                try {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+                    // Save image metadata (file name) to Firestore
+                    await setDoc(doc(db, 'dogImages', userUID), {
+                        fileName: file.name,
+                        timestamp: new Date()
+                    });
+
+                    // Display uploaded image
+                    uploadedImage.src = downloadURL;
+                    uploadedImage.style.display = 'block';
+                    console.log('File available at', downloadURL);
+                } catch (error) {
+                    console.error('Error saving image data:', error);
+                }
+            }
+        );
+    }
+
+    // Load the previously uploaded image if it exists
+    async function loadUploadedDogImage() {
+        const userUID = window.currentUserUID;
+        if (!userUID) {
+            return;
+        }
+
+        try {
+            // Check Firestore to see if the user has uploaded an image before
+            const docRef = doc(db, 'dogImages', userUID);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const { fileName } = docSnap.data();
+
+                // Try to fetch the image from Firebase Storage
+                const storageRef = ref(storage, 'dogs/' + userUID + '/' + fileName);
+                const downloadURL = await getDownloadURL(storageRef);
+
+                // Display the image in the img element
+                uploadedImage.src = downloadURL;
+                uploadedImage.style.display = 'block';
+            } else {
+                console.log("No uploaded image found for this user.");
+            }
+        } catch (error) {
+            console.error("Error loading image:", error);
+        }
+    }
+</script>
+
+<script>
+    const dogBreeds = ["labrador", "pug", "beagle", "germanshepherd", "maltese", "boxer", "poodle", "chihuahua", "shiba", "bulldog"];
+    const imgElement = document.getElementById('dogImg');
+    const dogInfoElement = document.getElementById('dogInfo');
+
+    async function getDogImage() {
+        const randomBreed = dogBreeds[Math.floor(Math.random() * dogBreeds.length)];
+        window.randomBreed = randomBreed; // Set the randomBreed to global scope
+
+        // Update the breed name in the rating section
+        document.getElementById('ratings').style.display = "block";
+        document.getElementById('breed-name').innerText = 
+            randomBreed == 'germanshepherd' ? "German Shepherd" : capitalizeFirstLetter(randomBreed);
+
+        try {
+            const dogImgResponse = await axios.get(`https://dog.ceo/api/breed/${randomBreed}/images/random`);
+            imgElement.src = dogImgResponse.data.message;
+        } catch (error) {
+            console.error(`Error fetching image for breed ${randomBreed}:`, error);
+        }
+
+        try {            
+            // Replace the Cloud Function URL with your own
+            const wikiResponse = await axios.get('https://us-central1-pawhub-858e8.cloudfunctions.net/searchWikipedia', {
+                params: { breed: randomBreed }
+            });
+            dogInfoElement.innerHTML = wikiResponse.data;
+        } catch (error) {
+            console.error(`Error fetching wiki info for breed ${randomBreed}:`, error);
+        }
+
+        // Check if this breed has been rated
+        const userUID = window.currentUserUID;
+        let ratings = JSON.parse(localStorage.getItem(userUID)) || [];
+        const existingRating = ratings.find(r => r[randomBreed] !== undefined);
+        if (existingRating) {
+            highlightStars(existingRating[randomBreed]);
+        } else {
+            highlightStars(0); // Reset stars if no rating found
+        }
+    }
+
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    function saveRating() {
+        const ratingInputs = document.querySelectorAll('input[name="rating"]');
+        let selectedRating;
+
+        ratingInputs.forEach(input => {
+            if (input.checked) {
+                selectedRating = input.value;
+            }
+        });
+
+        if (selectedRating) {
+            const userUID = window.currentUserUID;
+            const selectedBreed = window.randomBreed; // Use the global randomBreed variable
+            let ratings = JSON.parse(localStorage.getItem(userUID)) || [];
+            const existingRatingIndex = ratings.findIndex(r => r[selectedBreed] !== undefined);
+
+            if (existingRatingIndex !== -1) {
+                ratings[existingRatingIndex][selectedBreed] = parseInt(selectedRating);
+            } else {
+                ratings.push({ [selectedBreed]: parseInt(selectedRating) });
+            }
+
+            localStorage.setItem(userUID, JSON.stringify(ratings));
+            alert(`Rating for ${selectedBreed} saved: ${selectedRating} stars`);
+        } else {
+            alert("Please select a rating");
+        }
+    }
+
+    document.querySelectorAll('.rating label').forEach(label => {
+        label.addEventListener('click', function() {
+            const input = document.getElementById(this.htmlFor);
+            input.checked = true;
+            highlightStars(input.value);
+        });
+
+        label.addEventListener('mouseover', function() {
+            const value = this.htmlFor.replace('star', '');
+            highlightStars(value);
+        });
+
+        label.addEventListener('mouseout', function() {
+            updateStarColors();
+        });
+    });
+
+    function updateStarColors() {
+        const ratingInputs = document.querySelectorAll('input[name="rating"]');
+        let checkedValue = 0;
+
+        ratingInputs.forEach(input => {
+            if (input.checked) {
+                checkedValue = input.value;
+            }
+        });
+
+        highlightStars(checkedValue);
+    }
+
+    function highlightStars(value) {
+        document.querySelectorAll('.rating label').forEach(label => {
+            if (parseInt(label.htmlFor.replace('star', '')) <= value) {
+                label.style.color = 'gold';
+            } else {
+                label.style.color = 'lightgray';
+            }
+        });
+    }
+</script>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
