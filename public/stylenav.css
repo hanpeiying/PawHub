@@ -1,0 +1,85 @@
+html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: #F9F1E7 ;
+        }
+
+.navbar {
+    background-color: #C3C69B;
+    font-family: 'LazyDog';
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    height: 70px;
+}
+
+.nav-logo-img {
+    width: 170px;
+    height: auto;
+}
+
+.navbar-nav {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.navbar-nav a {
+    color: #2f2c2c;
+    margin: 0 15px;
+}
+
+.navbar-nav a:hover {
+    color: #555;
+}
+
+.icons-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 20px;
+}
+
+/* For profile pic */
+.icons-container .profile-pic {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%; /* Circular container */
+    overflow: hidden; /* Crop image to fit in the circle */
+    transition: transform 0.2s ease-in-out; /* Apply smooth scaling */
+}
+
+.icons-container .profile-pic:hover {
+    transform: scale(1.1); /* Scale the entire circle and image on hover */
+}
+
+.icons-container .profile-pic img {
+    width: 100%; /* Make the image fill the container */
+    height: 100%; /* Make the image fill the container */
+    object-fit: cover; /* Ensure the image covers the circle while maintaining aspect ratio */
+}
+
+/* For diary and chat icons */
+.icons-container img {
+    width: 50px;
+    height: auto;
+    transition: transform 0.2s ease-in-out;
+}
+
+.icons-container img:hover {
+    transform: scale(1.1);
+}
+
+.navbar-brand {
+    flex-shrink: 0;
+}
+
+@font-face {
+    font-family: 'LazyDog';
+    src: url('../lazy_dog.TTF') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}   
