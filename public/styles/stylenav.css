@@ -79,7 +79,7 @@ html, body {
 
 @font-face {
     font-family: 'LazyDog';
-    src: url('../lazy_dog.TTF') format('truetype');
+    src: url('../../lazy_dog.TTF') format('truetype');
     font-weight: bold;
     font-style: normal;
 }   
