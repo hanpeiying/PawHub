@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawHub - Dino Costume</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/stylenav.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+
+        .icons-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .icons-container i {
+            font-size: 20px;
+            color: #000;
+            cursor: pointer;
+        }
+
+        .icons-container i:hover {
+            color: #555;
+        }
+
+        .navbar-brand {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .icons-container i {
+                font-size: 18px;
+            }
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            gap: 20px;
+        }
+        .container-fluid {
+            padding: 0 15px; /* Reduce padding if necessary */
+        }
+
+        .carousel-container {
+            width: 400px;
+            height: 300px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .carousel-inner img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .product-info {
+            flex: 2.5;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            margin-left: 20px;
+        }
+
+        .product-info h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-size: 26px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .details-section h4 {
+            margin: 0;
+            margin-bottom: 10px;
+        }
+
+        .details-section p {
+            margin: 0;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .details {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .location p {
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .ratings-chat-container {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .username {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ratings {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ratings i {
+            color: #FFD700;
+        }
+
+        .chat-btn {
+            background-color: #9BA481;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .chat-btn i {
+            font-size: 20px;
+        }
+
+        .details-table {
+            width: 100%;
+        }
+
+        .details-table td {
+            padding: 5px 0;
+            font-size: 16px;
+        }
+
+        /* Media Queries for smaller viewports */
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
+                max-width: 100%;
+                margin: 20px;
+                justify-content: center;
+            }
+
+            .carousel-container {
+                width: 100%;
+                height: auto;
+            }
+
+            .carousel-inner img {
+                height: auto;
+            }
+
+            .product-info {
+                margin-left: 0;
+                text-align: center;
+            }
+
+            .product-info h1 {
+                font-size: 28px;
+            }
+
+            .product-price {
+                font-size: 24px;
+            }
+
+            .details-table td {
+                font-size: 14px;
+            }
+
+            .ratings-chat-container {
+                align-items: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .product-info h1 {
+                font-size: 24px;
+            }
+
+            .product-price {
+                font-size: 20px;
+            }
+
+            .chat-btn {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+
+            .details-table td {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="homePage.html"><img class="nav-logo-img" src="images/nav/PawHubLogo.png"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Centered Navigation Links -->
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="homePage.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="shop.html">Shop</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="places.html">Places</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="inventory.html">Inventory</a>
+                    </li>
+                </ul>
+                <div class="icons-container ms-auto">
+                    <a href="diary.html"><img src="images/nav/diaryIcon.png" alt="diaryIcon"></a>
+                    <a href="chat.html"><img src="images/nav/chatIcon.png" alt="chatIcon"></a>
+                    <a class="profile-pic" href="user.html"><img src="images/nav/DefaultPP.png" alt="defaultPP"></a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <!-- Product Images (Carousel) -->
+        <div class="carousel-container">
+            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <img src="images/shop/dino2.jpg" alt="Dino Costume" class="d-block w-100" data-bs-toggle="modal" data-bs-target="#imageModal">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="images/shop/dino.JPG" alt="Dino Costume Image 2" class="d-block w-100" data-bs-toggle="modal" data-bs-target="#imageModal">
+                    </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="product-info">
+            <h1>Dino Costume</h1>
+            <div class="product-price">$12</div>
+
+            <div class="details-section">
+                <h4>Details</h4>
+                <table class="details-table">
+                    <tr>
+                        <td>Condition</td>
+                        <td>Like new</td>
+                    </tr>
+                    <tr>
+                        <td>MeetUp Location</td>
+                        <td>Yishun MRT Station, North</td>
+                    </tr>
+                    <tr>
+                        <td>Description</td>
+                        <td>Transform your pet into a cute dinosaur with this adorable dino costume. Made with soft fabric for your pet's comfort. Available in various sizes, perfect for any occasion.</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Seller Section -->
+            <div class="ratings-chat-container">
+                <div class="username">
+                    <i class="fas fa-paw"></i> LeYong @petlovers
+                </div>
+                <div class="ratings">
+                    <span>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </span>
+                    <span>(5 Customer Reviews)</span>
+                </div>
+                <button class="chat-btn"><i class="fas fa-comment"></i> Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal to show enlarged image -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <img src="" id="enlargedImage" class="img-fluid">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript to handle image enlargement -->
+    <script>
+        document.querySelectorAll('.carousel-inner img').forEach(img => {
+            img.addEventListener('click', function() {
+                const imgSrc = this.src;
+                document.getElementById('enlargedImage').src = imgSrc;
+            });
+        });
+    </script>
+
+</body>
+
+</html>

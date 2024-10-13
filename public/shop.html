@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawHub - Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/stylenav.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .icons-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .icons-container i {
+            font-size: 20px;
+            color: #000;
+            cursor: pointer;
+        }
+
+        .icons-container i:hover {
+            color: #555;
+        }
+
+        .navbar-brand {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .icons-container i {
+                font-size: 18px;
+            }
+        }
+
+        .shop-container {
+            min-height: 100vh;
+            padding: 30px;
+            background-color: #F9F1E7;
+        }
+
+        .shop-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .add-btn {
+            background-color: #9BA481;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-left: 10px;
+        }
+
+        /* Flexbox container for filter, search and add button */
+        .filter-search {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap; /* Ensures that the items wrap on smaller screens */
+        }
+
+        .filter-search input {
+            flex-grow: 2;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            min-width: 120px;  /* Adjust the width for smaller screens */
+        }
+
+        .filter-search .filter-btn {
+            background-color: #9BA481;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            flex-shrink: 0; /* Prevent buttons from shrinking too much */
+        }
+
+        .add-btn {
+            flex-shrink: 0;  /* Prevent add button from shrinking */
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 15px;
+            cursor: pointer; /* Make the whole card clickable */
+        }
+
+        .product-card:hover {
+            transform: scale(1.05);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 180px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .product-card .card-body {
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%; 
+            object-fit: cover;  
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .user-info img {
+                width: 35px;
+                height: 35px;
+            }
+
+            .filter-search {
+                justify-content: space-between;
+            }
+            .add-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .filter-search {
+                flex-direction: row; 
+            }
+
+            .filter-search input {
+                flex-grow: 1;
+                min-width: 100px; 
+            }
+
+            .add-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+
+            .user-info img {
+                width: 30px;
+                height: 30px;
+            }
+        }
+
+        .user-info .user-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1.2;
+        }
+
+        .user-info .user-details p {
+            margin: 0;
+            color: #333;
+        }
+
+        .location-info {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+
+        .location-info i {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+
+        .location-info p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .show-more {
+            background-color: #9BA481;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: block;
+            width: 150px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .filter-sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            background-color: #F7F4EF;
+            height: 100%;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            transition: left 0.3s ease;
+            padding-top: 30px;
+            z-index: 100;
+        }
+
+        .filter-sidebar.active {
+            left: 0;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        .filter-section h4 {
+            margin-bottom: 10px;
+        }
+
+        .filter-section input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .range-slider-container {
+            position: relative;
+            height: 50px;
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            pointer-events: auto;
+            width: 16px;
+            height: 16px;
+            background: #E06A62;
+            border-radius: 50%;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+
+        .slider-track {
+            background-color: #E06A62;
+            height: 5px;
+            position: absolute;
+            z-index: 1;
+        }
+
+        .apply-filter-btn {
+            background-color: #9BA481;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .filter-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="homePage.html"><img class="nav-logo-img" src="images/nav/PawHubLogo.png"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Centered Navigation Links -->
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="homePage.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="shop.html">Shop</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="places.html">Places</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="inventory.html">Inventory</a>
+                    </li>
+                </ul>
+                <div class="icons-container ms-auto">
+                    <a href="diary.html"><img src="images/nav/diaryIcon.png" alt="diaryIcon"></a>
+                    <a href="chat.html"><img src="images/nav/chatIcon.png" alt="chatIcon"></a>
+                    <a class="profile-pic" href="user.html"><img src="images/nav/DefaultPP.png" alt="defaultPP"></a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="shop-container">
+        <div class="shop-header">
+            <h1>Shop</h1>
+        </div>
+
+        <div class="filter-search">
+            <button class="filter-btn" id="filterBtn"><i class="fas fa-filter"></i> Filter</button>
+            <input type="text" placeholder="Search...">
+            <button class="add-btn"><i class="fas fa-plus"></i></button>
+        </div>
+
+        <h3>Top Items</h3>
+        <div class="row" id="productContainer"></div>
+        <button class="show-more" id="showMoreBtn">Show More</button>
+    </div>
+    <div class="filter-sidebar" id="filterSidebar">
+        <div class="filter-close" id="filterClose">&times;</div>
+        <div class="filter-section">
+            <h4>Items</h4>
+            <label><input type="checkbox" id="dogFoodFilter"> Dog Food</label><br>
+            <label><input type="checkbox" id="dogAccessoriesFilter"> Dog Accessories</label><br>
+            <label><input type="checkbox" id="dogToysFilter"> Dog Toys</label>
+        </div>
+        <div class="filter-section">
+            <h4>Location</h4>
+            <label><input type="checkbox" id="locationCentral"> Central</label><br>
+            <label><input type="checkbox" id="locationNorth"> North</label><br>
+            <label><input type="checkbox" id="locationSouth"> South</label><br>
+            <label><input type="checkbox" id="locationEast"> East</label><br>
+            <label><input type="checkbox" id="locationWest"> West</label>
+        </div>
+        <div class="filter-section">
+            <h4>Prices</h4>
+            <div class="range-slider-container">
+                <input type="range" class="range-slider" id="priceMin" min="0" max="100" value="0">
+                <input type="range" class="range-slider" id="priceMax" min="0" max="100" value="100">
+                <div class="slider-track" id="sliderTrack"></div>
+            </div>
+            <p>Price range: $<span id="minPriceValue">0</span> - $<span id="maxPriceValue">100</span></p>
+        </div>
+        <button class="apply-filter-btn" id="applyFilterBtn">Apply Filter</button>
+    </div>
+    <script>
+        const showMoreBtn = document.getElementById('showMoreBtn');
+        const productContainer = document.getElementById('productContainer');
+        const allProducts = [
+            { name: 'Green Crocs', price: '$7', imgSrc: 'images/shop/crocs.jpg', user: 'bestdealsonlyy', date: '15 days ago', category: 'dogAccessories', location: 'Central' },
+            { name: 'Dino Costume', price: '$12', imgSrc: 'images/shop/dino2.jpg', user: 'petlovers', date: '10 days ago', category: 'dogAccessories', location: 'North', link: 'dino-costume.html' },
+            { name: 'Buddy Bites Duck Meal Recipe', price: '$20', imgSrc: 'images/shop/food1.jpg', user: 'dogfoodmaster', date: '8 days ago', category: 'dogFood', location: 'South' },
+            { name: 'Hypro Food real ocean fish', price: '$20', imgSrc: 'images/shop/food3.PNG', user: 'premiumfeeds', date: '12 days ago', category: 'dogFood', location: 'East' },
+            { name: 'Buddy Bites Salmon Treats', price: '$27', imgSrc: 'images/shop/food2.png', user: 'treatmaster', date: '5 days ago', category: 'dogFood', location: 'West' },
+            { name: 'Chicken Toy', price: '$2', imgSrc: 'images/shop/toy1.jpg', user: 'toymaker', date: '6 days ago', category: 'dogToys', location: 'Central' },
+            { name: 'Bone Toy', price: '$3', imgSrc: 'images/shop/toy2.JPG', user: 'boneseller', date: '7 days ago', category: 'dogToys', location: 'South' },
+            { name: 'Duck Toy', price: '$5', imgSrc: 'images/shop/toy3.JPG', user: 'funtoys', date: '3 days ago', category: 'dogToys', location: 'North' },
+            { name: 'GiGwi Ball', price: '$8', imgSrc: 'images/shop/toy4.png', user: 'toymaster', date: '2 days ago', category: 'dogToys', location: 'West' }
+        ];
+
+        let productsToShow = 4;
+        function loadProducts(products) {
+            productContainer.innerHTML = '';
+            products.forEach((product, i) => {
+                if (i < productsToShow) {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'col-lg-3 col-md-4 col-sm-6'; // Adjust grid for different viewports
+                    productCard.innerHTML = `
+                        <div class="product-card" data-link="${product.link || '#'}">
+                            <div class="user-info">
+                                <img src="https://via.placeholder.com/40" alt="user profile">
+                                <div class="user-details">
+                                    <p><strong>${product.user}</strong></p>
+                                    <p>${product.date}</p>
+                                </div>
+                            </div>
+                            <img src="${product.imgSrc}" alt="${product.name}">
+                            <div class="card-body">
+                                <h5>${product.name}</h5>
+                                <p class="price">${product.price}</p>
+                            </div>
+                            <div class="location-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <p>${product.location}</p>
+                            </div>
+                        </div>`;
+                    productContainer.appendChild(productCard);
+                }
+            });
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const link = this.getAttribute('data-link');
+                    if (link && link !== '#') {
+                        window.location.href = link;
+                    }
+                });
+            });
+        }
+
+        loadProducts(allProducts);
+        showMoreBtn.addEventListener('click', () => {
+            productsToShow += 4;
+            loadProducts(allProducts);
+        });
+        const filterBtn = document.getElementById('filterBtn');
+        const filterSidebar = document.getElementById('filterSidebar');
+        const filterClose = document.getElementById('filterClose');
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        const priceMin = document.getElementById('priceMin');
+        const priceMax = document.getElementById('priceMax');
+        const minPriceValue = document.getElementById('minPriceValue');
+        const maxPriceValue = document.getElementById('maxPriceValue');
+        const sliderTrack = document.getElementById('sliderTrack');
+
+        filterBtn.addEventListener('click', () => {
+            filterSidebar.classList.add('active');
+        });
+
+        filterClose.addEventListener('click', () => {
+            filterSidebar.classList.remove('active');
+        });
+
+        applyFilterBtn.addEventListener('click', () => {
+            const dogFoodFilter = document.getElementById('dogFoodFilter').checked;
+            const dogAccessoriesFilter = document.getElementById('dogAccessoriesFilter').checked;
+            const dogToysFilter = document.getElementById('dogToysFilter').checked;
+
+            const locationCentral = document.getElementById('locationCentral').checked;
+            const locationNorth = document.getElementById('locationNorth').checked;
+            const locationSouth = document.getElementById('locationSouth').checked;
+            const locationEast = document.getElementById('locationEast').checked;
+            const locationWest = document.getElementById('locationWest').checked;
+
+            const minPrice = parseInt(priceMin.value);
+            const maxPrice = parseInt(priceMax.value);
+
+            let filteredProducts = allProducts.filter(product => {
+                const price = parseFloat(product.price.replace('$', ''));
+                let locationMatch = true;
+                if (locationCentral && product.location !== 'Central') locationMatch = false;
+                if (locationNorth && product.location !== 'North') locationMatch = false;
+                if (locationSouth && product.location !== 'South') locationMatch = false;
+                if (locationEast && product.location !== 'East') locationMatch = false;
+                if (locationWest && product.location !== 'West') locationMatch = false;
+
+                if (!dogFoodFilter && !dogAccessoriesFilter && !dogToysFilter) {
+                    return price >= minPrice && price <= maxPrice && locationMatch;
+                }
+                return (
+                    ((dogFoodFilter && product.category === 'dogFood') ||
+                    (dogAccessoriesFilter && product.category === 'dogAccessories') ||
+                    (dogToysFilter && product.category === 'dogToys'))
+                    && price >= minPrice && price <= maxPrice && locationMatch
+                );
+            });
+
+            loadProducts(filteredProducts);
+            filterSidebar.classList.remove('active');
+
+            showMoreBtn.style.display = 'none';
+            productsToShow = filteredProducts.length;
+            loadProducts(filteredProducts);
+        });
+
+        priceMin.addEventListener('input', updateSlider);
+        priceMax.addEventListener('input', updateSlider);
+
+        function updateSlider() {
+            if (parseInt(priceMin.value) > parseInt(priceMax.value)) {
+                priceMin.value = priceMax.value;
+            }
+            minPriceValue.textContent = priceMin.value;
+            maxPriceValue.textContent = priceMax.value;
+
+            const percentMin = (priceMin.value / priceMax.max) * 100;
+            const percentMax = (priceMax.value / priceMax.max) * 100;
+            sliderTrack.style.left = `${percentMin}%`;
+            sliderTrack.style.width = `${percentMax - percentMin}%`;
+        }
+
+        updateSlider();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
