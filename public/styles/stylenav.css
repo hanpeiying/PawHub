@@ -1,10 +1,10 @@
 html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-            background-color: #F9F1E7 ;
-        }
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: #F9F1E7 ;
+}
 
 .navbar {
     background-color: #C3C69B;
@@ -82,4 +82,91 @@ html, body {
     src: url('../fonts/lazy_dog.TTF') format('truetype');
     font-weight: bold;
     font-style: normal;
-}   
+}
+
+/* Sidebar styles */
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: -100%; /* Initially off the screen */
+    width: 250px;
+    height: 100%;
+    background-color: #F9F1E7;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    padding: 30px 20px;
+    text-align: center;
+    transition: left 0.3s ease-in-out; /* Smooth transition */
+    z-index: 1000;
+}
+
+.side-menu.active {
+    left: 0; /* Sidebar slides in */
+}
+
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 25px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.hamburger span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: #2f2c2c;
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #2f2c2c;
+}
+
+/* Sidebar icons */
+.side-menu .icons-container {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+}
+
+.side-menu .icons-container img {
+    width: 40px;
+    height: 40px;
+}
+
+.side-menu ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.side-menu ul li {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.side-menu ul li a {
+    text-decoration: none;
+    color: #2f2c2c;
+    font-size: 18px;
+    font-family: 'LazyDog'
+}
+
+.side-menu ul li a:hover {
+    color: #999999;
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: flex;
+    }
+
+    .navbar-nav {
+        display: none;
+    }
+}

@@ -7,6 +7,7 @@
     <title>PawHub - Shop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="styles/stylenav.css">
     <style>
         html, body {
@@ -47,6 +48,7 @@
             min-height: 100vh;
             padding: 30px;
             background-color: #F9F1E7;
+
         }
 
         .shop-header {
@@ -55,6 +57,17 @@
             align-items: center;
             margin-bottom: 20px;
             position: relative;
+            font-family: 'LazyDog';
+            background-image: url('images/shop/dog.webp');
+            width: 100%;
+            height: 400px; 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        h1{
+            color: white;
+            font-size: 80px;
         }
 
         .add-btn {
@@ -71,6 +84,9 @@
             align-items: center;
             position: relative;
             margin-left: 10px;
+        }
+        .newListing{
+            text-decoration: none;
         }
 
         /* Flexbox container for filter, search and add button */
@@ -322,45 +338,21 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="homePage.html"><img class="nav-logo-img" src="images/nav/PawHubLogo.png"></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Centered Navigation Links -->
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="homePage.html">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="shop.html">Shop</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="places.html">Places</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="inventory.html">Inventory</a>
-                    </li>
-                </ul>
-                <div class="icons-container ms-auto">
-                    <a href="diary.html"><img src="images/nav/diaryIcon.png" alt="diaryIcon"></a>
-                    <a href="chat.html"><img src="images/nav/chatIcon.png" alt="chatIcon"></a>
-                    <a class="profile-pic" href="user.html"><img src="images/nav/DefaultPP.png" alt="defaultPP"></a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div id="app">
+        <!-- Vue will render the Navbar component here -->
+        <Navbar></Navbar>
+    </div>
+    <div class="shop-header">
+        <h1>Shop</h1>
+    </div>
     <div class="shop-container">
-        <div class="shop-header">
-            <h1>Shop</h1>
-        </div>
 
         <div class="filter-search">
             <button class="filter-btn" id="filterBtn"><i class="fas fa-filter"></i> Filter</button>
-            <input type="text" placeholder="Search...">
-            <button class="add-btn"><i class="fas fa-plus"></i></button>
+            <input type="text" placeholder="Search..." id="searchInput">
+            <a class='newListing' href="new-listing.html">
+                <button class="add-btn"><i class="fas fa-plus"></i></button>
+            </a>            
         </div>
 
         <h3>Top Items</h3>
@@ -394,9 +386,23 @@
         </div>
         <button class="apply-filter-btn" id="applyFilterBtn">Apply Filter</button>
     </div>
+    <script type="module">
+        import Navbar from './Navbar.js';
+
+        // Create and mount the Vue app after the DOM is ready
+        const app = Vue.createApp({
+            components: {
+                Navbar
+            }
+        });
+
+        app.mount('#app'); // Mount the app to the #app element
+    </script>
     <script>
         const showMoreBtn = document.getElementById('showMoreBtn');
         const productContainer = document.getElementById('productContainer');
+        const searchInput = document.getElementById('searchInput');
+        
         const allProducts = [
             { name: 'Green Crocs', price: '$7', imgSrc: 'images/shop/crocs.jpg', user: 'bestdealsonlyy', date: '15 days ago', category: 'dogAccessories', location: 'Central' },
             { name: 'Dino Costume', price: '$12', imgSrc: 'images/shop/dino2.jpg', user: 'petlovers', date: '10 days ago', category: 'dogAccessories', location: 'North', link: 'dino-costume.html' },
@@ -449,10 +455,21 @@
         }
 
         loadProducts(allProducts);
+
+        // Show more button logic
         showMoreBtn.addEventListener('click', () => {
             productsToShow += 4;
             loadProducts(allProducts);
         });
+
+        // Search functionality
+        searchInput.addEventListener('input', () => {
+            const searchText = searchInput.value.toLowerCase();
+            const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchText));
+            loadProducts(filteredProducts);
+        });
+
+        // Filter sidebar logic
         const filterBtn = document.getElementById('filterBtn');
         const filterSidebar = document.getElementById('filterSidebar');
         const filterClose = document.getElementById('filterClose');
