@@ -14,15 +14,13 @@
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     
-
-
     <style>
 
     </style>
 </head>
-<div id='app'>
+<div id="app">
 <div class="container-fluid h-100">
-        <div class="row h-100">
+        <div class="row h-100 d-flex">
             <!-- Left Half - Carousel -->
             <div id="left-half" class="col-md-6 col-sm-12 p-0 left-half" style="position: relative;">
                 <div id="carouselExample" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
@@ -32,6 +30,9 @@
                         <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="2" aria-label="Slide 3"></button>
                         <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="3" aria-label="Slide 4"></button>
                     </div>
+
+                    <!-- <div col-4 col-sm-6 col-lg-12></div> -->
+
 
                     <div class="carousel-inner">
                         <div class="carousel-item active">
@@ -82,7 +83,7 @@
                         <a href="homepageBeforelogin.html"><img src="images/nav/PawHubLogo.png" alt="PawHub Logo" class="logo"></a>
                     </div>
 
-                    <h1 class="mb-3" style="color:black;">Welcome Back!</h1>
+                    <h1 style="color:black;">Create Account</h1>
 
                     <form @submit.prevent="signUp">
                     <div class="input-items mb-3">
@@ -90,30 +91,38 @@
                         <input type="email" class="form-control" v-model="email" placeholder="example@gmail.com" required>
                     </div>
 
+                    <!-- Password Input with Eye Icon -->
                     <div class="input-items mb-3">
                         <label for="password" class="form-label mb-0">Password</label>
                         <div class="input-group">
-                            <!-- Toggle between password and text -->
                             <input :type="showPassword ? 'text' : 'password'" class="form-control" v-model="password" placeholder="Enter Your Password" required>
-                            <!-- Toggle icon between open and closed eye -->
-                            <button type="button" class="input-group-text" @click="togglePasswordVisibility">
-                                <img :src="showPassword ? 'images/signIn/eye_close.png' : 'images/signIn/eye_open.png'" width="30px">
+                            <button type="button" class="input-group-text" @click="togglePasswordVisibility('password')">
+                                <img :src="showPassword ? 'images/signIn/eye_open.png' : 'images/signIn/eye_close.png'" width="30px">
                             </button>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-signup btn-primary w-100 mb-3 mt-2">Sign In</button>
+                    <!-- Confirm Password Input with Eye Icon -->
+                    <div class="input-items mb-4">
+                        <label for="confirmPassword" class="form-label mb-0">Confirm Password</label>
+                        <div class="input-group">
+                            <input :type="showConfirmPassword  ? 'text' : 'password'" class="form-control" v-model="confirmPassword" placeholder="Re-enter Password" required>
+                            <button type="button" class="input-group-text" @click="togglePasswordVisibility('confirm')">
+                                <img :src="showConfirmPassword  ? 'images/signIn/eye_open.png' : 'images/signIn/eye_close.png'" width="30px">
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-signup btn-primary w-100 mb-2">Sign Up</button>
                     </form>
 
-                    <p class="forgot-password"><a href="forgotPassword.html">Forgot Password</a></p>
-
-                    <p style="text-align:center; color:black; font-size:15px;" class="mb-3 mt-0">OR</p>
+                    <p style="text-align:center; color:black; font-size:15px;" class="mb-2 mt-0">OR</p>
 
                     <button class="btn btn-outline-dark w-100" @click="googleSignIn">
                     <img src="images/signIn/Google.png" width="30" alt="Google Logo"> Continue with Google
                     </button>
 
-                    <p class="have-an-account">Don't have an account? <a href="register.html">Sign up</a></p>
+                    <p class="have-an-account">Already have an account? <a href="SignIn.html">Log In</a></p>
                 </div>
             </div>
         </div>
@@ -122,7 +131,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup  } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
     // Add Firestore to setup
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
     // Add Cloud Storage
@@ -146,35 +155,45 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    const vueApp = Vue.createApp({
+    const vueApp = Vue.createApp({ 
         data() {
             return {
-                email: '',
-                password: '',
-                showPassword: false, // Control visibility of password field
+            email: '',
+            password: '',
+            confirmPassword: '',
+            showPassword: false,
+            showConfirmPassword: false,
             };
         },
         methods: {
-            // Toggle password visibility
-            togglePasswordVisibility() {
-                this.showPassword = !this.showPassword;
+            togglePasswordVisibility(field) {
+                if (field === 'password') {
+                    this.showPassword = !this.showPassword;
+                }
+                if (field === 'confirm') {
+                    this.showConfirmPassword = !this.showConfirmPassword;
+                }
             },
-
-            // Sign in with email and password
             signUp() {
-                signInWithEmailAndPassword(auth, this.email, this.password)
-                    .then((userCredential) => {
-                        const user = userCredential.user;
-                        alert("Signed in successfully!");
-                        // Redirect or additional handling
-                    })
-                    .catch((error) => {
-                        console.error("Error: ", error);
-                        alert("Failed to sign in.");
-                    });
-            },
+            if (this.password !== this.confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+            if (this.password.length < 6 ) {
+                alert("Password should be at least 6 characters")
+            }
 
-            // Google sign-in method
+            // const auth = getAuth();
+            createUserWithEmailAndPassword(auth, this.email, this.password)
+                .then((userCredential) => {
+                const user = userCredential.user;
+                alert("Account created successfully!");
+                })
+                .catch((error) => {
+                console.error("Error: ", error);
+                alert("Failed to create account.");
+                });
+            },
             googleSignIn() {
                 const provider = new GoogleAuthProvider();
                 signInWithPopup(auth, provider)
@@ -190,26 +209,7 @@
             }
         }
     });
-
-//     async googleSignIn() {
-//     const provider = new GoogleAuthProvider();
-//     try {
-//         const result = await signInWithPopup(auth, provider);
-//         const user = result.user;
-//         alert("Signed in with Google!");
-//         // Additional handling, like redirecting
-//     } catch (error) {
-//         console.error("Error: ", error);
-//         alert("Failed to sign in with Google.");
-//     }
-// }
-//         }
-//     });
-
-    vueApp.mount('#app');
-
-    
-
+    const vm = vueApp.mount('#app'); 
 </script>
 
 <!-- Bootstrap Bundle with Popper -->
