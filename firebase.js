@@ -6,11 +6,11 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
-
+import API_KEY from ""
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyApb-p_DzaRgN2FGcm6X7kXLHJIGQvmoOw",
+  apiKey: import.meta.API_KEY,
   authDomain: "pawhub-858e8.firebaseapp.com",
   projectId: "pawhub-858e8",
   storageBucket: "pawhub-858e8.appspot.com",
@@ -27,3 +27,4 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 export { app, analytics, auth, db, storage };
+
