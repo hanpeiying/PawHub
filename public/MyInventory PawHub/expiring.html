@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expiring Stock</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="stock-info">
+        <h3>Expiring Stock</h3>
+        <div id="expiringStockContainer" class="stock-container">
+            
+            <!-- Dynamic stock information will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        const expiringStock = [
+        { product: "ADULT SALMON AND SWEET POTATO 2kg", image: "kibbles.png", expirydate: "9-11-24", daysleft: calculateDaysLeft(expiryDate) },
+        { product: "iPhone 14 pro", image: "iphone.png", expirydate: "Sold 2 Products", time: "12 m ago" },
+        { product: "Zoom75", image: "keyboard.png", expirydate: "Sold 1 Product", time: "23 m ago" },
+        { product: "Zoom75", image: "keyboard.png", expirydate: "Restocked 12 Product", time: "42 m ago" }
+    ];
+
+    function calculateDaysLeft(expiryDate) {
+    // Convert the expiry date string to a Date object
+    const expiry = new Date(expiryDate);
+    // Get today's date
+    const today = new Date();
+    // Calculate the difference in time (in milliseconds)
+    const differenceInTime = expiry - today;
+    // Convert the difference from milliseconds to days
+    const differenceInDays = Math.ceil(differenceInTime / (1000 * 60 * 60 * 24));
+    return differenceInDays;
+}
+    
+    function displayStockItems() {
+        const container = document.getElementById('expiringStockContainer');
+        container.innerHTML = ''; // Clear existing items
+    
+        expiringStock.forEach(item => {
+            const stockItem = document.createElement('div');
+            stockItem.classList.add('stock-item');
+    
+            stockItem.innerHTML = `
+                <img src="${item.image}" alt="${item.product}">
+                <div class="stock-item-expirydate">
+                    <div class="stock-item-title">${item.product}</div>
+                    <div class="stock-item-subtitle">${item.expirydate}</div>
+                </div>
+                <div class="time-ago">${item.time}</div>
+            `;
+    
+            container.appendChild(stockItem);
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        displayStockItems();
+    });
+    </script>
+</body>
+</html>
+
+<style>
+    /* General styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.stock-info {
+    width: 300px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stock-info h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.stock-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.stock-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.stock-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.stock-item-expirydate {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.stock-item-title {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.stock-item-subtitle {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.time-ago {
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+}
+</style>
+

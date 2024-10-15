@@ -1,0 +1,78 @@
+/* General styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f8f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.product-list-container {
+    width: 80%;
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Table styles */
+.product-list {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.product-list th, .product-list td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.product-list th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.product-list td img {
+    width: 50px;
+    height: auto;
+    border-radius: 5px;
+}
+
+/* Row hover effect */
+.product-list tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* Pagination styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.page-btn {
+    background-color: #4a90e2;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.page-btn.active {
+    background-color: #2c73b9;
+}
+
+.page-btn:hover {
+    background-color: #2c73b9;
+}
+
+.search-bar input {
+    padding: 8px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    width: 250px;
+}
