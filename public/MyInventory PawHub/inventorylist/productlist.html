@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <link rel="stylesheet" href="productlist.css">
+</head>
+<body>
+    <div class="product-list-container">
+        <h2>Product List</h2>
+        <div class="search-bar">
+            <input type="text" placeholder="Search">
+        </div>
+        <table class="product-list">
+            <thead>
+                <tr>
+                    <th>S/N</th>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Expiry Date
+                        <button id="sortExpiryBtn"> 
+                        <span id="sortIcon">⬇️</span></button>
+                    </th>
+                    <th>Date Added 
+                        <button id="sortAddedBtn">
+                        <span id="sortIcon">⬇️</span></button>
+                    </th>
+                    <th>Price</th>
+                    <th>Servings</th>
+                    <th>+/-</th>
+                </tr>
+            </thead>
+            <tbody id="productTableBody">
+                <!-- Extract product and input into various parameters -->
+                <td><input type="checkbox"> 1. </td>
+                    <!-- loop to count length of list -->
+                <td>Dog Food 1</td>
+
+                <!-- Products will be dynamically loaded here -->
+            </tbody>
+        </table>
+        <div class="pagination">
+            <button class="page-btn" data-page="prev">&lt;</button>
+            <button class="page-btn" data-page="1">1</button>
+            <button class="page-btn" data-page="2">2</button>
+            <button class="page-btn" data-page="3">3</button>
+            <button class="page-btn" data-page="next">&gt;</button>
+        </div>
+    </div>
+    <script src="productlist.js"></script>
+</body>
+</html>
