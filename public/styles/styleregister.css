@@ -1,0 +1,160 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #f9f1e7;
+  font-family: "Poppins Regular";
+  color: #695c5c;
+}
+
+.carousel-item img {
+  object-fit: cover;
+  height: 100vh;
+}
+
+h3 {
+  font-family: "LazyDog";
+  /* color: rgb(203, 203, 203); */
+  font-size: 30px;
+}
+
+.carousel-caption {
+  font-size: 20px;
+}
+
+.right-half {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f9f1e7;
+  padding: 20px;
+  height: 100vh;
+}
+
+.signup-form-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: 10px;
+  /* box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); */
+}
+
+.input-items {
+  font-size: 15px;
+  width: 370px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.form-control {
+  font-size: 15px;
+}
+
+.logo {
+  width: 150px;
+  margin-bottom: 10px;
+}
+
+h1 {
+  font-size: 40px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-family: "Overlock";
+}
+
+.btn {
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.btn-signup {
+  box-shadow: 0px 3px 3px rgb(100, 129, 227);
+}
+
+.have-an-account {
+  font-size: 12px;
+}
+
+.forgot-password a {
+  /* color: grey; */
+  font-size: 15px;
+}
+
+/* When screen size is less than md, stack the left and right sections vertically */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  /* Make row flex direction column */
+  .row {
+    flex-direction: column;
+  }
+
+  .left-half {
+    height: auto;
+    margin-bottom: 20px;
+  }
+
+  .right-half {
+    height: auto;
+  }
+}
+
+@font-face {
+  font-family: "LazyDog";
+  src: url("../fonts/lazy_dog.TTF") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Overlock";
+  src: url("../fonts/OverlockSC-Regular.ttf") format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Poppins Regular";
+  src: url("../fonts/poppins/Poppins-Regular.ttf") format("truetype");
+  font-style: normal;
+}
+
+@media (max-width: 576px) {
+  .left-half {
+    position: relative;
+    height: 100%;
+  }
+
+  .right-half {
+    position: absolute;
+    top: 10px; /* Add some gap from the top */
+    right: 10px; /* Add gap on the right */
+    left: 10px; /* Add gap on the left */
+    bottom: 10px; /* Add gap from the bottom */
+    background-color: #ddddddd9; /* Semi-transparent grey */
+    z-index: 1;
+    padding: 20px;
+    border-radius: 10px;
+    width: calc(100% - 20px); /* Reduce width by 20px to add gap */
+    height: calc(100% - 20px); /* Reduce height by 20px to add gap */
+    box-sizing: border-box; /* Include padding and border in element's total width/height */
+  }
+
+  /* Ensures the right half content doesn't go beyond screen size */
+  .signup-form-container {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  h1 {
+    font-size: 30px;
+    margin-bottom: 0px;
+    text-align: center;
+    font-family: "Overlock";
+  }
+
+  .logo {
+    width: 120px;
+    margin-bottom: 5px;
+  }
+}
