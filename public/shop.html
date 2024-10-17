@@ -405,7 +405,10 @@
         
         const allProducts = [
             { name: 'Green Crocs', price: '$7', imgSrc: 'images/shop/crocs.jpg', user: 'bestdealsonlyy', date: '15 days ago', category: 'dogAccessories', location: 'Central' },
-            { name: 'Dino Costume', price: '$12', imgSrc: 'images/shop/dino2.jpg', user: 'petlovers', date: '10 days ago', category: 'dogAccessories', location: 'North', link: 'dino-costume.html' },
+            { name: 'Dino Costume', price: '$12', imgSrc: ['images/shop/crocs.jpg',  // Main image
+            'images/shop/dino2.jpg',  // Alternate image 1
+            'images/shop/toy1.jpg'   // Alternate image 2
+            ], user: 'petlovers', date: '10 days ago', category: 'dogAccessories', location: 'North', link: 'dino-costume.html' },
             { name: 'Buddy Bites Duck Meal Recipe', price: '$20', imgSrc: 'images/shop/food1.jpg', user: 'dogfoodmaster', date: '8 days ago', category: 'dogFood', location: 'South' },
             { name: 'Hypro Food real ocean fish', price: '$20', imgSrc: 'images/shop/food3.PNG', user: 'premiumfeeds', date: '12 days ago', category: 'dogFood', location: 'East' },
             { name: 'Buddy Bites Salmon Treats', price: '$27', imgSrc: 'images/shop/food2.png', user: 'treatmaster', date: '5 days ago', category: 'dogFood', location: 'West' },
@@ -547,6 +550,72 @@
         }
 
         updateSlider();
+
+        function loadProducts(products) {
+    productContainer.innerHTML = '';
+    products.forEach((product, i) => {
+        if (i < productsToShow) {
+            const productCard = document.createElement('div');
+            productCard.className = 'col-lg-3 col-md-4 col-sm-6';
+
+            // Check if imgSrc is an array or a single string
+            const images = Array.isArray(product.imgSrc) ? product.imgSrc : [product.imgSrc];
+            let currentImageIndex = 0;
+            let intervalId;
+
+            // Create the product card
+            productCard.innerHTML = `
+                <a href="${product.link || '#'}" class="product-card" data-link="${product.link || '#'}">
+                    <div data-link="${product.link || '#'}">
+                        <div class="user-info">
+                            <img src="https://via.placeholder.com/40" alt="user profile">
+                            <div class="user-details">
+                                <p><strong>${product.user}</strong></p>
+                                <p>${product.date}</p>
+                            </div>
+                        </div>
+                        <img src="${images[0]}" alt="${product.name}" class="product-image">
+                        <div class="card-body">
+                            <h6>${product.name}</h6>
+                            <p class="price">${product.price}</p>
+                        </div>
+                        <div class="location-info">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>${product.location}</p>
+                        </div>
+                    </div>
+                </a>`;
+
+            const productImage = productCard.querySelector('.product-image');
+
+            // Start rotating images on mouseover if there are multiple images
+            productCard.addEventListener('mouseover', () => {
+                if (images.length > 1) {
+                    intervalId = setInterval(() => {
+                        currentImageIndex = (currentImageIndex + 1) % images.length;
+                        productImage.src = images[currentImageIndex];
+                    }, 500);  // Rotate every 0.5 second
+                }
+            });
+
+            // Stop rotating images on mouseout
+            productCard.addEventListener('mouseout', () => {
+                clearInterval(intervalId);
+                productImage.src = images[currentImageIndex];  // Keep the last image displayed
+            });
+
+            productContainer.appendChild(productCard);
+        }
+    });
+
+    // Show more button logic (unchanged)
+    if (productsToShow >= products.length) {
+        showMoreBtn.style.display = 'none';
+    } else {
+        showMoreBtn.style.display = 'block';
+    }
+}
+
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
