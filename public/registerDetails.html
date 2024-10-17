@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Lovers App - Profile Details</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="styles/styleregisterdetails.css">
+
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <style scoped>
+        .circular-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto;
+            cursor: pointer;
+            border: 4px solid #695c5c;
+        }
+    </style>
+</head> 
+<body>
+    <div id="app">
+        <div class="container-fluid h-100">
+            <div class="row h-100 d-flex">
+                <div id="left-half" class="col-md-6 col-sm-12 p-0 left-half">
+                    <img src="images/signIn/dog_welcome.gif" class="d-block w-100" alt="Welcome!">
+                </div>
+                <div id="right-half" class="col-md-6 col-sm-12 d-flex align-items-center justify-content-center right-half">
+                    <div class="signup-form-container">
+                        <h1 class="mb-3" style="color: black;">More information</h1>
+
+                        <!-- Profile Photo Section -->
+                        <div class="profile-photo-container">
+                            <img 
+                                class="circular-image" 
+                                :src="uploadedImageUrl || './images/signin/photo.png'" 
+                                @click="triggerFileUpload"
+                            >
+                            <input type="file" ref="fileInput" @change="onFileChange" style="display: none;" />
+                        </div>
+
+                        <!-- Dog's Name -->
+                        <div class="form-group mt-3">
+                            <label for="dogName">Dog's Name</label>
+                            <input type="text" id="dogName" class="form-control" v-model="dogName" placeholder="Enter Dog's Name" />
+                        </div>
+
+                        <!-- Dog Breed Dropdown -->
+                        <div class="form-group mt-3">
+                            <label for="dogBreed">Dog's Breed</label>
+                            <select id="dogBreed" class="form-control" v-model="dogBreed">
+                                <option>Corgi</option>
+                                <option>Golden Retriever</option>
+                                <option>Bulldog</option>
+                                <option>Poodle</option>
+                                <option>Beagle</option>
+                            </select>
+                        </div>
+
+                        <!-- Age Group Dropdown -->
+                        <div class="form-group mt-3">
+                            <label for="dogAgeGroup">Dog's Age Group</label>
+                            <select id="dogAgeGroup" class="form-control" v-model="dogAgeGroup">
+                                <option>Puppy</option>
+                                <option>Junior</option>
+                                <option>Adult</option>
+                                <option>Mature</option>
+                            </select>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button class="btn btn-primary mt-4" @click="redirectToHomepage">Go to Log In</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import {app} from "../firebase.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup  } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        // Add Firestore to setup
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        // Add Cloud Storage
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+
+        // const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        const vueApp = Vue.createApp({
+            data() {
+                return {
+                    uploadedImageUrl: '',
+                    dogName: '',
+                    dogBreed: 'Corgi',
+                    dogAgeGroup: 'Puppy',
+                };
+            },
+            methods: {
+                    triggerFileUpload() {
+                        this.$refs.fileInput.click();
+                    },
+                    async onFileChange(event) {
+                        const file = event.target.files[0];
+                        if (file) await this.uploadImage(file);
+                    },
+                    async uploadImage(file) {
+                        const userUID = window.currentUserUID;
+                        const storageRef = ref(storage, `dogs/${userUID}/${file.name}`);
+                        const uploadTask = uploadBytesResumable(storageRef, file);
+
+                        uploadTask.on('state_changed', null, 
+                            error => console.error("Upload failed:", error), 
+                            async () => {
+                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                this.uploadedImageUrl = downloadURL;
+                                await setDoc(doc(db, "dogImages", userUID), { fileName: file.name, timestamp: new Date() });
+                            }
+                        );
+                    },
+                    async saveDogDetails() {
+                        const userUID = window.currentUserUID;
+                        if (!userUID) {
+                            console.error("User UID is not defined. Cannot save dog details.");
+                            return;
+                        }
+                        try {
+                            await setDoc(doc(db, "dogDetails", userUID), {
+                                // uploadedImageUrl: this.uploadedImageUrl,
+                                dogName: this.dogName,
+                                dogBreed: this.dogBreed,
+                                dogAgeGroup: this.dogAgeGroup,
+                                timestamp: new Date()
+                            });
+                            console.log("Dog details saved successfully!");
+                        } catch (error) {
+                            console.error("Error saving dog details:", error);
+                        }
+                    },
+                    redirectToHomepage() {
+                        window.location.href = "homepageBeforeLogin.html";
+                    },
+                    async loadUploadedDogImage() {
+                        const userUID = window.currentUserUID;
+                        if (!userUID) return;
+
+                        try {
+                            const docRef = doc(db, "dogImages", userUID);
+                            const docSnap = await getDoc(docRef);
+                            if (docSnap.exists()) {
+                                const { fileName } = docSnap.data();
+                                const storageRef = ref(storage, `dogs/${userUID}/${fileName}`);
+                                this.uploadedImageUrl = await getDownloadURL(storageRef);
+                            }
+                        } catch (error) {
+                            console.error("Error loading image:", error);
+                        }
+                    }
+                },
+                mounted() {
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            window.currentUserUID = user.uid;
+                            this.loadUploadedDogImage();  // Call the image loading function
+                            this.saveDogDetails();        // Call the save dog details function
+                        }
+                    });
+                }
+            });
+
+        vueApp.mount("#app");
+    </script>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

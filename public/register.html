@@ -162,37 +162,72 @@
                 }
             },
             signUp() {
-            if (this.password !== this.confirmPassword) {
-                alert("Passwords do not match!");
-                return;
-            }
-            if (this.password.length < 6 ) {
-                alert("Password should be at least 6 characters")
-            }
+                if (this.password !== this.confirmPassword) {
+                    alert("Passwords do not match!");
+                    return;
+                }
+                if (this.password.length < 6 ) {
+                    alert("Password should be at least 6 characters")
+                }
 
-            // const auth = getAuth();
-            createUserWithEmailAndPassword(auth, this.email, this.password)
-                .then((userCredential) => {
-                const user = userCredential.user;
-                alert("Account created successfully!");
-                })
-                .catch((error) => {
-                console.error("Error: ", error);
-                alert("Failed to create account.");
-                });
-            },
-            googleSignIn() {
-                const provider = new GoogleAuthProvider();
-                signInWithPopup(auth, provider)
-                    .then((result) => {
-                        const user = result.user;
-                        alert("Signed in with Google!");
-                        // Additional handling, like redirecting
+                // const auth = getAuth();
+                createUserWithEmailAndPassword(auth, this.email, this.password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        const uid = user.uid;  // Capture the UID
+                        localStorage.setItem('userUID', user.uid);
+                        
+                        // Store UID and email in Firestore
+                        setDoc(doc(db, "users", uid), {
+                        email: this.email,
+                        uid: uid
+                        })
+                        .then(() => {
+                        console.log("User UID and email stored in Firestore");
+                        alert("Account created successfully!");
+                        
+                        // Redirect to the next page
+                        window.location.href = 'registerDetails.html';
+                        })
+                        .catch((error) => {
+                        console.error("Error writing document: ", error);
+                        alert("Failed to store user data.");
+                        });
                     })
                     .catch((error) => {
                         console.error("Error: ", error);
-                        alert("Failed to sign in with Google.");
+                        alert("Failed to create account.");
                     });
+                },
+
+            googleSignIn() {
+                const provider = new GoogleAuthProvider();
+                signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    const uid = user.uid;  // Capture the UID
+
+                    // Store UID and email in Firestore
+                    setDoc(doc(db, "users", uid), {
+                    email: user.email,
+                    uid: uid
+                    })
+                    .then(() => {
+                    console.log("User UID and email stored in Firestore");
+                    alert("Signed in with Google!");
+                    
+                    // Redirect to the next page
+                    window.location.href = 'registerDetails.html';
+                    })
+                    .catch((error) => {
+                    console.error("Error writing document: ", error);
+                    alert("Failed to store user data.");
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error: ", error);
+                    alert("Failed to sign in with Google.");
+                });
             }
         }
     });
