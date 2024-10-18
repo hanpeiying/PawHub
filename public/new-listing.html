@@ -161,6 +161,17 @@
             </div>
 
             <div class="mb-3">
+                <label for="location" class="form-label">Locations</label>
+                <select id="location" class="form-select" multiple required>
+                    <option value="Central">Central</option>
+                    <option value="North">North</option>
+                    <option value="South">South</option>
+                    <option value="East">East</option>
+                    <option value="West">West</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
                 <label for="description" class="form-label">Description (Optional)</label>
                 <textarea id="description" class="form-control" rows="3"></textarea>
             </div>
@@ -258,7 +269,7 @@ async function uploadPhotos() {
 }
     
         // Function to add listing to Firestore
-        async function addListing(listingTitle, description, category, price, expiryDate, imageURLs) {
+        async function addListing(listingTitle, description, category, price, expiryDate, locations, imageURLs) {
             try {
                 const docRef = await addDoc(collection(db, "marketplace"), {
                     title: listingTitle,
@@ -266,6 +277,7 @@ async function uploadPhotos() {
                     category: category,
                     price: price,
                     expiryDate: expiryDate,
+                    location: locations,
                     imageURLs: imageURLs,  // Store an array of image URLs
                     userUID: userUID
                 });
@@ -294,6 +306,9 @@ async function uploadPhotos() {
             const description = document.getElementById('description').value;
             const price = document.getElementById('price').value;
             const expiryDate = document.getElementById('expiryDate').value;
+
+            const locationSelect = document.getElementById('location');
+            const selectedLocations = Array.from(locationSelect.selectedOptions).map(option => option.value);
     
             // Upload the photos and get their download URLs
             const files = photosInput.files;
@@ -302,7 +317,7 @@ async function uploadPhotos() {
             console.log('All uploaded URLs:', imageURLs);
     
             // Add dog listing to Firestore with the uploaded image URLs
-            addListing(listingTitle, description, category, price, expiryDate, imageURLs);
+            addListing(listingTitle, description, category, price, expiryDate, selectedLocations, imageURLs);
     
             // Clear form
             form.reset();
