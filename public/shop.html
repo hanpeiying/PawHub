@@ -286,7 +286,7 @@
         }
 
         .range-slider {
-            -webkit-appearance: none;
+            /* -webkit-appearance: none; */
             width: 100%;
             height: 5px;
             background: #ddd;
@@ -398,87 +398,26 @@
 
         app.mount('#app'); // Mount the app to the #app element
     </script>
-    <script>
+     <script type="module">
+        // Firebase setup and Firestore imports
+        import {app} from "../firebase.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getFirestore, onSnapshot, collection, query, orderBy, limit, startAfter, getDocs, where } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+    
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
         const showMoreBtn = document.getElementById('showMoreBtn');
         const productContainer = document.getElementById('productContainer');
         const searchInput = document.getElementById('searchInput');
         
-        const allProducts = [
-            { name: 'Green Crocs', price: '$7', imgSrc: 'images/shop/crocs.jpg', user: 'bestdealsonlyy', date: '15 days ago', category: 'dogAccessories', location: 'Central' },
-            { name: 'Dino Costume', price: '$12', imgSrc: 'images/shop/dino2.jpg', user: 'petlovers', date: '10 days ago', category: 'dogAccessories', location: 'North', link: 'dino-costume.html' },
-            { name: 'Buddy Bites Duck Meal Recipe', price: '$20', imgSrc: 'images/shop/food1.jpg', user: 'dogfoodmaster', date: '8 days ago', category: 'dogFood', location: 'South' },
-            { name: 'Hypro Food real ocean fish', price: '$20', imgSrc: 'images/shop/food3.PNG', user: 'premiumfeeds', date: '12 days ago', category: 'dogFood', location: 'East' },
-            { name: 'Buddy Bites Salmon Treats', price: '$27', imgSrc: 'images/shop/food2.png', user: 'treatmaster', date: '5 days ago', category: 'dogFood', location: 'West' },
-            { name: 'Chicken Toy', price: '$2', imgSrc: 'images/shop/toy1.jpg', user: 'toymaker', date: '6 days ago', category: 'dogToys', location: 'Central' },
-            { name: 'Bone Toy', price: '$3', imgSrc: 'images/shop/toy2.JPG', user: 'boneseller', date: '7 days ago', category: 'dogToys', location: 'South' },
-            { name: 'Duck Toy', price: '$5', imgSrc: 'images/shop/toy3.JPG', user: 'funtoys', date: '3 days ago', category: 'dogToys', location: 'North' },
-            { name: 'GiGwi Ball', price: '$8', imgSrc: 'images/shop/toy4.png', user: 'toymaster', date: '2 days ago', category: 'dogToys', location: 'West' }
-        ];
-
-        let productsToShow = 4;
-        function loadProducts(products) {
-            productContainer.innerHTML = '';
-            products.forEach((product, i) => {
-                if (i < productsToShow) {
-                    const productCard = document.createElement('div');
-                    productCard.className = 'col-lg-3 col-md-4 col-sm-6'; // Adjust grid for different viewports
-                    productCard.innerHTML = `
-                        <div class="product-card" data-link="${product.link || '#'}">
-                            <div class="user-info">
-                                <img src="https://via.placeholder.com/40" alt="user profile">
-                                <div class="user-details">
-                                    <p><strong>${product.user}</strong></p>
-                                    <p>${product.date}</p>
-                                </div>
-                            </div>
-                            <img src="${product.imgSrc}" alt="${product.name}">
-                            <div class="card-body">
-                                <h5>${product.name}</h5>
-                                <p class="price">${product.price}</p>
-                            </div>
-                            <div class="location-info">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <p>${product.location}</p>
-                            </div>
-                        </div>`;
-                    productContainer.appendChild(productCard);
-                }
-            });
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const link = this.getAttribute('data-link');
-                    if (link && link !== '#') {
-                        window.location.href = link;
-                    }
-                });
-            });
-        }
-
-        loadProducts(allProducts);
-
-        // Show more button logic
-        showMoreBtn.addEventListener('click', () => {
-            productsToShow += 4;
-            loadProducts(allProducts);
-        });
-
-        // Search functionality
-        searchInput.addEventListener('input', () => {
-            const searchText = searchInput.value.toLowerCase();
-            const filteredProducts = allProducts.filter(product => product.name.toLowerCase().includes(searchText));
-            loadProducts(filteredProducts);
-        });
-
-        // Filter sidebar logic
-        const filterBtn = document.getElementById('filterBtn');
-        const filterSidebar = document.getElementById('filterSidebar');
-        const filterClose = document.getElementById('filterClose');
-        const applyFilterBtn = document.getElementById('applyFilterBtn');
-        const priceMin = document.getElementById('priceMin');
-        const priceMax = document.getElementById('priceMax');
         const minPriceValue = document.getElementById('minPriceValue');
         const maxPriceValue = document.getElementById('maxPriceValue');
         const sliderTrack = document.getElementById('sliderTrack');
+
+                let lastVisible = null;
+        let productsToShow = 4;
 
         filterBtn.addEventListener('click', () => {
             filterSidebar.classList.add('active');
@@ -488,47 +427,134 @@
             filterSidebar.classList.remove('active');
         });
 
-        applyFilterBtn.addEventListener('click', () => {
-            const dogFoodFilter = document.getElementById('dogFoodFilter').checked;
-            const dogAccessoriesFilter = document.getElementById('dogAccessoriesFilter').checked;
-            const dogToysFilter = document.getElementById('dogToysFilter').checked;
+        // Event listener for the "Apply Filter" button
+        let allProducts = [];  // Store all products fetched from Firestore
 
-            const locationCentral = document.getElementById('locationCentral').checked;
-            const locationNorth = document.getElementById('locationNorth').checked;
-            const locationSouth = document.getElementById('locationSouth').checked;
-            const locationEast = document.getElementById('locationEast').checked;
-            const locationWest = document.getElementById('locationWest').checked;
+// Fetch all products from Firestore
+async function fetchAllProducts() {
+    // resetProductContainer();
 
-            const minPrice = parseInt(priceMin.value);
-            const maxPrice = parseInt(priceMax.value);
 
-            let filteredProducts = allProducts.filter(product => {
-                const price = parseFloat(product.price.replace('$', ''));
-                let locationMatch = true;
-                if (locationCentral && product.location !== 'Central') locationMatch = false;
-                if (locationNorth && product.location !== 'North') locationMatch = false;
-                if (locationSouth && product.location !== 'South') locationMatch = false;
-                if (locationEast && product.location !== 'East') locationMatch = false;
-                if (locationWest && product.location !== 'West') locationMatch = false;
+    const listingsQuery = query(
+        collection(db, "marketplace"),
+        orderBy("title"),  // Adjust this as needed for your sorting logic
+        limit(productsToShow)  // Show only the first batch of products
+    );
+    const querySnapshot = await getDocs(collection(db, "marketplace"));
+    allProducts = [];
+    querySnapshot.forEach((doc) => {
+        allProducts.push(doc.data());
+    });
+    lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+    displayProducts(allProducts);  // Display all products initially
+}
 
-                if (!dogFoodFilter && !dogAccessoriesFilter && !dogToysFilter) {
-                    return price >= minPrice && price <= maxPrice && locationMatch;
-                }
-                return (
-                    ((dogFoodFilter && product.category === 'dogFood') ||
-                    (dogAccessoriesFilter && product.category === 'dogAccessories') ||
-                    (dogToysFilter && product.category === 'dogToys'))
-                    && price >= minPrice && price <= maxPrice && locationMatch
-                );
-            });
+// Display products
+function displayProducts(products) {
+    productContainer.innerHTML = '';  // Clear the container
+    products.forEach((product) => {
+        const productCard = document.createElement('div');
+        productCard.className = 'col-lg-3 col-md-4 col-sm-6';
+        const imageURL = (product.imageURLs && product.imageURLs.length > 0) ? product.imageURLs[0] : 'https://via.placeholder.com/180';
+        productCard.innerHTML = `
+            <div class="product-card">
+                <div class="user-info">
+                    <img src="https://via.placeholder.com/40" alt="user profile">
+                    <div class="user-details">
+                        <p><strong>User</strong></p> <!-- Placeholder for user name -->
+                    </div>
+                </div>
+                <img src="${imageURL}" alt="${product.title}">
+                <div class="card-body">
+                    <h5>${product.title}</h5>
+                    <p class="price">S$${product.price}</p>
+                    <p class="description">${product.description || "No description provided"}</p>
+                </div>
+                <div class="location-info">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <p>${product.location}</p> <!-- Placeholder for location -->
+                </div>
+            </div>`;
+        productContainer.appendChild(productCard);
+    });
+}
 
-            loadProducts(filteredProducts);
-            filterSidebar.classList.remove('active');
+// Filter products based on selected filters
+function filterProducts() {
+    // resetProductContainer();
+    const dogFoodFilter = document.getElementById('dogFoodFilter').checked;
+    const dogAccessoriesFilter = document.getElementById('dogAccessoriesFilter').checked;
+    const dogToysFilter = document.getElementById('dogToysFilter').checked;
 
-            showMoreBtn.style.display = 'none';
-            productsToShow = filteredProducts.length;
-            loadProducts(filteredProducts);
-        });
+    const locationCentral = document.getElementById('locationCentral').checked;
+    const locationNorth = document.getElementById('locationNorth').checked;
+    const locationSouth = document.getElementById('locationSouth').checked;
+    const locationEast = document.getElementById('locationEast').checked;
+    const locationWest = document.getElementById('locationWest').checked;
+
+    const minPrice = parseFloat(document.getElementById('priceMin').value);
+    const maxPrice = parseFloat(document.getElementById('priceMax').value);
+
+    let filteredProducts = allProducts.filter(product => {
+        const price = parseFloat(product.price);
+
+        // Category filter
+        const selectedCats = [];
+    if (dogFoodFilter) selectedCats.push('dogFood');
+    if (dogAccessoriesFilter) selectedCats.push('dogAccessories');
+    if (dogToysFilter) selectedCats.push('dogToys');
+
+        // Location filter
+        const selectedLocations = [];
+    if (locationCentral) selectedLocations.push('Central');
+    if (locationNorth) selectedLocations.push('North');
+    if (locationSouth) selectedLocations.push('South');
+    if (locationEast) selectedLocations.push('East');
+    if (locationWest) selectedLocations.push('West');
+    let filteredProducts = allProducts.filter(product => {
+        const price = parseFloat(product.price);
+
+        // Category filter
+        let categoryMatch = true;
+        if (selectedCats.length > 0 && !selectedCats.includes(product.category)) {
+            categoryMatch = false;
+        }
+        // Location filter
+        let locationMatch = true;
+        if (selectedLocations.length > 0) {
+            if (Array.isArray(product.location)) {
+                // Check if any of the product's locations match the selected locations
+                locationMatch = product.location.some(loc => selectedLocations.includes(loc));
+            } else {
+                // For products with a single location (not an array)
+                locationMatch = selectedLocations.includes(product.location);
+            }
+        }
+
+        // Price filter
+        let priceMatch = price >= minPrice && price <= maxPrice;
+
+        return categoryMatch && locationMatch && priceMatch;
+    });
+
+    displayProducts(filteredProducts);  // Display filtered products
+
+    if (filteredProducts.length <= productsToShow) {
+        showMoreBtn.style.display = 'none';
+    } else {
+        showMoreBtn.style.display = 'block';
+    }
+});
+}
+
+// Event listener for the "Apply Filter" button
+applyFilterBtn.addEventListener('click', () => {
+    filterProducts();  // Filter and display the products
+});
+
+// Fetch and display all products when the page loads
+fetchAllProducts();
+
 
         priceMin.addEventListener('input', updateSlider);
         priceMax.addEventListener('input', updateSlider);
@@ -547,7 +573,81 @@
         }
 
         updateSlider();
+
+        // function resetProductContainer() {
+        //     productContainer.innerHTML = '';  // Clear the container
+        //     lastVisible = null;               // Reset pagination tracker
+        // }
+        
+        // Fetch and display listings from Firestore
+        async function loadListings(initialLoad = true) {
+            // if (initialLoad) {
+            //     resetProductContainer();  // Reset container for a fresh start
+            // }
+            const listingsQuery = query(
+                collection(db, "marketplace"),
+                orderBy("title"), // Ordering by title or any other field
+                limit(productsToShow),
+                startAfter(lastVisible || 0)
+            );
+
+            const querySnapshot = await getDocs(listingsQuery);
+            if (!querySnapshot.empty) {
+                lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1]; // For pagination
+                querySnapshot.forEach((doc) => {
+                    const listing = doc.data();
+                    createProductCard(listing);
+                });
+            }
+
+            // Hide "Show More" button if there are no more products to load
+            if (querySnapshot.size < productsToShow) {
+                showMoreBtn.style.display = "none";
+            }
+        }
+
+
+        // Function to create a product card and add it to the container
+        function createProductCard(listing) {
+            const productCard = document.createElement('div');
+            productCard.className = 'col-lg-3 col-md-4 col-sm-6';
+
+            const imageURL = (listing.imageURLs && listing.imageURLs.length > 0) ? listing.imageURLs[0] : 'https://via.placeholder.com/180';
+
+            productCard.innerHTML = `
+                <div class="product-card">
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/40" alt="user profile">
+                        <div class="user-details">
+                            <p><strong>User</strong></p> <!-- Placeholder for user name -->
+                        </div>
+                    </div>
+                    <img src="${imageURL}" alt="${listing.title}">
+                    <div class="card-body">
+                        <h5>${listing.title}</h5>
+                        <p class="price">S$${listing.price}</p>
+                        <p class="description">${listing.description || "No description provided"}</p>
+                    </div>
+                    <div class="location-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>${listing.location}</p> <!-- Placeholder for location -->
+                    </div>
+                </div>`;
+            productContainer.appendChild(productCard);
+        }
+
+        // Event listener for "Show More" button to load more listings
+        showMoreBtn.addEventListener('click', () => {
+            loadListings(false); // Load more listings without resetting
+        });
+
+        // Initial load when the page is ready
+        loadListings();
+
+        // Optional: You can add the search functionality and filters here as in your original code
     </script>
+
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>

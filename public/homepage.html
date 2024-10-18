@@ -11,6 +11,10 @@
     <!-- css for navbar and standard body-->
     <link rel="stylesheet" href="styles/stylenav.css">
 
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+
     <style>
       /* Layout styles */
       .main-container {
@@ -169,36 +173,24 @@
 
   <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="homePage.html"><img class="nav-logo-img" src="images/nav/PawHubLogo.png"></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Centered Navigation Links -->
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="homePage.html">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="shop.html">Shop</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="places.html">Places</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="inventory.html">Inventory</a>
-                    </li>
-                </ul>
-                <div class="icons-container ms-auto">
-                    <a href="diary.html"><img src="images/nav/diaryIcon.png" alt="diaryIcon"></a>
-                    <a href="chat.html"><img src="images/nav/chatIcon.png" alt="chatIcon"></a>
-                    <a class="profile-pic" href="user.html"><img src="images/nav/DefaultPP.png" alt="defaultPP"></a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div id="app">
+      <!-- Header Section (Navbar) -->
+      <Navbar></Navbar>
+    
+   
+    <script type="module">
+      import Navbar from './navbar.js';
+  
+      // Create and mount the Vue app after the DOM is ready
+      const app = Vue.createApp({
+          components: {
+              Navbar
+          }
+      });
+  
+      app.mount('#app'); // Mount the app to the #app element
+  </script>
+  </div>
 
     <!-- Main container with carousel and expiring items -->
     <div class="container main-container">

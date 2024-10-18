@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawHub Inventory</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<style>
+    /* General reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+}
+
+/* Header styling */
+header {
+    background-color: #8a9b68;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+}
+
+nav ul li {
+    margin: 0 10px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #fff;
+}
+
+.icons a {
+    margin-left: 10px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Main section styling */
+.inventory {
+    padding: 20px;
+    background-color: #fff;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.filter-search {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    background-color: #8a9b68;
+    border: none;
+    color: #fff;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.filter-btn:hover {
+    background-color: #738556;
+}
+
+.main-alerts {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.alert-card {
+    background-color: #ececec;
+    padding: 15px;
+    border-radius: 5px;
+    text-align: center;
+    width: 20%;
+}
+
+.product-list table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.product-list th, .product-list td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+
+.stock-info {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+
+.stock-info h3 {
+    margin-bottom: 10px;
+}
+
+.expiring-stock, .low-stock {
+    width: 45%;
+    background-color: #ececec;
+    padding: 10px;
+    border-radius: 5px;
+}
+</style>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#"><strong>PawHub</strong></a>
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Shop</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Places</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Inventory</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="inventory">
+            <h1>My Inventory</h1>
+            <div class="filter-search">
+                <button class="filter-btn">Filter</button>
+                <input type="text" placeholder="Search...">
+            </div>
+            <div class="main-alerts">
+                <div class="alert-card">Expiring in 6 Days<br>Hot dogs</div>
+                <div class="alert-card">Reorder Left 2 serving<br>iPhone 14 Pro</div>
+                <div class="alert-card">Sold 1 Product<br>Zoom75</div>
+                <div class="alert-card">Sold 2 Products<br>Zoom75</div>
+            </div>
+            <div class="product-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Expiry Date</th>
+                            <th>Type</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><img src="dogfood.png" alt="Dog food"></td>
+                            <td>FoodName</td>
+                            <td>22/03/24</td>
+                            <td>Laptop</td>
+                            <td>$1241</td>
+                            <td>44</td>
+                     
+                        </tr>
+                        <!-- Add more rows as needed -->
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="stock-info">
+                <div class="expiring-stock">
+                    <h3>Expiring Stock</h3>
+                    <p>Restock within 2 Days<br>Kibbles - 2 Servings left</p>
+                    <!-- Add more alerts as needed -->
+                </div>
+                <div class="low-stock">
+                    <h3>Low stock to replenish</h3>
+                    <p>Restock within 2 Days<br>Kibbles - 2 Servings left</p>
+                    <!-- Add more alerts as needed -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+
