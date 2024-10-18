@@ -42,13 +42,13 @@
             displayProducts(filteredProducts, currentPage);
         }
     
-        // Toggle sort icon
+        // Toggle the sort icons for expiry and date added
         function toggleSortIcon(iconElement, isAscending) {
-            iconElement.classList.remove('fa-sort-up', 'fa-sort-down');
+            iconElement.classList.remove('fa-solid', 'fa-arrow-down-wide-short', 'fa-arrow-up-wide-short');
             if (isAscending) {
-                iconElement.classList.add('fa-sort-down'); // Show down arrow for ascending
+                iconElement.classList.add('fa-solid', 'fa-arrow-up-wide-short'); // Show up arrow for ascending
             } else {
-                iconElement.classList.add('fa-sort-up'); // Show up arrow for descending
+                iconElement.classList.add('fa-solid', 'fa-arrow-down-wide-short'); // Show down arrow for descending
             }
         }
     
@@ -128,22 +128,6 @@
     
         updatePaginationButtons(filteredProducts);
     }
-
-
-
-    // Function to enlarge the image and show the modal
-    function enlargeImage(imageSrc) {
-        const modal = document.getElementById('imageModal');
-        const enlargedImage = document.getElementById('enlargedImage');
-        enlargedImage.src = imageSrc; // Set the clicked image source to the modal image
-        modal.classList.add('show'); // Show the modal
-    }
-
-    // Function to close the image modal
-    function closeImageModal() {
-        const modal = document.getElementById('imageModal');
-        modal.classList.remove('show'); // Hide the modal
-}
     
     // Function to format date (YYYY-MM-DD to DD-MM-YY)
     function formatDate(isoDateString) {
@@ -260,7 +244,6 @@
     document.getElementById('cancelBtn').addEventListener('click', hideConfirmationModal);
     // End of minus function
     displayProducts(currentPage);
-
 
     // Function to enlarge the image and show the modal
     function enlargeImage(imageSrc) {
