@@ -286,7 +286,7 @@
         }
 
         .range-slider {
-            -webkit-appearance: none;
+            /* -webkit-appearance: none; */
             width: 100%;
             height: 5px;
             background: #ddd;
@@ -398,7 +398,16 @@
 
         app.mount('#app'); // Mount the app to the #app element
     </script>
-    <script>
+     <script type="module">
+        // Firebase setup and Firestore imports
+        import {app} from "../firebase.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getFirestore, onSnapshot, collection, query, orderBy, limit, startAfter, getDocs, where } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+    
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
         const showMoreBtn = document.getElementById('showMoreBtn');
         const productContainer = document.getElementById('productContainer');
         const searchInput = document.getElementById('searchInput');
@@ -483,6 +492,9 @@
         const maxPriceValue = document.getElementById('maxPriceValue');
         const sliderTrack = document.getElementById('sliderTrack');
 
+                let lastVisible = null;
+        let productsToShow = 4;
+
         filterBtn.addEventListener('click', () => {
             filterSidebar.classList.add('active');
         });
@@ -491,47 +503,134 @@
             filterSidebar.classList.remove('active');
         });
 
-        applyFilterBtn.addEventListener('click', () => {
-            const dogFoodFilter = document.getElementById('dogFoodFilter').checked;
-            const dogAccessoriesFilter = document.getElementById('dogAccessoriesFilter').checked;
-            const dogToysFilter = document.getElementById('dogToysFilter').checked;
+        // Event listener for the "Apply Filter" button
+        let allProducts = [];  // Store all products fetched from Firestore
 
-            const locationCentral = document.getElementById('locationCentral').checked;
-            const locationNorth = document.getElementById('locationNorth').checked;
-            const locationSouth = document.getElementById('locationSouth').checked;
-            const locationEast = document.getElementById('locationEast').checked;
-            const locationWest = document.getElementById('locationWest').checked;
+// Fetch all products from Firestore
+async function fetchAllProducts() {
+    // resetProductContainer();
 
-            const minPrice = parseInt(priceMin.value);
-            const maxPrice = parseInt(priceMax.value);
 
-            let filteredProducts = allProducts.filter(product => {
-                const price = parseFloat(product.price.replace('$', ''));
-                let locationMatch = true;
-                if (locationCentral && product.location !== 'Central') locationMatch = false;
-                if (locationNorth && product.location !== 'North') locationMatch = false;
-                if (locationSouth && product.location !== 'South') locationMatch = false;
-                if (locationEast && product.location !== 'East') locationMatch = false;
-                if (locationWest && product.location !== 'West') locationMatch = false;
+    const listingsQuery = query(
+        collection(db, "marketplace"),
+        orderBy("title"),  // Adjust this as needed for your sorting logic
+        limit(productsToShow)  // Show only the first batch of products
+    );
+    const querySnapshot = await getDocs(collection(db, "marketplace"));
+    allProducts = [];
+    querySnapshot.forEach((doc) => {
+        allProducts.push(doc.data());
+    });
+    lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+    displayProducts(allProducts);  // Display all products initially
+}
 
-                if (!dogFoodFilter && !dogAccessoriesFilter && !dogToysFilter) {
-                    return price >= minPrice && price <= maxPrice && locationMatch;
-                }
-                return (
-                    ((dogFoodFilter && product.category === 'dogFood') ||
-                    (dogAccessoriesFilter && product.category === 'dogAccessories') ||
-                    (dogToysFilter && product.category === 'dogToys'))
-                    && price >= minPrice && price <= maxPrice && locationMatch
-                );
-            });
+// Display products
+function displayProducts(products) {
+    productContainer.innerHTML = '';  // Clear the container
+    products.forEach((product) => {
+        const productCard = document.createElement('div');
+        productCard.className = 'col-lg-3 col-md-4 col-sm-6';
+        const imageURL = (product.imageURLs && product.imageURLs.length > 0) ? product.imageURLs[0] : 'https://via.placeholder.com/180';
+        productCard.innerHTML = `
+            <div class="product-card">
+                <div class="user-info">
+                    <img src="https://via.placeholder.com/40" alt="user profile">
+                    <div class="user-details">
+                        <p><strong>User</strong></p> <!-- Placeholder for user name -->
+                    </div>
+                </div>
+                <img src="${imageURL}" alt="${product.title}">
+                <div class="card-body">
+                    <h5>${product.title}</h5>
+                    <p class="price">S$${product.price}</p>
+                    <p class="description">${product.description || "No description provided"}</p>
+                </div>
+                <div class="location-info">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <p>${product.location}</p> <!-- Placeholder for location -->
+                </div>
+            </div>`;
+        productContainer.appendChild(productCard);
+    });
+}
 
-            loadProducts(filteredProducts);
-            filterSidebar.classList.remove('active');
+// Filter products based on selected filters
+function filterProducts() {
+    // resetProductContainer();
+    const dogFoodFilter = document.getElementById('dogFoodFilter').checked;
+    const dogAccessoriesFilter = document.getElementById('dogAccessoriesFilter').checked;
+    const dogToysFilter = document.getElementById('dogToysFilter').checked;
 
-            showMoreBtn.style.display = 'none';
-            productsToShow = filteredProducts.length;
-            loadProducts(filteredProducts);
-        });
+    const locationCentral = document.getElementById('locationCentral').checked;
+    const locationNorth = document.getElementById('locationNorth').checked;
+    const locationSouth = document.getElementById('locationSouth').checked;
+    const locationEast = document.getElementById('locationEast').checked;
+    const locationWest = document.getElementById('locationWest').checked;
+
+    const minPrice = parseFloat(document.getElementById('priceMin').value);
+    const maxPrice = parseFloat(document.getElementById('priceMax').value);
+
+    let filteredProducts = allProducts.filter(product => {
+        const price = parseFloat(product.price);
+
+        // Category filter
+        const selectedCats = [];
+    if (dogFoodFilter) selectedCats.push('dogFood');
+    if (dogAccessoriesFilter) selectedCats.push('dogAccessories');
+    if (dogToysFilter) selectedCats.push('dogToys');
+
+        // Location filter
+        const selectedLocations = [];
+    if (locationCentral) selectedLocations.push('Central');
+    if (locationNorth) selectedLocations.push('North');
+    if (locationSouth) selectedLocations.push('South');
+    if (locationEast) selectedLocations.push('East');
+    if (locationWest) selectedLocations.push('West');
+    let filteredProducts = allProducts.filter(product => {
+        const price = parseFloat(product.price);
+
+        // Category filter
+        let categoryMatch = true;
+        if (selectedCats.length > 0 && !selectedCats.includes(product.category)) {
+            categoryMatch = false;
+        }
+        // Location filter
+        let locationMatch = true;
+        if (selectedLocations.length > 0) {
+            if (Array.isArray(product.location)) {
+                // Check if any of the product's locations match the selected locations
+                locationMatch = product.location.some(loc => selectedLocations.includes(loc));
+            } else {
+                // For products with a single location (not an array)
+                locationMatch = selectedLocations.includes(product.location);
+            }
+        }
+
+        // Price filter
+        let priceMatch = price >= minPrice && price <= maxPrice;
+
+        return categoryMatch && locationMatch && priceMatch;
+    });
+
+    displayProducts(filteredProducts);  // Display filtered products
+
+    if (filteredProducts.length <= productsToShow) {
+        showMoreBtn.style.display = 'none';
+    } else {
+        showMoreBtn.style.display = 'block';
+    }
+});
+}
+
+// Event listener for the "Apply Filter" button
+applyFilterBtn.addEventListener('click', () => {
+    filterProducts();  // Filter and display the products
+});
+
+// Fetch and display all products when the page loads
+fetchAllProducts();
+
 
         priceMin.addEventListener('input', updateSlider);
         priceMax.addEventListener('input', updateSlider);
@@ -617,6 +716,8 @@
 }
 
     </script>
+
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
