@@ -1,0 +1,84 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #f9f1e7;
+    font-family: "Poppins Regular";
+    color: #695c5c;
+}
+
+h1 {
+  text-align: center;
+  font-family: 'Overlock';
+}
+
+.left-half img {
+    object-fit: cover;
+    height: 100vh;
+}
+
+.right-half {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f9f1e7;
+    padding: 20px;
+    height: 100vh;
+}
+
+.signup-form-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+/* Responsive Behavior */
+/* On smaller screens, the right half overlaps the left half */
+@media (max-width: 576px) {
+    .left-half {
+        position: relative;
+        height: 100%;
+    }
+
+    .right-half {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        bottom: 10px;
+        background-color: #ddddddd9; /* Semi-transparent grey */
+        z-index: 1;
+        padding: 20px;
+        border-radius: 10px;
+        width: calc(100% - 20px);
+        height: calc(100% - 20px);
+        box-sizing: border-box;
+    }
+
+    .signup-form-container {
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+
+@font-face {
+  font-family: "LazyDog";
+  src: url("../fonts/lazy_dog.TTF") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Overlock";
+  src: url("../fonts/OverlockSC-Regular.ttf") format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Poppins Regular";
+  src: url("../fonts/poppins/Poppins-Regular.ttf") format("truetype");
+  font-style: normal;
+}
