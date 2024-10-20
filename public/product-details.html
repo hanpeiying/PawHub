@@ -4,30 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PawHub - Dino Costume</title>
+    <title>Product Details</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles/stylenav.css">
-    <link rel="stylesheet" href="styles/dino-costume.css">
+    <link rel="stylesheet" href="styles/pdtDetails.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-
 </head>
 
 <body>
     <div id="app">
-        <Navbar></Navbar>
+        <Navbar></Navbar> <!-- Navbar component from Vue.js -->
     </div>
+
     <div class="container">
+        <!-- Product Carousel -->
         <div class="carousel-container">
             <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <div class="carousel-item active" onclick="enlargeImage('images/shop/dino2.jpg')">
-                        <img src="images/shop/dino2.jpg" alt="Dino Costume" class="d-block w-100">
-                    </div>
-                    <div class="carousel-item" onclick="enlargeImage('images/shop/dino.JPG')">
-                        <img src="images/shop/dino.JPG" alt="Dino Costume Image 2" class="d-block w-100">
-                    </div>
-                </div>
+                <div class="carousel-inner"></div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Previous</span>
@@ -41,31 +35,18 @@
 
         <!-- Product Info -->
         <div class="product-info">
-            <h1>Dino Costume</h1>
-            <div class="product-price">$12</div>
+            <h1 id="productTitle">Loading...</h1>
+            <div class="product-price" id="productPrice"></div>
 
             <div class="details-section">
                 <h4>Details</h4>
-                <table class="details-table">
-                    <tr>
-                        <td>Condition</td>
-                        <td>Like new</td>
-                    </tr>
-                    <tr>
-                        <td>MeetUp Location</td>
-                        <td>Yishun MRT Station, North</td>
-                    </tr>
-                    <tr>
-                        <td>Description</td>
-                        <td>Transform your pet into a cute dinosaur with this adorable dino costume. Made with soft fabric for your pet's comfort. Available in various sizes, perfect for any occasion.</td>
-                    </tr>
-                </table>
+                <table class="details-table" id="productDetailsTable"></table>
             </div>
 
             <!-- Seller Section -->
             <div class="ratings-chat-container">
-                <div class="username">
-                    <i class="fas fa-paw"></i> LeYong @petlovers
+                <div class="username" id="sellerUsername">
+                    <i class="fas fa-paw"></i> Seller Name
                 </div>
                 <div class="ratings">
                     <span>
@@ -81,30 +62,78 @@
             </div>
         </div>
     </div>
-    <div id="imageModal" class="image-modal">
-        <span class="close-btn" onclick="closeImageModal()">&times;</span>
-        <div class="image-modal-content">
-            <img id="enlargedImage" src="" alt="Product Image" class="zoomable-image">
-            <div id="zoomLens" class="zoom-lens"></div>
-        </div>
-    </div>
 
-    <!-- Modal to show enlarged image -->
-
+    <!-- Firebase and Script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- JavaScript to handle image enlargement -->
-
+    
+    <!-- Use Firebase app initialization -->
     <script type="module">
-        import Navbar from './Navbar.js';
-        const app = Vue.createApp({
-            components: {
-                Navbar
+        import { app } from "./firebase.js"; // Import your firebase app initialization
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+        const db = getFirestore(app);
+
+        // Function to get the product ID from the URL query parameters
+        function getProductIdFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id'); // Get the 'id' query parameter from the URL
+        }
+
+        // Function to load and display the product details
+        async function loadProductDetails() {
+            const productId = getProductIdFromURL();
+            if (!productId) {
+                console.error('Product ID not found in URL');
+                return;
             }
-        });
-        app.mount('#app');
-    </script>
-    <script>
+
+            // Get product data from Firestore
+            const docRef = doc(db, "marketplace", productId);
+            try {
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const productData = docSnap.data();
+                    displayProductDetails(productData);
+                } else {
+                    console.error('No such document!');
+                }
+            } catch (error) {
+                console.error('Error fetching document:', error);
+            }
+        }
+
+        // Function to display product details on the page
+        function displayProductDetails(product) {
+            document.getElementById('productTitle').textContent = product.title;
+            document.getElementById('productPrice').textContent = `S$${product.price}`;
+            document.getElementById('productDetailsTable').innerHTML = `
+                <tr>
+                    <td>Condition</td>
+                    <td>${product.condition || 'Unknown'}</td>
+                </tr>
+                <tr>
+                    <td>MeetUp Location</td>
+                    <td>${product.location || 'Unknown'}</td>
+                </tr>
+                <tr>
+                    <td>Description</td>
+                    <td>${product.description || 'No description available'}</td>
+                </tr>`;
+
+            // Populate image carousel
+            const carouselInner = document.querySelector('.carousel-inner');
+            carouselInner.innerHTML = ''; // Clear existing content
+            product.imageURLs.forEach((url, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                carouselInner.innerHTML += `
+                    <div class="carousel-item ${activeClass}">
+                        <img src="${url}" class="d-block w-100" alt="Product Image" onclick="enlargeImage('${url}')">
+                    </div>`;
+            });
+        }
+
+        // Function to handle image enlargement and zoom
         function enlargeImage(imageSrc) {
             const modal = document.getElementById('imageModal');
             const enlargedImage = document.getElementById('enlargedImage');
@@ -125,7 +154,6 @@
                 const rect = enlargedImage.getBoundingClientRect();
                 const lensSize = 150;
 
-                // Calculate mouse position relative to the image
                 const x = event.clientX - rect.left;
                 const y = event.clientY - rect.top;
 
@@ -156,13 +184,11 @@
 
         function closeImageModal() {
             const modal = document.getElementById('imageModal');
-            const enlargedImage = document.getElementById('enlargedImage');
             modal.classList.remove('show');
-            enlargedImage.style.transform = 'scale(1)';
         }
-        
-    </script>
 
+        document.addEventListener('DOMContentLoaded', loadProductDetails);
+    </script>
 </body>
 
 </html>
