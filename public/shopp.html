@@ -1,0 +1,355 @@
+// backup copy of pawhub shop.html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawHub - Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="styles/stylenav.css">
+    <link rel="stylesheet" href="styles/styleshop.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Vue will render the Navbar component here -->
+        <Navbar></Navbar>
+    </div>
+    <div class="shop-header">
+        <h1>Shop</h1>
+    </div>
+    <div class="shop-container">
+
+        <div class="filter-search">
+            <button class="filter-btn" id="filterBtn"><i class="fas fa-filter"></i> Filter</button>
+            <input type="text" placeholder="Search..." id="searchInput">
+            <a class='newListing' href="new-listing.html">
+                <button class="add-btn"><i class="fas fa-plus"></i></button>
+            </a>            
+        </div>
+
+        <h3>Top Items</h3>
+        <div class="row" id="productContainer"></div>
+        <button class="show-more" id="showMoreBtn">Show More</button>
+        <button class="show-less" id="showLessBtn" style="display: none;">Show Less</button> <!-- Hidden by default -->
+
+    </div>
+    <div class="filter-sidebar" id="filterSidebar">
+        <div class="filter-close" id="filterClose">&times;</div>
+        <div class="filter-section">
+            <h4>Items</h4>
+            <label><input type="checkbox" id="dogFoodFilter"> Dog Food</label><br>
+            <label><input type="checkbox" id="dogAccessoriesFilter"> Dog Accessories</label><br>
+            <label><input type="checkbox" id="dogToysFilter"> Dog Toys</label>
+        </div>
+        <div class="filter-section">
+            <h4>Location</h4>
+            <label><input type="checkbox" id="locationCentral"> Central</label><br>
+            <label><input type="checkbox" id="locationNorth"> North</label><br>
+            <label><input type="checkbox" id="locationSouth"> South</label><br>
+            <label><input type="checkbox" id="locationEast"> East</label><br>
+            <label><input type="checkbox" id="locationWest"> West</label>
+        </div>
+        <div class="filter-section">
+            <h4>Prices</h4>
+            <div class="range-slider-container">
+                <input type="range" class="range-slider" id="priceMin" min="0" max="100" value="0">
+                <input type="range" class="range-slider" id="priceMax" min="0" max="100" value="100">
+            </div>
+            <p>Price range: $<span id="minPriceValue">0</span> - $<span id="maxPriceValue">100</span></p>
+        </div>
+        <button class="apply-filter-btn" id="applyFilterBtn">Apply Filter</button>
+    </div>
+    <script type="module">
+        import Navbar from './Navbar.js';
+
+        // Create and mount the Vue app after the DOM is ready
+        const app = Vue.createApp({
+            components: {
+                Navbar
+            }
+        });
+
+        app.mount('#app'); // Mount the app to the #app element
+    </script>
+    
+    <script type="module">
+        import Navbar from './Navbar.js';
+        import { app } from "../firebase.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, limit, startAfter, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        let allProducts = [];  // Global array to store all fetched products
+        const showMoreBtn = document.getElementById('showMoreBtn');
+        const productContainer = document.getElementById('productContainer');
+        const searchInput = document.getElementById('searchInput');
+        
+        let lastVisible = null;
+        let productsToShow = 4;
+        const showLessBtn = document.getElementById('showLessBtn'); // Get the Show Less button
+
+        // Function to create and display product cards
+        function createProductCard(listing) {
+            const productCard = document.createElement('div');
+            productCard.className = 'col-lg-3 col-md-4 col-sm-6';
+            const images = listing.imageURLs || [];
+            const productImage = document.createElement('img');
+            productImage.src = images.length > 0 ? images[0] : 'https://via.placeholder.com/180'; // First image or placeholder
+            productImage.className = 'product-image';
+        
+            // HTML structure for the product card
+            productCard.innerHTML = `
+                <div class="product-card">
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/40" alt="user profile">
+                        <div class="user-details">
+                            <p><strong>User</strong></p> <!-- Placeholder for user name -->
+                        </div>
+                    </div>
+                    <div class="image-container"></div> <!-- Image will be appended here -->
+                    <div class="card-body">
+                        <h5>${listing.title}</h5>
+                        <p class="price">S$${listing.price}</p>
+                        <p class="description">${listing.description || "No description provided"}</p>
+                    </div>
+                    <div class="location-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>${listing.location}</p> <!-- Placeholder for location -->
+                    </div>
+                </div>`;
+        
+            // Append the image element to the product card
+            productCard.querySelector('.image-container').appendChild(productImage);
+            productContainer.appendChild(productCard);
+
+            // Image rotation on mouseover
+            let currentImageIndex = 0;
+            let intervalId;
+
+            const startImageRotation = () => {
+                if (!intervalId && images.length > 1) {
+                    intervalId = setInterval(() => {
+                        currentImageIndex = (currentImageIndex + 1) % images.length;
+                        productImage.src = images[currentImageIndex];
+                    }, 1000);  // Rotate every 1 second
+                }
+            };
+
+            const stopImageRotation = () => {
+                clearInterval(intervalId);
+                intervalId = null;  // Reset the intervalId
+                productImage.src = images[0];  // Reset to the first image
+            };
+
+            productCard.addEventListener('mouseover', startImageRotation);
+            productCard.addEventListener('mouseleave', stopImageRotation);
+        }
+
+        // Function to load filtered or all products into the UI
+        function loadProducts(products) {
+            productContainer.innerHTML = '';  // Clear existing products
+            if (products.length === 0) {
+                productContainer.innerHTML = '<p>No products found.</p>';
+            } else {
+                products.forEach(product => {
+                    createProductCard(product);
+                });
+            }
+        }
+        let productsShown = 0; // Track the number of products currently shown
+
+        // Function to load a batch of products into the UI
+        function loadBatchOfProducts() {
+            const batch = allProducts.slice(productsShown, productsShown + productsToShow); // Get the next batch of products
+            if (batch.length > 0) {
+                batch.forEach(product => {
+                    createProductCard(product);  // Display each product in the batch
+                });
+                productsShown += productsToShow;  // Update the number of products shown
+            }
+        
+            // Show "Show Less" button if all products are shown, and hide "Show More"
+            if (productsShown >= allProducts.length) {
+                showMoreBtn.style.display = 'none';
+                showLessBtn.style.display = 'block';  // Show the "Show Less" button
+            }
+        }
+        function resetToFirstBatch() {
+            productContainer.innerHTML = '';  // Clear the existing product display
+            productsShown = 4;  // Only show the first 4 products
+            loadProducts(allProducts.slice(0, productsToShow));  // Display the first 4 products again
+        
+            showMoreBtn.style.display = 'block';  // Show "Show More" button again
+            showLessBtn.style.display = 'none';  // Hide the "Show Less" button
+        }
+
+        // Function to fetch all listings from Firestore without pagination
+        async function loadAllListings() {
+            const listingsQuery = query(
+                collection(db, "marketplace"),
+                orderBy("title") // Load all products ordered by title
+            );
+        
+            const querySnapshot = await getDocs(listingsQuery);
+            if (!querySnapshot.empty) {
+                allProducts = []; // Clear the array to avoid duplicates
+                querySnapshot.forEach((doc) => {
+                    const listing = doc.data();
+                    allProducts.push(listing);  // Store the product in allProducts for filtering
+                });
+        
+                // Initially load the first batch of products
+                productsShown = 0;  // Reset the number of products shown
+                loadBatchOfProducts();  // Load the first batch
+            }
+        }
+
+        searchInput.addEventListener('input', () => {
+            const searchText = searchInput.value.toLowerCase();
+            // Filter products based on the search input
+            const filteredProducts = allProducts.filter(product => 
+                product.title.toLowerCase().includes(searchText)
+            );
+            // Display filtered products in the container
+            productContainer.innerHTML = '';  // Clear existing products
+            loadProducts(filteredProducts);  // Load filtered products
+        
+            // Hide "Show More" button when filtering, as we're showing all matched products
+            showMoreBtn.style.display = filteredProducts.length >= productsToShow ? "block" : "none";
+            showLessBtn.style.display = 'none';  // Hide the "Show Less" button when filtering
+        });
+
+        // Event listener for "Show More" button to load more listings
+        showMoreBtn.addEventListener('click', () => {
+            loadBatchOfProducts();  // Load the next batch of products
+        });
+        showLessBtn.addEventListener('click', () => {
+            resetToFirstBatch();  // Reset to the first 4 products
+        });
+        // Load all listings when the page is ready
+        loadAllListings();
+        const applyFilterBtn = document.getElementById('applyFilterBtn'); // Get the Apply Filter button
+
+        applyFilterBtn.addEventListener('click', () => {
+            applyFilters();  // Apply the filters when the button is clicked
+            filterSidebar.classList.remove('active');  // Hide the sidebar after applying filters
+        });
+        // Function to apply the selected filters
+        // Function to apply the selected filters
+        function applyFilters() {
+            // Get the selected item filters
+            const dogFoodChecked = document.getElementById('dogFoodFilter').checked;
+            const dogAccessoriesChecked = document.getElementById('dogAccessoriesFilter').checked;
+            const dogToysChecked = document.getElementById('dogToysFilter').checked;
+    
+            // Get the selected location filters
+            const locationCentralChecked = document.getElementById('locationCentral').checked;
+            const locationNorthChecked = document.getElementById('locationNorth').checked;
+            const locationSouthChecked = document.getElementById('locationSouth').checked;
+            const locationEastChecked = document.getElementById('locationEast').checked;
+            const locationWestChecked = document.getElementById('locationWest').checked;
+    
+            // Get the selected price range
+            const priceMin = parseInt(document.getElementById('priceMin').value, 10);
+            const priceMax = parseInt(document.getElementById('priceMax').value, 10);
+    
+            const filteredProducts = allProducts.filter(product => {
+                console.log('Checking product:', product);
+    
+                // Item filter
+                const matchesItem = (!dogFoodChecked && !dogAccessoriesChecked && !dogToysChecked) ||
+                    (dogFoodChecked && product.category === 'dogFood') ||
+                    (dogAccessoriesChecked && product.category === 'dogAccessories') ||
+                    (dogToysChecked && product.category === 'dogToys');
+                console.log('Matches Item:', matchesItem);
+    
+                // Location filter
+                function locationMatches(productLocation, filterLocation) {
+                    if (Array.isArray(productLocation)) {
+                        return productLocation.some(loc => loc.toLowerCase() === filterLocation.toLowerCase());
+                    } else if (typeof productLocation === 'string') {
+                        return productLocation.toLowerCase() === filterLocation.toLowerCase();
+                    }
+                    return false;
+                }
+    
+                const matchesLocation = (!locationCentralChecked && !locationNorthChecked && !locationSouthChecked && !locationEastChecked && !locationWestChecked) ||
+                    (locationCentralChecked && locationMatches(product.location, 'Central')) ||
+                    (locationNorthChecked && locationMatches(product.location, 'North')) ||
+                    (locationSouthChecked && locationMatches(product.location, 'South')) ||
+                    (locationEastChecked && locationMatches(product.location, 'East')) ||
+                    (locationWestChecked && locationMatches(product.location, 'West'));
+                console.log('Matches Location:', matchesLocation);
+    
+                // Price filter
+                const productPrice = parseFloat(product.price);
+                const matchesPrice = !isNaN(productPrice) && productPrice >= priceMin && productPrice <= priceMax;
+                console.log('Matches Price:', matchesPrice);
+    
+                return matchesItem && matchesLocation && matchesPrice;
+            });
+    
+            console.log('Filtered Products:', filteredProducts);
+    
+            // Load filtered products into the UI
+            loadProducts(filteredProducts);
+        }
+    
+        // Get the price range elements
+        const priceMinInput = document.getElementById('priceMin');
+        const priceMaxInput = document.getElementById('priceMax');
+        const minPriceValue = document.getElementById('minPriceValue');
+        const maxPriceValue = document.getElementById('maxPriceValue');
+    
+        // Function to update the price range displayed
+        function updatePriceRange() {
+            const minPrice = priceMinInput.value;
+            const maxPrice = priceMaxInput.value;
+    
+            // Ensure min price is not greater than max price
+            if (parseInt(minPrice) > parseInt(maxPrice)) {
+                priceMinInput.value = maxPrice;
+            }
+    
+            minPriceValue.innerText = priceMinInput.value;
+            maxPriceValue.innerText = priceMaxInput.value;
+    
+            // Apply filters instantly after adjusting the price range
+            applyFilters();
+        }
+    
+        // Event listeners to detect changes in slider values and update the price range instantly
+        priceMinInput.addEventListener('input', updatePriceRange);
+        priceMaxInput.addEventListener('input', updatePriceRange);
+    
+        applyFilterBtn.addEventListener('click', () => {
+            applyFilters();  // Apply filters when button clicked
+            filterSidebar.classList.remove('active');
+        });
+    
+        const filterBtn = document.getElementById('filterBtn');
+        const filterSidebar = document.getElementById('filterSidebar');
+        const filterClose = document.getElementById('filterClose');
+    
+        filterBtn.addEventListener('click', () => {
+            filterSidebar.classList.add('active');
+        });
+    
+        filterClose.addEventListener('click', () => {
+            filterSidebar.classList.remove('active');
+        });
+
+
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -17,13 +17,6 @@ template: `
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- Hamburger Icon -->
-                <div class="hamburger" @click="toggleMenu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <!-- Centered Navigation Links (hidden on mobile view) -->
                     <ul class="navbar-nav mx-auto">
