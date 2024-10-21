@@ -76,6 +76,7 @@
     </script>
     
     <script type="module">
+        import Navbar from './Navbar.js';
         import { app } from "../firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
         import { getFirestore, collection, query, orderBy, limit, startAfter, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
@@ -105,7 +106,7 @@
             // HTML structure for the product card
             productCard.innerHTML = `
                 <div class="product-card">
-                    <a href="product-details.html?id=${id}">
+                    <a href="product-details.html?id=${id}" style="color: inherit; text-decoration:none;">
                     <div class="user-info">
                         <img src="https://via.placeholder.com/40" alt="user profile">
                         <div class="user-details">
@@ -197,23 +198,18 @@
             );
         
             const querySnapshot = await getDocs(listingsQuery);
-            
             if (!querySnapshot.empty) {
                 allProducts = []; // Clear the array to avoid duplicates
-                productContainer.innerHTML = ''; // Clear product container to avoid duplicate appending
-                
                 querySnapshot.forEach((doc) => {
                     const listing = doc.data();
-                    const id = doc.id;  // Get the Firestore document ID
-                    allProducts.push({ ...listing, id });  // Store the product and its id in allProducts
-                    createProductCard(listing, id); // Pass the product data and its ID to createProductCard
+                    allProducts.push(listing);  // Store the product in allProducts for filtering
                 });
         
                 // Initially load the first batch of products
                 productsShown = 0;  // Reset the number of products shown
                 loadBatchOfProducts();  // Load the first batch
             }
-        }        
+        }
 
         searchInput.addEventListener('input', () => {
             const searchText = searchInput.value.toLowerCase();
