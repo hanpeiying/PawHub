@@ -101,10 +101,10 @@
             row.innerHTML = `
 
                 <div id="imageModal" class="image-modal">
+                <div class="image-modal-content">
                     <span class="close-btn" onclick="closeImageModal()">&times;</span>
-                    <div class="image-modal-content">
-                        <img id="enlargedImage" src="" alt="Product Image" class="zoomable-image">
-                        <div id="zoomLens" class="zoom-lens"></div>
+                    <img id="enlargedImage" src="" alt="Product Image" class="zoomable-image">
+                    <div id="zoomLens" class="zoom-lens"></div>
                     </div>
                 </div>
 
@@ -118,11 +118,10 @@
                 <td>${isValidDate(product.expiry) ? formatDate(product.expiry) : 'Invalid Date'}</td>
                 <td>${formatDate(product.added)}</td>
                 <td>${product.price}</td>
-                <td id="quantity-${index}" class="${stockClass}">${product.quantity}</td> <!-- Class applied here -->
+                <td id="quantity-${index}" class="${stockClass}">${product.quantity}</td>
                 <td> 
-                    <button class="minus-btn" data-index="${start + index}" onclick="decreaseQuantity(${start + index})">-</button> 
-                    <button class="add-btn" data-index="${start + index}" onclick="increaseQuantity(${start + index})">+</button> 
-                </td>
+                    <button class="minus-btn" data-index="${start + index}" onclick="decreaseQuantity(${start + index})" data-tooltip="Deduct serving">-</button> 
+                    <button class="add-btn" data-index="${start + index}" onclick="increaseQuantity(${start + index})" data-tooltip="Add serving">+</button>                </td>
             `;
             tableBody.appendChild(row);
         });
@@ -246,6 +245,7 @@
     // End of minus function
     displayProducts(currentPage);
 
+
     // Function to enlarge the image and show the modal
     function enlargeImage(imageSrc) {
         const modal = document.getElementById('imageModal');
@@ -258,6 +258,15 @@
         enlargedImage.addEventListener('mousemove', moveLens);
         enlargedImage.addEventListener('mouseleave', hideLens); // Hide lens on mouse leave
         zoomLens.style.display = 'block'; // Show the zoom lens when modal opens
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function handleEscapeKey(event) {
+        if (event.key === "Escape") {
+            closeImageModal();
+            // Remove this event listener to avoid stacking multiple listeners
+            document.removeEventListener('keydown', handleEscapeKey);
+        }
+    });
 
         function moveLens(event) {
             const rect = enlargedImage.getBoundingClientRect();

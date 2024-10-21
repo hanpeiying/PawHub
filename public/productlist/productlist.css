@@ -1,19 +1,35 @@
 /* General styles */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f8f8f8;
+    background-color:#F9F1E7;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 100;
 }
 
+
+table{
+    width:100%;
+    border-collapse: collapse;
+    font-family: 'LazyDog';
+}
+
+td{
+    padding:0;
+    height:50px;
+    text-align: center;
+}
+
+
 .product-list-container {
-    width: 80%;
-    background-color: white;
+    width: 90%; /* Adjusted to a larger percentage for better visibility */
+    max-width: 1200px; 
+    background-color: #F9F1E7;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+    margin: 0 auto; /* Center container horizontally */
 }
 
 /* Table styles */
@@ -45,38 +61,20 @@ body {
     background-color: lightcyan;
 }
 
-/* For low stock */
-.low-stock {
+.low-stock, .sufficient-stock {
     background-color: #C69B9B; /* Light red background */
     color: black;
     font-weight: bold;
     padding: 0;
-    border-radius: 0;
     text-align: center;
-    width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center; /* Center horizontally */
-    align-items: center; /* Center vertically */
-    margin: 0;
+    display: table-cell; /* Make sure it behaves like a table cell */
+    vertical-align: middle; /* Center vertically without flex */
     box-sizing: border-box;
 }
 
-/* For sufficient stock */
 .sufficient-stock {
     background-color: #C3C69B; /* Light green background */
-    color: black;
-    font-weight: bold;
-    padding: 0;
-    border-radius: 0;
-    text-align: center;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center; /* Center horizontally */
-    align-items: center; /* Center vertically */
-    margin: 0;
-    box-sizing: border-box;
 }
 
 /* Pagination styles */
@@ -158,6 +156,28 @@ button {
     justify-content: center;
 }
 
+.add-btn, .minus-btn {
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.add-btn {
+    background-color: #5cb85c;
+    color: white;
+}
+
+.minus-btn {
+    background-color: #d9534f;
+    color: white;
+}
+
+.add-btn:hover, .minus-btn:hover {
+    opacity: 0.9;
+}
+
 /* Add hover effect */
 button:hover {
     opacity: 0.8;  /* Reduce opacity slightly on hover */
@@ -200,7 +220,6 @@ button:hover {
     color: white;
 }
 
-
 /* Container for modal */
 .image-modal {
     display: none;
@@ -232,15 +251,27 @@ button:hover {
     justify-content: center;
 }
 
-/* Close button */
 .close-btn {
     position: absolute;
-    top: 20px;
-    right: 40px;
-    font-size: 35px;
+    font-size: 24px;
     color: white;
     cursor: pointer;
+    z-index: 1000;
+    background-color: rgba(250, 243, 243, 0.5); 
+    border-radius: 50%;
+    padding: 5px;
 }
+
+.close-btn:hover {
+    color: white; /* Light red color on hover */
+}
+
+.image-modal img {
+    width: 100%; /* Make the image responsive */
+    max-width: 600px;
+    border-radius: 8px; /* Optional: Add some rounding for aesthetic purposes */
+}
+
 
 
 /* Style the zoomable image */
@@ -277,4 +308,30 @@ button:hover {
 /* When mouse hovers over the zoomable image, scale it */
 .zoomable-image:hover {
     cursor: zoom-in;
+}
+
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px;
+    background-color: #333;
+    color: white;
+    border-radius: 3px;
+    font-size: 12px;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+[data-tooltip]:hover:before {
+    visibility: visible;
+    opacity: 1;
 }

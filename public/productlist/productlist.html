@@ -58,7 +58,8 @@
                     </th>
                     <th>Price</th>
                     <th>Servings</th>
-                    <th>- / +</th>
+                    <th>Adjust Stock</th>
+
                 </tr>
             </thead>
             <tbody id="productTableBody">
@@ -80,10 +81,10 @@
     <!-- Modal for when qty==0 -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
-          <p>Are you sure you want to remove this product?</p>
-          <button id="deleteProductBtn">Delete</button>
-          <button id="replenishProductBtn">Replenish</button>
-          <button id="cancelBtn">Cancel</button>
+            <p>Are you sure you want to remove this product?</p>
+            <button id="deleteProductBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> Delete</button>
+            <button id="replenishProductBtn" class="replenish-btn"><i class="fas fa-sync-alt"></i> Replenish</button>
+            <button id="cancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
         </div>
       </div>
 
