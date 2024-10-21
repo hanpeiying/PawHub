@@ -8,7 +8,6 @@ body {
     height: 100vh;
 }
 
-
 .product-list-container {
     width: 80%;
     background-color: white;
@@ -145,10 +144,10 @@ button {
 
 /* General reset for buttons */
 button {
-    border: none;      /* Remove border */
-    background: none;  /* Remove background */
-    cursor: pointer;   /* Change cursor to pointer */
-    padding: 5px;      /* Add padding to increase the clickable area */
+    border: none;     
+    background: none;  
+    cursor: pointer;   
+    padding: 5px;      
 }
 
 .sort-btn {

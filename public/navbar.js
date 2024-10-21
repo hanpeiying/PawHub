@@ -64,4 +64,3 @@ template: `
         </div>
     </div>`
 };
-

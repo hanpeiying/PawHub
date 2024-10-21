@@ -236,7 +236,7 @@
     // Replenish the product (redirect to another webpage)
     function replenishProduct() {
         hideConfirmationModal();
-        window.location.href = "../../shop.html"; // Redirect to the replenishment page
+        window.location.href = "../shop.html"; // Redirect to the replenishment page
     }
 
     // Event listeners for modal buttons

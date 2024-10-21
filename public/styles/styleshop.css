@@ -41,13 +41,14 @@ h6{
     min-height: 100vh;
     padding: 30px;
     background-color: #F9F1E7;
-
+    /* flex-grow:1; */
 }
 
 .shop-header {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: 80px;
     margin-bottom: 20px;
     position: relative;
     font-family: 'LazyDog';
