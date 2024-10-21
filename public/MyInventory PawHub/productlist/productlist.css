@@ -76,3 +76,171 @@ body {
     border: 1px solid #ddd;
     width: 250px;
 }
+
+#sortIcon{
+    border:0px, solid,white;
+}
+
+/* Modal styling */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+}
+
+button {
+    margin: 10px;
+    padding: 10px;
+}
+
+/* General reset for buttons */
+button {
+    border: none;      /* Remove border */
+    background: none;  /* Remove background */
+    cursor: pointer;   /* Change cursor to pointer */
+    padding: 5px;      /* Add padding to increase the clickable area */
+}
+
+.sort-btn {
+    padding: 0;
+    margin-left: 5px;  /* Small margin to separate from the text */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Add hover effect */
+button:hover {
+    opacity: 0.8;  /* Reduce opacity slightly on hover */
+}
+
+/* Optional: Custom styling for the arrow icons */
+#sortIconExpiry, #sortIconAdded {
+    font-size: 14px;  /* Adjust the icon size */
+}
+
+/* Dropdown list for search suggestions */
+.suggestions {
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #fff;
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+    display: none; /* Hidden by default */
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+/* Each suggestion item */
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+/* Hover effect for suggestion items */
+.suggestion-item:hover {
+    background-color: #f1f1f1;
+}
+
+/* Active suggestion when using arrow keys */
+.suggestion-item.active {
+    background-color: #4a90e2;
+    color: white;
+}
+
+
+/* Container for modal */
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.image-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+/* Modal content */
+.image-modal-content {
+    position: relative;
+    width: 80%; /* Image takes 80% of the screen width */
+    max-width: 800px;
+    height: auto;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+/* Close button */
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    font-size: 35px;
+    color: white;
+    cursor: pointer;
+}
+
+
+/* Style the zoomable image */
+.zoomable-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    position: relative;
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Zoom Lens */
+.zoom-lens {
+    position: absolute;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    width: 150px;  /* Adjust lens size as needed */
+    height: 150px; /* Adjust lens size as needed */
+    background-color: rgba(255, 255, 255, 0.2); /* Slightly translucent background */
+    pointer-events: none; /* Prevent the lens from interfering with mouse events */
+    display: none; /* Initially hidden */
+}
+
+/* Modal content */
+.image-modal-content {
+    position: relative;
+    width: 80%;
+    max-width: 800px;
+    height: auto;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+/* When mouse hovers over the zoomable image, scale it */
+.zoomable-image:hover {
+    cursor: zoom-in;
+}
