@@ -96,6 +96,7 @@
         tableBody.innerHTML = ""; // Clear existing rows
     
         paginatedProducts.forEach((product, index) => {
+            let stockClass = product.quantity <= 5 ? 'low-stock' : 'sufficient-stock'; // Set class based on stock level
             const row = document.createElement('tr');
             row.innerHTML = `
 
@@ -117,7 +118,7 @@
                 <td>${isValidDate(product.expiry) ? formatDate(product.expiry) : 'Invalid Date'}</td>
                 <td>${formatDate(product.added)}</td>
                 <td>${product.price}</td>
-                <td id="quantity-${index}">${product.quantity}</td>
+                <td id="quantity-${index}" class="${stockClass}">${product.quantity}</td> <!-- Class applied here -->
                 <td> 
                     <button class="minus-btn" data-index="${start + index}" onclick="decreaseQuantity(${start + index})">-</button> 
                     <button class="add-btn" data-index="${start + index}" onclick="increaseQuantity(${start + index})">+</button> 

@@ -8,6 +8,7 @@ body {
     height: 100vh;
 }
 
+
 .product-list-container {
     width: 80%;
     background-color: white;
@@ -42,7 +43,41 @@ body {
 
 /* Row hover effect */
 .product-list tr:hover {
-    background-color: #f9f9f9;
+    background-color: lightcyan;
+}
+
+/* For low stock */
+.low-stock {
+    background-color: #C69B9B; /* Light red background */
+    color: black;
+    font-weight: bold;
+    padding: 0;
+    border-radius: 0;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    margin: 0;
+    box-sizing: border-box;
+}
+
+/* For sufficient stock */
+.sufficient-stock {
+    background-color: #C3C69B; /* Light green background */
+    color: black;
+    font-weight: bold;
+    padding: 0;
+    border-radius: 0;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    margin: 0;
+    box-sizing: border-box;
 }
 
 /* Pagination styles */
