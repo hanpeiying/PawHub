@@ -93,7 +93,8 @@
         let lastVisible = null;
         let productsToShow = 4;
         const showLessBtn = document.getElementById('showLessBtn'); // Get the Show Less button
-
+        
+   
         // Function to create and display product cards
         function createProductCard(listing,id) {
             const productCard = document.createElement('div');
@@ -159,7 +160,7 @@
                 productContainer.innerHTML = '<p>No products found.</p>';
             } else {
                 products.forEach(product => {
-                    createProductCard(product);
+                    createProductCard(product, product.each_id);
                 });
             }
         }
@@ -170,7 +171,7 @@
             const batch = allProducts.slice(productsShown, productsShown + productsToShow); // Get the next batch of products
             if (batch.length > 0) {
                 batch.forEach(product => {
-                    createProductCard(product);  // Display each product in the batch
+                    createProductCard(product, product.each_id);  // Display each product in the batch
                 });
                 productsShown += productsToShow;  // Update the number of products shown
             }
@@ -180,6 +181,10 @@
                 showMoreBtn.style.display = 'none';
                 showLessBtn.style.display = 'block';  // Show the "Show Less" button
             }
+            else {
+                showMoreBtn.style.display = 'block';  // If not all products are shown, "Show More" stays visible
+                showLessBtn.style.display = 'none';   // Hide "Show Less" if not all products are shown
+    }
         }
         function resetToFirstBatch() {
             productContainer.innerHTML = '';  // Clear the existing product display
@@ -202,7 +207,10 @@
                 allProducts = []; // Clear the array to avoid duplicates
                 querySnapshot.forEach((doc) => {
                     const listing = doc.data();
-                    allProducts.push(listing);  // Store the product in allProducts for filtering
+                    const each_id = doc.id;  // Get the document ID
+                    console.log(each_id)
+                    allProducts.push({ ...listing, each_id });
+                    // createProductCard(listing, id) // Store the product in allProducts for filtering
                 });
         
                 // Initially load the first batch of products
@@ -210,6 +218,9 @@
                 loadBatchOfProducts();  // Load the first batch
             }
         }
+
+        loadAllListings();
+
 
         searchInput.addEventListener('input', () => {
             const searchText = searchInput.value.toLowerCase();
@@ -234,7 +245,7 @@
             resetToFirstBatch();  // Reset to the first 4 products
         });
         // Load all listings when the page is ready
-        loadAllListings();
+        
         const applyFilterBtn = document.getElementById('applyFilterBtn'); // Get the Apply Filter button
 
         applyFilterBtn.addEventListener('click', () => {
@@ -243,6 +254,12 @@
         });
         // Function to apply the selected filters
         // Function to apply the selected filters
+
+        // function getProductIdFromURL() {
+        //     const params = new URLSearchParams(window.location.search);
+        //     console.log(params)
+        //     return params.get('id'); // Get the 'id' query parameter from the URL
+        // }
         function applyFilters() {
             // Get the selected item filters
             const dogFoodChecked = document.getElementById('dogFoodFilter').checked;
