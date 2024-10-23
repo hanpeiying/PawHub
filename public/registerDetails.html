@@ -36,7 +36,7 @@
                 </div>
                 <div id="right-half" class="col-md-6 col-sm-12 d-flex align-items-center justify-content-center right-half">
                     <div class="signup-form-container">
-                        <h1 class="mb-3" style="color: black;">More information</h1>
+                        <h1 class="mb-4" style="color: black;">More information</h1>
 
                         <!-- Profile Photo Section -->
                         <div class="profile-photo-container">
@@ -49,13 +49,13 @@
                         </div>
 
                         <!-- Dog's Name -->
-                        <div class="form-group mt-3">
-                            <label for="dogName">Dog's Name</label>
-                            <input type="text" id="dogName" class="form-control" v-model="dogName" placeholder="Enter Dog's Name" />
+                        <div class="form-group mt-4">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" class="form-control" v-model="username" placeholder="Enter Username" />
                         </div>
 
                         <!-- Dog Breed Dropdown -->
-                        <div class="form-group mt-3">
+                        <!-- <div class="form-group mt-3">
                             <label for="dogBreed">Dog's Breed</label>
                             <select id="dogBreed" class="form-control" v-model="dogBreed">
                                 <option>Corgi</option>
@@ -64,10 +64,10 @@
                                 <option>Poodle</option>
                                 <option>Beagle</option>
                             </select>
-                        </div>
+                        </div> -->
 
                         <!-- Age Group Dropdown -->
-                        <div class="form-group mt-3">
+                        <div class="form-group mt-4">
                             <label for="dogAgeGroup">Dog's Age Group</label>
                             <select id="dogAgeGroup" class="form-control" v-model="dogAgeGroup">
                                 <option>Puppy</option>
@@ -78,7 +78,7 @@
                         </div>
 
                         <!-- Submit Button -->
-                        <button class="btn btn-primary mt-4" @click="redirectToHomepage">Go to Log In</button>
+                        <button class="btn btn-primary mt-4" @click="submitForm">Go to Log In</button>
                     </div>
                 </div>
             </div>
@@ -86,101 +86,106 @@
     </div>
 
     <script type="module">
-        import {app} from "../firebase.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup  } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        // Add Firestore to setup
+        import { app } from "../firebase.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-        // Add Cloud Storage
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
-        // const analytics = getAnalytics(app);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
 
         const vueApp = Vue.createApp({
-            data() {
-                return {
-                    uploadedImageUrl: '',
-                    dogName: '',
-                    dogBreed: 'Corgi',
-                    dogAgeGroup: 'Puppy',
-                };
+        data() {
+            return {
+                uploadedImageUrl: '',
+                username: '',
+                dogAgeGroup: 'Puppy',
+            };
+        },
+        methods: {
+            triggerFileUpload() {
+                this.$refs.fileInput.click();
             },
-            methods: {
-                    triggerFileUpload() {
-                        this.$refs.fileInput.click();
-                    },
-                    async onFileChange(event) {
-                        const file = event.target.files[0];
-                        if (file) await this.uploadImage(file);
-                    },
-                    async uploadImage(file) {
-                        const userUID = window.currentUserUID;
-                        const storageRef = ref(storage, `dogs/${userUID}/${file.name}`);
-                        const uploadTask = uploadBytesResumable(storageRef, file);
-
-                        uploadTask.on('state_changed', null, 
-                            error => console.error("Upload failed:", error), 
-                            async () => {
-                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                                this.uploadedImageUrl = downloadURL;
-                                await setDoc(doc(db, "dogImages", userUID), { fileName: file.name, timestamp: new Date() });
-                            }
-                        );
-                    },
-                    async saveDogDetails() {
-                        const userUID = window.currentUserUID;
-                        if (!userUID) {
-                            console.error("User UID is not defined. Cannot save dog details.");
-                            return;
-                        }
-                        try {
-                            await setDoc(doc(db, "dogDetails", userUID), {
-                                // uploadedImageUrl: this.uploadedImageUrl,
-                                dogName: this.dogName,
-                                dogBreed: this.dogBreed,
-                                dogAgeGroup: this.dogAgeGroup,
-                                timestamp: new Date()
-                            });
-                            console.log("Dog details saved successfully!");
-                        } catch (error) {
-                            console.error("Error saving dog details:", error);
-                        }
-                    },
-                    redirectToHomepage() {
-                        window.location.href = "homepage.html";
-                    },
-                    async loadUploadedDogImage() {
-                        const userUID = window.currentUserUID;
-                        if (!userUID) return;
-
-                        try {
-                            const docRef = doc(db, "dogImages", userUID);
-                            const docSnap = await getDoc(docRef);
-                            if (docSnap.exists()) {
-                                const { fileName } = docSnap.data();
-                                const storageRef = ref(storage, `dogs/${userUID}/${fileName}`);
-                                this.uploadedImageUrl = await getDownloadURL(storageRef);
-                            }
-                        } catch (error) {
-                            console.error("Error loading image:", error);
-                        }
+            async onFileChange(event) {
+                const file = event.target.files[0];
+                if (file) await this.uploadImage(file);
+            },
+            async uploadImage(file) {
+                const userUID = window.currentUserUID;
+                const storageRef = ref(storage, `dogs/${userUID}/${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                uploadTask.on('state_changed', null, 
+                    error => console.error("Upload failed:", error), 
+                    async () => {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        this.uploadedImageUrl = downloadURL;  // Just set the image URL, no submission yet
+                        console.log("Image uploaded successfully:", downloadURL);
                     }
-                },
-                mounted() {
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                            window.currentUserUID = user.uid;
-                            this.loadUploadedDogImage();  // Call the image loading function
-                            this.saveDogDetails();        // Call the save dog details function
+                );
+            },
+            async saveDogDetails() {
+                const userUID = window.currentUserUID;
+                if (!userUID) {
+                    console.error("User UID is not defined. Cannot save dog details.");
+                    return;
+                }
+                console.log("Dog Name:", this.username); 
+                try {
+                    const userDocRef = doc(db, "users", userUID);
+                    await setDoc(userDocRef, {
+                        uploadedImageUrl: this.uploadedImageUrl,
+                        username: this.username,
+                        dogAgeGroup: this.dogAgeGroup,
+                        timestamp: new Date()
+                    }, { merge: true });  // Use merge: true to avoid overwriting existing data like email and uid
+                    console.log("Dog details saved successfully!");
+                } catch (error) {
+                    console.error("Error saving dog details:", error);
+                }
+            },
+            submitForm() {
+                // Check if all necessary fields are filled before saving
+                if (!this.username) {
+                    alert("Please enter your username before submitting.");
+                    return;
+                }
+                // Save dog details and then redirect to the homepage
+                this.saveDogDetails().then(() => {
+                    // After saving successfully, redirect to the homepage
+                    window.location.href = "homepageBeforeLogin.html";
+                }).catch((error) => {
+                    console.error("Error during form submission:", error);
+                    alert("There was an issue saving the details. Please try again.");
+                });
+            },
+            async loadUploadedDogImage() {
+                const userUID = window.currentUserUID;
+                if (!userUID) return;
+
+                try {
+                    const docRef = doc(db, "users", userUID);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists() && docSnap.data().uploadedImageUrl) {
+                        this.uploadedImageUrl = docSnap.data().uploadedImageUrl;
                         }
-                    });
+                } catch (error) {
+                    console.error("Error loading image:", error);
+                }
+            }
+        },
+        mounted() {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    window.currentUserUID = user.uid;
+                    this.loadUploadedDogImage();  // Load existing image if available
                 }
             });
+        }
+    });
 
-        vueApp.mount("#app");
-    </script>
+    vueApp.mount("#app");
+</script>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
