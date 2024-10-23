@@ -386,6 +386,7 @@ h6{
     font-size: 32px;
     font-weight: bold;
     cursor: pointer;
+    padding-top: 80px;
 }
 @font-face {
     font-family: "Poppins Regular";
