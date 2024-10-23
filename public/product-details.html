@@ -62,6 +62,14 @@
             </div>
         </div>
     </div>
+    <div id="imageModal" class="image-modal">
+        <span class="close-btn" onclick="closeImageModal()">&times;</span>
+        <div class="image-modal-content">
+            <img id="enlargedImage" src="" alt="Product Image" class="zoomable-image">
+            <div id="zoomLens" class="zoom-lens"></div>
+        </div>
+    </div>
+    
 
     <!-- Firebase and Script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -69,6 +77,14 @@
     <!-- Use Firebase app initialization -->
     <script type="module">
         import Navbar from './Navbar.js';
+        const app = Vue.createApp({
+            components: {
+                Navbar
+            }
+        });
+        app.mount('#app');
+    </script>
+    <script type="module">
         import { app } from "../firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
         import { getFirestore, collection, query, orderBy, limit, startAfter, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
@@ -118,10 +134,6 @@
             document.getElementById('productPrice').textContent = `S$${product.price}`;
             document.getElementById('productDetailsTable').innerHTML = `
                 <tr>
-                    <td>Condition</td>
-                    <td>${product.condition || 'Unknown'}</td>
-                </tr>
-                <tr>
                     <td>MeetUp Location</td>
                     <td>${product.location || 'Unknown'}</td>
                 </tr>
@@ -143,55 +155,55 @@
         }
 
         // Function to handle image enlargement and zoom
-        function enlargeImage(imageSrc) {
+        window.enlargeImage = function(imageSrc) {
             const modal = document.getElementById('imageModal');
             const enlargedImage = document.getElementById('enlargedImage');
             const zoomLens = document.getElementById('zoomLens');
-
+    
             // Set the clicked image source to the modal image
             enlargedImage.src = imageSrc;
-
+    
             // Show the modal
             modal.classList.add('show');
-
+    
             // Add event listeners for zoom
             enlargedImage.addEventListener('mousemove', moveLens);
             enlargedImage.addEventListener('mouseleave', hideLens);
             zoomLens.style.display = 'block';
-
+    
             function moveLens(event) {
                 const rect = enlargedImage.getBoundingClientRect();
                 const lensSize = 150;
-
+    
                 const x = event.clientX - rect.left;
                 const y = event.clientY - rect.top;
-
+    
                 let lensX = x - lensSize / 2;
                 let lensY = y - lensSize / 2;
-
+    
                 if (lensX < 0) lensX = 0;
                 if (lensY < 0) lensY = 0;
                 if (lensX > rect.width - lensSize) lensX = rect.width - lensSize;
                 if (lensY > rect.height - lensSize) lensY = rect.height - lensSize;
-
+    
                 zoomLens.style.left = `${lensX}px`;
                 zoomLens.style.top = `${lensY}px`;
-
+    
                 const scale = 2;
                 const zoomX = (lensX / rect.width) * 100;
                 const zoomY = (lensY / rect.height) * 100;
-
+    
                 enlargedImage.style.transform = `scale(${scale})`;
                 enlargedImage.style.transformOrigin = `${zoomX}% ${zoomY}%`;
             }
-
+    
             function hideLens() {
                 zoomLens.style.display = 'none';
                 enlargedImage.style.transform = 'scale(1)';
             }
         }
-
-        function closeImageModal() {
+    
+        window.closeImageModal = function() {
             const modal = document.getElementById('imageModal');
             modal.classList.remove('show');
         }

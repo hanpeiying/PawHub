@@ -16,8 +16,11 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            font-family: 'Poppins', sans-serif;
             background-color: #F9F1E7;
+        }
+        body{
+            padding-top: 80px;
+            font-family: 'Poppins Regular', sans-serif;
         }
 
         .container {
@@ -49,13 +52,34 @@
             border-radius: 5px;
             font-size: 16px;
             border: none;
-            width: 100%;
             cursor: pointer;
         }
-
+        
         #sellNow:hover {
             background-color: #85946b;
         }
+        
+        #backToShop {
+            background-color: white;
+            color: #9BA481;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            border: 2px solid #9BA481;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        #backToShop:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
 
         #expiryDateSection {
             display: none;
@@ -101,6 +125,17 @@
             border-radius: 10px;
             border: 1px solid #ddd;
         }
+        .align-text-symbol {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        @font-face {
+            font-family: "Poppins Regular";
+            src: url("fonts/poppins/Poppins-Regular.ttf") format("truetype");
+            font-style: normal;
+            }
     </style>
 </head>
 
@@ -109,9 +144,7 @@
     <div id="app">
         <!-- Header Section (Navbar) -->
         <Navbar></Navbar>
-      
-     
-      <script type="module">
+    <script type="module">
         import Navbar from './navbar.js';
     
         // Create and mount the Vue app after the DOM is ready
@@ -161,8 +194,8 @@
             </div>
 
             <div class="mb-3">
-                <label for="location" class="form-label">Locations</label>
-                <select id="location" class="form-select" multiple required>
+                <label for="location" class="form-label">Location</label>
+                <select id="location" class="form-select" required>
                     <option value="Central">Central</option>
                     <option value="North">North</option>
                     <option value="South">South</option>
@@ -178,15 +211,16 @@
 
             <!-- Price Section -->
             <div class="input-group mb-3">
-                <span class="input-group-text">S$</span>
+                <span class="input-group-text align-text-symbol">S$</span>
                 <input type="number" id="price" class="form-control" placeholder="Price of your listing" required>
             </div>
 
             <!-- Sell Now Button -->
-            <button type="submit" id="sellNow" class="btn btn-success">Sell Now</button>
+            <div class="button-container">
+                <a href="shop.html" id="backToShop">Back to Shop</a>
+                <button id="sellNow">Sell Now</button>
+            </div>
         </form>
-
-        <a href="shop.html" class="back-to-shop">Back to Shop</a>
     </div>
 
     <script type="module">

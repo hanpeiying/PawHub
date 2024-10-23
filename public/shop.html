@@ -53,6 +53,13 @@
             <label><input type="checkbox" id="locationWest"> West</label>
         </div>
         <div class="filter-section">
+            <h4>Age Group</h4>
+            <label><input type="checkbox" id="ageGroupPuppy"> Puppy</label><br>
+            <label><input type="checkbox" id="ageGroupJunior"> Junior</label><br>
+            <label><input type="checkbox" id="ageGroupAdult"> Adult</label><br>
+            <label><input type="checkbox" id="ageGroupMature"> Mature</label>
+        </div>
+        <div class="filter-section">
             <h4>Prices</h4>
             <div class="range-slider-container">
                 <input type="range" class="range-slider" id="priceMin" min="0" max="100" value="0">
@@ -76,10 +83,9 @@
     </script>
     
     <script type="module">
-        import Navbar from './Navbar.js';
         import { app } from "../firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, limit, startAfter, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, limit, startAfter, doc, getDocs, getDoc} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
         const auth = getAuth(app);
@@ -94,9 +100,24 @@
         let productsToShow = 4;
         const showLessBtn = document.getElementById('showLessBtn'); // Get the Show Less button
         
-   
+
+        async function getUserInfo(uid) {
+            try {
+                const userDocRef = doc(db, "users", uid); // Assuming 'users' is the collection where user profiles are stored
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    return userDoc.data(); // Return the user data
+                } else {
+                    console.log("No such user!");
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching user data: ", error);
+                return null;
+            }
+        }
         // Function to create and display product cards
-        function createProductCard(listing,id) {
+        async function createProductCard(listing,id) {
             const productCard = document.createElement('div');
             productCard.className = 'col-lg-3 col-md-4 col-sm-6';
             const images = listing.imageURLs || [];
@@ -104,21 +125,27 @@
             productImage.src = images.length > 0 ? images[0] : 'https://via.placeholder.com/180'; // First image or placeholder
             productImage.className = 'product-image';
         
+            const userInfo = await getUserInfo(listing.userUID);
+            const userDisplayName = userInfo ? userInfo.email || 'No Name' : 'User'; 
+            console.log(userDisplayName)
+            const userProfileImage = userInfo && userInfo.uploadedImageUrl ? userInfo.uploadedImageUrl : 'https://via.placeholder.com/40';
+            const dogAgeGroup = userInfo ? userInfo.dogAgeGroup : 'Unknown';
+            
             // HTML structure for the product card
             productCard.innerHTML = `
                 <div class="product-card">
                     <a href="product-details.html?id=${id}" style="color: inherit; text-decoration:none;">
                     <div class="user-info">
-                        <img src="https://via.placeholder.com/40" alt="user profile">
+                        <img src="${userProfileImage}" alt="user profile">
                         <div class="user-details">
-                            <p><strong>User</strong></p> <!-- Placeholder for user name -->
+                            <p><strong>${userDisplayName}</strong></p> <!-- Placeholder for user name -->
                         </div>
                     </div>
                     <div class="image-container"></div> <!-- Image will be appended here -->
                     <div class="card-body">
                         <h5>${listing.title}</h5>
                         <p class="price">S$${listing.price}</p>
-                        <p class="description">${listing.description || "No description provided"}</p>
+                        <p class="age-group">Age Group: ${dogAgeGroup}</p>
                     </div>
                     <div class="location-info">
                         <i class="fas fa-map-marker-alt"></i>
@@ -205,13 +232,15 @@
             const querySnapshot = await getDocs(listingsQuery);
             if (!querySnapshot.empty) {
                 allProducts = []; // Clear the array to avoid duplicates
-                querySnapshot.forEach((doc) => {
+                for (const doc of querySnapshot.docs) {
                     const listing = doc.data();
                     const each_id = doc.id;  // Get the document ID
-                    console.log(each_id)
-                    allProducts.push({ ...listing, each_id });
-                    // createProductCard(listing, id) // Store the product in allProducts for filtering
-                });
+                    const userInfo = await getUserInfo(listing.userUID); // Fetch user info
+                    const dogAgeGroup = userInfo ? userInfo.dogAgeGroup : 'Unknown'; // Get the age group from user data
+                    
+                    // Add the product to the array, including ageGroup
+                    allProducts.push({ ...listing, each_id, dogAgeGroup });
+                }
         
                 // Initially load the first batch of products
                 productsShown = 0;  // Reset the number of products shown
@@ -261,32 +290,38 @@
         //     return params.get('id'); // Get the 'id' query parameter from the URL
         // }
         function applyFilters() {
+            // Clear the container before applying filters
+            productContainer.innerHTML = '';
+        
             // Get the selected item filters
             const dogFoodChecked = document.getElementById('dogFoodFilter').checked;
             const dogAccessoriesChecked = document.getElementById('dogAccessoriesFilter').checked;
             const dogToysChecked = document.getElementById('dogToysFilter').checked;
-    
+        
             // Get the selected location filters
             const locationCentralChecked = document.getElementById('locationCentral').checked;
             const locationNorthChecked = document.getElementById('locationNorth').checked;
             const locationSouthChecked = document.getElementById('locationSouth').checked;
             const locationEastChecked = document.getElementById('locationEast').checked;
             const locationWestChecked = document.getElementById('locationWest').checked;
-    
+        
+            // Get the selected age group filters
+            const ageGroupPuppyChecked = document.getElementById('ageGroupPuppy').checked;
+            const ageGroupJuniorChecked = document.getElementById('ageGroupJunior').checked;
+            const ageGroupAdultChecked = document.getElementById('ageGroupAdult').checked;
+            const ageGroupMatureChecked = document.getElementById('ageGroupMature').checked;
+        
             // Get the selected price range
             const priceMin = parseInt(document.getElementById('priceMin').value, 10);
             const priceMax = parseInt(document.getElementById('priceMax').value, 10);
-    
+        
             const filteredProducts = allProducts.filter(product => {
-                console.log('Checking product:', product);
-    
                 // Item filter
                 const matchesItem = (!dogFoodChecked && !dogAccessoriesChecked && !dogToysChecked) ||
                     (dogFoodChecked && product.category === 'dogFood') ||
                     (dogAccessoriesChecked && product.category === 'dogAccessories') ||
                     (dogToysChecked && product.category === 'dogToys');
-                console.log('Matches Item:', matchesItem);
-    
+        
                 // Location filter
                 function locationMatches(productLocation, filterLocation) {
                     if (Array.isArray(productLocation)) {
@@ -296,31 +331,43 @@
                     }
                     return false;
                 }
-    
+        
                 const matchesLocation = (!locationCentralChecked && !locationNorthChecked && !locationSouthChecked && !locationEastChecked && !locationWestChecked) ||
                     (locationCentralChecked && locationMatches(product.location, 'Central')) ||
                     (locationNorthChecked && locationMatches(product.location, 'North')) ||
                     (locationSouthChecked && locationMatches(product.location, 'South')) ||
                     (locationEastChecked && locationMatches(product.location, 'East')) ||
                     (locationWestChecked && locationMatches(product.location, 'West'));
-                console.log('Matches Location:', matchesLocation);
-    
+        
                 // Price filter
                 const productPrice = parseFloat(product.price);
                 const matchesPrice = !isNaN(productPrice) && productPrice >= priceMin && productPrice <= priceMax;
-                console.log('Matches Price:', matchesPrice);
-    
-                return matchesItem && matchesLocation && matchesPrice;
+        
+                // Age Group filter
+                const matchesAgeGroup = (!ageGroupPuppyChecked && !ageGroupJuniorChecked && !ageGroupAdultChecked && !ageGroupMatureChecked) ||
+                (ageGroupPuppyChecked && product.dogAgeGroup?.toLowerCase() === 'puppy') ||
+                (ageGroupJuniorChecked && product.dogAgeGroup?.toLowerCase() === 'junior') ||
+                (ageGroupAdultChecked && product.dogAgeGroup?.toLowerCase() === 'adult') ||
+                (ageGroupMatureChecked && product.dogAgeGroup?.toLowerCase() === 'mature');
+            
+        
+                // Return true only if all filters match
+                return matchesItem && matchesLocation && matchesPrice && matchesAgeGroup;
             });
-    
+        
+            // Log the filtered products to help debug
             console.log('Filtered Products:', filteredProducts);
-    
+        
+            // Clear existing products before displaying new ones
+            productContainer.innerHTML = ''; 
+        
             // Load filtered products into the UI
             loadProducts(filteredProducts);
-
+        
             showMoreBtn.style.display = 'none'; 
             showLessBtn.style.display = 'none'; 
         }
+        
     
         // Get the price range elements
         const priceMinInput = document.getElementById('priceMin');
@@ -349,8 +396,22 @@
         priceMinInput.addEventListener('input', updatePriceRange);
         priceMaxInput.addEventListener('input', updatePriceRange);
     
+        function debounce(func, delay) {
+            let debounceTimer;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+        
+        // Replace the direct call to applyFilters with the debounced version
+        const debouncedApplyFilters = debounce(applyFilters, 300);
+        
+        // Event listener for the "Apply Filter" button
         applyFilterBtn.addEventListener('click', () => {
-            applyFilters();  // Apply filters when button clicked
+            debouncedApplyFilters();  // Use the debounced function
             filterSidebar.classList.remove('active');
         });
     
