@@ -126,8 +126,8 @@
             productImage.className = 'product-image';
         
             const userInfo = await getUserInfo(listing.userUID);
-            const userDisplayName = userInfo ? userInfo.email || 'No Name' : 'User'; 
-            console.log(userDisplayName)
+            const userDisplayName = userInfo ? (userInfo.username || 'User') : 'User';
+            console.log(userDisplayName);
             const userProfileImage = userInfo && userInfo.uploadedImageUrl ? userInfo.uploadedImageUrl : 'https://via.placeholder.com/40';
             const dogAgeGroup = userInfo ? userInfo.dogAgeGroup : 'Unknown';
             

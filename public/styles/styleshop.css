@@ -279,12 +279,13 @@ h6{
     top: 0;
     left: -300px;
     width: 300px;
+    height: 100vh;
     background-color: #F7F4EF;
     height: 100%;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
     padding: 20px;
     transition: left 0.3s ease;
-    padding-top: 30px;
+    overflow-y: auto;
     z-index: 100;
     padding-top: 100px; 
 }
