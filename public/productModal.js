@@ -26,6 +26,7 @@ export default {
             const file = event.target.files[0];
             if (file) {
                 this.imageFile = file;
+                this.downloadURL = URL.createObjectURL(file);
                 this.uploadImageToFirebase(file);
             }
         },
@@ -34,10 +35,6 @@ export default {
             console.log("Image uploading...");
 
             // Simulate an image upload with a fixed URL or a placeholder
-            setTimeout(() => {
-                this.downloadURL = 'https://via.placeholder.com/180';
-                console.log('Image uploaded successfully. URL:', this.downloadURL);
-            }, 2000);
         },
         async addProduct() {
             if (!this.productName || !this.quantity || !this.expiryDate) {
@@ -61,12 +58,17 @@ export default {
             this.closeModal();
             this.resetForm();
         },
+        removeImage() {
+            this.downloadURL = '';
+            this.imageFile = null;
+        },
         resetForm() {
             this.productName = '';
             this.price = '';
             this.quantity = '';
             this.expiryDate = '';
             this.downloadURL = '';
+            this.imageFile = null;
         }
     },
     template: `
@@ -77,11 +79,19 @@ export default {
                 <span class="close-btn" @click="closeModal">&times;</span>
                 <h2>New Product</h2>
                 <form @submit.prevent="addProduct">
-                    <div class="image-upload">
+                   <div class="image-upload">
                         <div class="image-placeholder">
-                            Drag image here<br>or<br>
-                            <a href="#" @click="triggerFileInput">Browse image</a>
-                            <input type="file" ref="fileInput" @change="handleImageUpload" style="display:none;" />
+                            <div v-if="downloadURL" class="image-preview-container">
+                                <img :src="downloadURL" alt="Uploaded Image" class="uploaded-image" />
+                                <div class="delete-icon" @click="removeImage">
+                                    <i class="fas fa-trash"></i>
+                                </div>
+                            </div>
+                            <div v-else>
+                                Drag image here<br>or<br>
+                                <a href="#" @click="triggerFileInput">Browse image</a>
+                                <input type="file" ref="fileInput" @change="handleImageUpload" style="display:none;" />
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">

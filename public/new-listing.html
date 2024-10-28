@@ -136,6 +136,38 @@
             src: url("fonts/poppins/Poppins-Regular.ttf") format("truetype");
             font-style: normal;
             }
+
+            .image-preview-container {
+                position: relative;
+                display: inline-block;
+            }
+
+            .photo-preview-img {
+                width: 100px;
+                height: 100px;
+                object-fit: cover;
+                border-radius: 10px;
+                border: 1px solid #ddd;
+            }
+
+            .delete-icon {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: rgba(0, 0, 0, 0.6);
+                color: white;
+                border-radius: 50%;
+                padding: 10px;
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            .image-preview-container:hover .delete-icon {
+                opacity: 1;
+            }
+
     </style>
 </head>
 
@@ -251,23 +283,68 @@
         const photoPreview = document.getElementById('photoPreview');
     
         // Preview the selected images
-        const handleFileInput = (input) => {
+       // Preview the selected images
+const handleFileInput = (input) => {
     const files = input.files;
-    Array.from(files).forEach(file => {
-        selectedFiles.push(file); // Add each file to the array
+    Array.from(files).forEach((file, index) => {
+        selectedFiles.push({ file, id: Date.now() + index }); // Add each file with a unique ID
         const reader = new FileReader();
         reader.onload = function (e) {
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-preview-container';
+
             const img = document.createElement('img');
             img.src = e.target.result;
             img.className = 'photo-preview-img';
-            photoPreview.appendChild(img); // Display image preview
+
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'delete-icon';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.onclick = () => removeImage(index);
+
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(deleteBtn);
+            photoPreview.appendChild(imgContainer); // Display image preview with delete button
         };
         reader.readAsDataURL(file);
     });
 };
 
+// Function to remove an image
+const removeImage = (index) => {
+    selectedFiles.splice(index, 1); // Remove the selected file from the array
+    renderPreviews(); // Re-render the previews
+};
+
+// Function to render previews
+const renderPreviews = () => {
+    photoPreview.innerHTML = ''; // Clear existing previews
+    selectedFiles.forEach((item, index) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-preview-container';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'photo-preview-img';
+
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'delete-icon';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.onclick = () => removeImage(index);
+
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(deleteBtn);
+            photoPreview.appendChild(imgContainer);
+        };
+        reader.readAsDataURL(item.file);
+    });
+};
+
 // Listen for file input changes
 photosInput.addEventListener('change', () => handleFileInput(photosInput));
+
 
 // Function to upload photos to Firebase Storage and return URLs
 async function uploadPhotos() {
