@@ -1,317 +1,258 @@
-    // Toggle sort icon (up/down arrow)
-    // function toggleSortIcon(iconElement, isAscending) {
-    //     iconElement.textContent = isAscending ? '⬇️' : '⬆️';
-    // }
+// Firebase setup
+import { app } from "../firebase.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+import { getFirestore, addDoc, collection, doc, updateDoc, query, where, getDocs} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
-    // function toggleSortIcon(iconElement, isAscending) {
-    //     iconElement.classList.toggle("fa-solid fa-sort-down", isAscending);
-    //     iconElement.classList.toggle("fa-solid fa-sort-up", !isAscending);
-    // }
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+let userUID = null;
+let allProducts = []; // Store all user products
+const rowsPerPage = 5;
+let currentPage = 1;
 
-    const products = [
-        { name: "Dog food 1", expiry: "2024-03-22", added: "2023-02-21", price: "$1,241", quantity: 44, image: "dog1.jpg" },
-        { name: "iPhone 14 pro", expiry: "2023-03-22", added: "2022-02-21", price: "$1,499", quantity: 23, image: "iphone.png" },
-        { name: "BYEBYE", expiry: "2025-03-11", added: "2023-02-21", price: "$215", quantity: 3, image: "keyboard.png" },
-        { name: "Airpods Pro", expiry: "2025-03-11", added: "2027-02-21", price: "$249", quantity: 23, image: "airpods.png" },
-        { name: "Samsung Galaxy Fold", expiry: "2028-03-11", added: "2026-02-21", price: "$1,199", quantity: 23, image: "galaxyfold.png" },
-        { name: "Samsung Odyssey", expiry: "2027-03-11", added: "2025-02-21", price: "$500", quantity: 23, image: "odyssey.png" },
-        { name: "Logitech Superlight", expiry: "2026-03-11", added: "2024-02-21", price: "$500", quantity: 23, image: "logitech.png" },
-    ];
-    
-    const rowsPerPage = 5;
-    let currentPage = 1;
+// Monitor authentication state and get user ID
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // User is signed in, get the UID
+        userUID = user.uid;
+        console.log("Logged-in user UID:", userUID);
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const sortExpiryBtn = document.getElementById('sortExpiryBtn');
-        const sortAddedBtn = document.getElementById('sortAddedBtn');
-        const searchInput = document.getElementById('searchInput');
-        let sortExpiryAscending = true;
-        let sortAddedAscending = true;
-        const allProducts = [...products]; // Copy of the original products list for filtering
+        // Load user-specific products after confirming user is logged in
+        loadUserProducts(userUID);
+    } else {
+        console.log("No user is logged in");
+        alert("You need to be logged in to list an item.");
+    }
+});
 
-    
-        // Generalized sort function
-        function sortTable(column, isAscending, filteredProducts) {
-            filteredProducts.sort((a, b) => {
-                const dateA = new Date(a[column]);
-                const dateB = new Date(b[column]);
-    
-                return isAscending ? dateA - dateB : dateB - dateA;
-            });
-    
-            displayProducts(filteredProducts, currentPage);
-        }
-    
-        // Toggle the sort icons for expiry and date added
-        function toggleSortIcon(iconElement, isAscending) {
-            iconElement.classList.remove('fa-solid', 'fa-arrow-down-wide-short', 'fa-arrow-up-wide-short');
-            if (isAscending) {
-                iconElement.classList.add('fa-solid', 'fa-arrow-up-wide-short'); // Show up arrow for ascending
-            } else {
-                iconElement.classList.add('fa-solid', 'fa-arrow-down-wide-short'); // Show down arrow for descending
-            }
-        }
-    
-        // Sort by expiry date
-        sortExpiryBtn.addEventListener('click', () => {
-            const filteredProducts = filterProducts(searchInput.value);
-            sortTable('expiry', sortExpiryAscending, filteredProducts);
-            toggleSortIcon(sortIconExpiry, sortExpiryAscending);
-            sortExpiryAscending = !sortExpiryAscending; // Toggle the sort direction
+
+// Function to add a new product to the Firestore 'inventory' collection
+export async function addProductToFirestore(product) {
+    try {
+        const docRef = await addDoc(collection(db, 'inventory'), {
+            name: product.name,
+            expiry: product.expiry,
+            added: product.added,
+            price: product.price,
+            quantity: product.quantity,
+            image: product.image,
+            userUID: userUID  // Store user ID for personalized data
         });
-    
-        // Sort by date added
-        sortAddedBtn.addEventListener('click', () => {
-            const filteredProducts = filterProducts(searchInput.value);
-            sortTable('added', sortAddedAscending, filteredProducts);
-            toggleSortIcon(sortIconAdded, sortAddedAscending);
-            sortAddedAscending = !sortAddedAscending; // Toggle the sort direction
+        console.log("Product added with ID: ", docRef.id);
+        product.id = docRef.id; // Store the document ID for future updates
+        allProducts.push(product); // Add the new product to the local list
+        displayProducts(allProducts, currentPage); // Refresh the displayed products
+    } catch (e) {
+        console.error("Error adding product: ", e);
+    }
+}
+
+// Function to update the stock of an existing product in Firestore
+async function updateProductStockInFirestore(productId, newQuantity) {
+    const productRef = doc(db, 'inventory', productId);
+    try {
+        await updateDoc(productRef, { quantity: newQuantity });
+        console.log("Product stock updated in Firestore.");
+    } catch (e) {
+        console.error("Error updating product stock: ", e);
+    }
+}
+
+// Function to retrieve products for a specific user from Firestore
+export async function loadUserProducts(userId) {
+    console.log("Loading products for user ID:", userId);
+    const products = [];
+    const q = query(collection(db, 'inventory'), where("userUID", "==", userId));
+    try {
+        const querySnapshot = await getDocs(q);
+        console.log("Query executed, snapshot size:", querySnapshot.size);
+        querySnapshot.forEach(doc => {
+            console.log("hi", doc.id)
+            products.push({ id: doc.id, ...doc.data() });
         });
-    
-        // Filter products based on search input
-        searchInput.addEventListener('input', () => {
-            const searchValue = searchInput.value.toLowerCase();
-            const filteredProducts = filterProducts(searchValue);
-            displayProducts(filteredProducts, currentPage);
-        });
-    
-        // Function to filter products based on the search value
-        function filterProducts(searchValue) {
-            return allProducts.filter(product => 
-                product.name.toLowerCase().includes(searchValue)
-            );
-        }
-    
-        // Initial display of all products
+        console.log("User products loaded:", products);
+        allProducts = products; // Update the global list with fetched products
+        console.log("Displaying products:", allProducts);
+        displayProducts(allProducts, currentPage); // Display the loaded products
+    } catch (e) {
+        console.error("Error loading products: ", e);
+    }
+}
+
+// Function to adjust stock quantity in the UI and Firestore
+async function adjustStock(productId, adjustment) {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) {
+        console.error("Product not found with ID:", productId);
+        return;
+    } 
+
+    const newQuantity = Math.max(0, product.quantity + adjustment); // Ensure quantity doesn’t go below 0
+    product.quantity = newQuantity;
+    try {
+        // Update the stock quantity in Firestore
+        const productRef = doc(db, 'inventory', productId);
+        await updateDoc(productRef, { quantity: newQuantity });
+        console.log("Product stock updated in Firestore.");
+
+        // Refresh the displayed products after updating
         displayProducts(allProducts, currentPage);
+    } catch (e) {
+        console.error("Error updating product stock: ", e);
+    }
+}
+window.adjustStock = adjustStock;
+
+// Event listener for DOMContentLoaded to initialize UI components
+document.addEventListener('DOMContentLoaded', () => {
+    const sortExpiryBtn = document.getElementById('sortExpiryBtn');
+    const sortAddedBtn = document.getElementById('sortAddedBtn');
+    const searchInput = document.getElementById('searchInput');
+    let sortExpiryAscending = true;
+    let sortAddedAscending = true;
+
+    // Sort by expiry date
+    sortExpiryBtn.addEventListener('click', () => {
+        const filteredProducts = filterProducts(searchInput.value);
+        sortTable('expiry', sortExpiryAscending, filteredProducts);
+        toggleSortIcon(sortExpiryBtn, sortExpiryAscending);
+        sortExpiryAscending = !sortExpiryAscending;
     });
-    
-    // Function to render products in the table
-    function displayProducts(filteredProducts, page) {
-        const start = (page - 1) * rowsPerPage;
-        const end = start + rowsPerPage;
-        const paginatedProducts = filteredProducts.slice(start, end);
-    
-        const tableBody = document.getElementById('productTableBody');
-        tableBody.innerHTML = ""; // Clear existing rows
-    
-        paginatedProducts.forEach((product, index) => {
-            let stockClass = product.quantity <= 5 ? 'low-stock' : 'sufficient-stock'; // Set class based on stock level
-            const row = document.createElement('tr');
-            row.innerHTML = `
 
-                <div id="imageModal" class="image-modal">
-                <div class="image-modal-content">
-                    <span class="close-btn" onclick="closeImageModal()">&times;</span>
-                    <img id="enlargedImage" src="" alt="Product Image" class="zoomable-image">
-                    <div id="zoomLens" class="zoom-lens"></div>
-                    </div>
-                </div>
+    // Sort by date added
+    sortAddedBtn.addEventListener('click', () => {
+        const filteredProducts = filterProducts(searchInput.value);
+        sortTable('added', sortAddedAscending, filteredProducts);
+        toggleSortIcon(sortAddedBtn, sortAddedAscending);
+        sortAddedAscending = !sortAddedAscending;
+    });
 
-                <td><input type="checkbox"></td>
-                <td>
-                    <div class="product-image-container" onclick="enlargeImage('${product.image}')">
+    // Filter products based on search input
+    searchInput.addEventListener('input', () => {
+        const searchValue = searchInput.value.toLowerCase();
+        const filteredProducts = filterProducts(searchValue);
+        displayProducts(filteredProducts, currentPage);
+    });
+});
+
+// Function to filter products based on the search value
+function filterProducts(searchValue) {
+    return allProducts.filter(product => 
+        product.name.toLowerCase().includes(searchValue)
+    );
+}
+
+// Function to render products in the table
+function displayProducts(filteredProducts, page) {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const paginatedProducts = filteredProducts.slice(start, end);
+
+    const tableBody = document.getElementById('productTableBody');
+    tableBody.innerHTML = ""; // Clear existing rows
+
+    paginatedProducts.forEach((product, index) => {
+        let stockClass = product.quantity <= 5 ? 'low-stock' : 'sufficient-stock';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="checkbox"></td>
+            <td>
+                <div class="product-image-container" onclick="enlargeImage('${product.image}')">
                     <img src="${product.image}" alt="${product.name}" />
-                    </div>
-                </td>
-                <td>${product.name}</td>
-                <td>${isValidDate(product.expiry) ? formatDate(product.expiry) : 'Invalid Date'}</td>
-                <td>${formatDate(product.added)}</td>
-                <td>${product.price}</td>
-                <td id="quantity-${index}" class="${stockClass}">${product.quantity}</td>
-                <td> 
-                    <button class="minus-btn" data-index="${start + index}" onclick="decreaseQuantity(${start + index})" data-tooltip="Deduct serving">-</button> 
-                    <button class="add-btn" data-index="${start + index}" onclick="increaseQuantity(${start + index})" data-tooltip="Add serving">+</button>                </td>
+                </div>
+            </td>
+            <td>${product.name}</td>
+            <td>${isValidDate(product.expiry) ? formatDate(product.expiry) : 'Invalid Date'}</td>
+            <td>${formatDate(product.added)}</td>
+            <td>${product.price}</td>
+             <td id="quantity-${product.id}" class="${stockClass}">${product.quantity}</td>
+            <td>
+                    <button class="minus-btn" onclick="adjustStock('${product.id}', -1)" data-tooltip="Deduct serving">-</button> 
+                    <button class="add-btn" onclick="adjustStock('${product.id}', +1)" data-tooltip="Add serving">+</button>                
+            </td>
             `;
-            tableBody.appendChild(row);
-        });
-    
-        updatePaginationButtons(filteredProducts);
-    }
-    
-    // Function to format date (YYYY-MM-DD to DD-MM-YY)
-    function formatDate(isoDateString) {
-        const [year, month, day] = isoDateString.split('-');
-        const shortYear = year.slice(-2);  // Extract last two digits of the year
-        return `${day}-${month}-${shortYear}`;
-    }
-    
-    // Function to validate if a string is a valid date in the format YYYY-MM-DD
-    function isValidDate(dateString) {
-        return !isNaN(Date.parse(dateString)) && /^\d{4}-\d{2}-\d{2}$/.test(dateString);
-    }
-    
-    // Dynamically update pagination buttons
-    function updatePaginationButtons(filteredProducts) {
-        const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
-        const paginationContainer = document.querySelector('.pagination');
-        paginationContainer.innerHTML = ''; // Clear existing buttons
-    
-        // Create "prev" button
-        const prevButton = document.createElement('button');
-        prevButton.classList.add('page-btn');
-        prevButton.textContent = '<';
-        prevButton.disabled = currentPage === 1;
-        prevButton.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                displayProducts(filteredProducts, currentPage);
-            }
-        });
-        paginationContainer.appendChild(prevButton);
-    
-        // Create page number buttons dynamically
-        for (let i = 1; i <= totalPages; i++) {
-            const pageButton = document.createElement('button');
-            pageButton.classList.add('page-btn');
-            pageButton.textContent = i;
-            pageButton.addEventListener('click', () => {
-                currentPage = i;
-                displayProducts(filteredProducts, currentPage);
-            });
-            if (i === currentPage) {
-                pageButton.classList.add('active'); // Highlight the current page
-            }
-            paginationContainer.appendChild(pageButton);
-        }
-    
-        // Create "next" button
-        const nextButton = document.createElement('button');
-        nextButton.classList.add('page-btn');
-        nextButton.textContent = '>';
-        nextButton.disabled = currentPage === totalPages;
-        nextButton.addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                displayProducts(filteredProducts, currentPage);
-            }
-        });
-        paginationContainer.appendChild(nextButton);
-    }
-    
-    // Functions to increase/decrease quantity
-    function increaseQuantity(index) {
-        products[index].quantity += 1;
-        displayProducts(products, currentPage);
-    }
-    
+        tableBody.appendChild(row);
+    });
 
-    // Start of minus button
-    let selectedProductIndex = null; // To track the product to be deleted
-    // Show the confirmation modal
-    function showConfirmationModal(index) {
-        selectedProductIndex = index; // Save the selected product's index
-        const modal = document.getElementById('confirmationModal');
-        modal.style.display = 'flex'; // Show modal
+    updatePaginationButtons(filteredProducts);
+}
+
+// Utility functions for date formatting and validation
+function formatDate(isoDateString) {
+    const [year, month, day] = isoDateString.split('-');
+    return `${day}-${month}-${year.slice(-2)}`;
+}
+
+function isValidDate(dateString) {
+    return !isNaN(Date.parse(dateString)) && /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+}
+
+// Toggle the sort icons for expiry and date added
+function toggleSortIcon(iconElement, isAscending) {
+    iconElement.classList.remove('fa-arrow-down-wide-short', 'fa-arrow-up-wide-short');
+    iconElement.classList.add(isAscending ? 'fa-arrow-up-wide-short' : 'fa-arrow-down-wide-short');
+}
+
+function sortTable(column, isAscending, filteredProducts) {
+    filteredProducts.sort((a, b) => {
+        const dateA = new Date(a[column]);
+        const dateB = new Date(b[column]);
+        return isAscending ? dateA - dateB : dateB - dateA;
+    });
+    displayProducts(filteredProducts, currentPage);
     }
 
-    // Hide the confirmation modal
-    function hideConfirmationModal() {
-        const modal = document.getElementById('confirmationModal');
-        modal.style.display = 'none'; // Hide modal
-    }
-    
-    // Decrease quantity and show confirmation if it reaches 0
-    function decreaseQuantity(index) {
-        if (products[index].quantity > 1) {
-            products[index].quantity -= 1;
-            displayProducts(products, currentPage); // Pass products array here
-        } else if (products[index].quantity === 1) {
-            // Show confirmation modal if quantity is about to become 0
-            showConfirmationModal(index);
-        }
-    }
+function updatePaginationButtons(filteredProducts) {
+    const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
+    const paginationContainer = document.querySelector('.pagination');
+    paginationContainer.innerHTML = '';
+}
 
-    // Delete the product from the list
-    function deleteProduct() {
-        if (selectedProductIndex !== null) {
-            products.splice(selectedProductIndex, 1); // Remove the product
-            hideConfirmationModal();
-            displayProducts(currentPage); // Update the display
-            selectedProductIndex = null;
-        }
-    }
+function hideConfirmationModal() {
+    const modal = document.getElementById('confirmationModal');
+    modal.style.display = 'none'; // Hide modal
+    console.log("closeee")
+}
 
-    // Replenish the product (redirect to another webpage)
-    function replenishProduct() {
+function deleteProduct() {
+    if (selectedProductIndex !== null) {
+        products.splice(selectedProductIndex, 1); // Remove the product
         hideConfirmationModal();
-        window.location.href = "../shop.html"; // Redirect to the replenishment page
+        displayProducts(currentPage); // Update the display
+        selectedProductIndex = null;
     }
+}
 
-    // Event listeners for modal buttons
+// Replenish the product (redirect to another webpage)
+function replenishProduct() {
+    hideConfirmationModal();
+    window.location.href = "../shop.html"; // Redirect to the replenishment page
+}
+document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('deleteProductBtn').addEventListener('click', deleteProduct);
     document.getElementById('replenishProductBtn').addEventListener('click', replenishProduct);
     document.getElementById('cancelBtn').addEventListener('click', hideConfirmationModal);
-    // End of minus function
-    displayProducts(currentPage);
+});
 
+window.hideConfirmationModal = hideConfirmationModal;
+// Example product to test adding a new product to Firestore
+// function createAndAddProduct() {
+//     if (userUID) {
+//         const newProduct = {
+//             name: 'Sample Product 2',
+//             expiry: '2024-12-31',
+//             added: '2024-10-26',
+//             price: 10.99,
+//             quantity: 10,
+//             image: 'https://example.com/product.jpg',
+//         };
 
-    // Function to enlarge the image and show the modal
-    function enlargeImage(imageSrc) {
-        const modal = document.getElementById('imageModal');
-        const enlargedImage = document.getElementById('enlargedImage');
-        const zoomLens = document.getElementById('zoomLens');
-        enlargedImage.src = imageSrc; // Set the clicked image source to the modal image
-        modal.classList.add('show'); // Show the modal
+//         // Add the new product to Firestore
+//         addProductToFirestore(newProduct);
+//     } else {
+//         console.error("User UID is not available. Ensure the user is logged in before adding a product.");
+//     }
+// }
 
-        // Add event listeners for zoom
-        enlargedImage.addEventListener('mousemove', moveLens);
-        enlargedImage.addEventListener('mouseleave', hideLens); // Hide lens on mouse leave
-        zoomLens.style.display = 'block'; // Show the zoom lens when modal opens
-
-    // Close modal on Escape key
-    document.addEventListener('keydown', function handleEscapeKey(event) {
-        if (event.key === "Escape") {
-            closeImageModal();
-            // Remove this event listener to avoid stacking multiple listeners
-            document.removeEventListener('keydown', handleEscapeKey);
-        }
-    });
-
-        function moveLens(event) {
-            const rect = enlargedImage.getBoundingClientRect();
-            const lensSize = 150; // Size of the zoom lens (should match the CSS width/height)
-            
-            // Calculate mouse position relative to the image
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-        
-            // Ensure the lens stays within image bounds
-            let lensX = x - lensSize / 2;
-            let lensY = y - lensSize / 2;
-        
-            // Prevent lens from moving outside image bounds
-            if (lensX < 0) lensX = 0;
-            if (lensY < 0) lensY = 0;
-            if (lensX > rect.width - lensSize) lensX = rect.width - lensSize;
-            if (lensY > rect.height - lensSize) lensY = rect.height - lensSize;
-        
-            // Position the lens
-            zoomLens.style.left = `${lensX}px`;
-            zoomLens.style.top = `${lensY}px`;
-        
-            // Calculate zoom percentages (where the zoomed area should be based on the lens position)
-            const scale = 2; // Zoom level (adjust as needed)
-            const zoomX = (lensX / rect.width) * 100; // X percentage of the zoom
-            const zoomY = (lensY / rect.height) * 100; // Y percentage of the zoom
-        
-            // Apply the zoom transformation to the image
-            enlargedImage.style.transform = `scale(${scale})`;
-            enlargedImage.style.transformOrigin = `${zoomX}% ${zoomY}%`; // Zoom in on the specific area
-        }
-
-        function hideLens() {
-            zoomLens.style.display = 'none'; // Hide lens when the mouse leaves the image
-            enlargedImage.style.transform = 'scale(1)'; // Reset zoom
-        }
-    }
-
-    // Function to close the image modal
-    function closeImageModal() {
-        const modal = document.getElementById('imageModal');
-        const zoomLens = document.getElementById('zoomLens');
-        modal.classList.remove('show'); // Hide the modal
-        zoomLens.style.display = 'none'; // Hide the zoom lens
-        const enlargedImage = document.getElementById('enlargedImage');
-        enlargedImage.style.transform = 'scale(1)'; // Reset the zoom effect
-    }

@@ -22,9 +22,23 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+   "headers": [
+      {
+        "source": "**/*.js",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/javascript"
+          }
+        ]
+      }
     ]
   },
   "database": {
     "rules": "database.rules.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }

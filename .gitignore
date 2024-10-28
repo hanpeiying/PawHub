@@ -1,1 +1,7 @@
 configure.js
+public/node_modules
+.env.local
+package-lock.json
+node_modules
+.firebase
+

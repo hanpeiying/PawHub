@@ -70,7 +70,7 @@
         <button class="apply-filter-btn" id="applyFilterBtn">Apply Filter</button>
     </div>
     <script type="module">
-        import Navbar from './Navbar.js';
+        import Navbar from './navbar.js';
 
         // Create and mount the Vue app after the DOM is ready
         const app = Vue.createApp({
@@ -83,7 +83,7 @@
     </script>
     
     <script type="module">
-        import { app } from "../firebase.js";
+        import { app } from "./firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
         import { getFirestore, collection, query, orderBy, limit, startAfter, doc, getDocs, getDoc} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
@@ -100,6 +100,18 @@
         let productsToShow = 4;
         const showLessBtn = document.getElementById('showLessBtn'); // Get the Show Less button
         
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in, get the UID
+                const uid = user.uid;
+                console.log("Logged-in user UID:", uid);
+
+                // You can now pass `uid` to functions or use it to filter listings for this specific user
+            } else {
+                // No user is signed in
+                console.log("No user is logged in");
+            }
+        });
 
         async function getUserInfo(uid) {
             try {

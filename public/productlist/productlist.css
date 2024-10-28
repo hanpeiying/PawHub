@@ -2,10 +2,9 @@
 body {
     font-family: Arial, sans-serif;
     background-color:#F9F1E7;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100;
+    margin:0;
+    padding:0;
+    width:100%;
 }
 
 
@@ -22,6 +21,7 @@ td{
 }
 
 
+
 .product-list-container {
     width: 90%; /* Adjusted to a larger percentage for better visibility */
     max-width: 1200px; 
@@ -30,7 +30,11 @@ td{
     padding: 20px;
     /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
     margin: 0 auto; /* Center container horizontally */
+    margin-top: 80px;
+
 }
+
+
 
 /* Table styles */
 .product-list {
@@ -82,6 +86,7 @@ td{
     display: flex;
     justify-content: center;
     margin-top: 20px;
+  
 }
 
 .page-btn {
@@ -188,37 +193,6 @@ button:hover {
     font-size: 14px;  /* Adjust the icon size */
 }
 
-/* Dropdown list for search suggestions */
-.suggestions {
-    border: 1px solid #ccc;
-    max-height: 200px;
-    overflow-y: auto;
-    background-color: #fff;
-    position: absolute;
-    width: 100%;
-    z-index: 1000;
-    display: none; /* Hidden by default */
-    padding: 0;
-    margin: 0;
-    list-style-type: none;
-}
-
-/* Each suggestion item */
-.suggestion-item {
-    padding: 10px;
-    cursor: pointer;
-}
-
-/* Hover effect for suggestion items */
-.suggestion-item:hover {
-    background-color: #f1f1f1;
-}
-
-/* Active suggestion when using arrow keys */
-.suggestion-item.active {
-    background-color: #4a90e2;
-    color: white;
-}
 
 /* Container for modal */
 .image-modal {

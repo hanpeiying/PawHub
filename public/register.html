@@ -122,7 +122,7 @@
                     <img src="images/signIn/Google.png" width="30" alt="Google Logo"> Continue with Google
                     </button>
 
-                    <p class="have-an-account">Already have an account? <a href="SignIn.html">Log In</a></p>
+                    <p class="have-an-account">Already have an account? <a href="signIn.html">Log In</a></p>
                 </div>
             </div>
         </div>
@@ -130,7 +130,7 @@
 </div>
 
 <script type="module">
-    import {app} from "../firebase.js";
+    import {app} from "./firebase.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
     // Add Firestore to setup
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
