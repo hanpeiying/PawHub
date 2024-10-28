@@ -204,11 +204,51 @@ function sortTable(column, isAscending, filteredProducts) {
     displayProducts(filteredProducts, currentPage);
     }
 
-function updatePaginationButtons(filteredProducts) {
-    const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
-    const paginationContainer = document.querySelector('.pagination');
-    paginationContainer.innerHTML = '';
-}
+    function updatePaginationButtons(filteredProducts) {
+        const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
+        const paginationContainer = document.querySelector('.pagination');
+        paginationContainer.innerHTML = '';
+    
+        // Create "prev" button
+        const prevButton = document.createElement('button');
+        prevButton.textContent = '<';
+        prevButton.disabled = currentPage === 1;
+        prevButton.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                displayProducts(filteredProducts, currentPage);
+            }
+        });
+        paginationContainer.appendChild(prevButton);
+    
+        // Create page buttons
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.classList.add('page-btn');
+            if (i === currentPage) {
+                pageButton.classList.add('active');
+            }
+            pageButton.addEventListener('click', () => {
+                currentPage = i;
+                displayProducts(filteredProducts, currentPage);
+            });
+            paginationContainer.appendChild(pageButton);
+        }
+    
+        // Create "next" button
+        const nextButton = document.createElement('button');
+        nextButton.textContent = '>';
+        nextButton.disabled = currentPage === totalPages;
+        nextButton.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayProducts(filteredProducts, currentPage);
+            }
+        });
+        paginationContainer.appendChild(nextButton);
+    }
+    
 
 function hideConfirmationModal() {
     const modal = document.getElementById('confirmationModal');
