@@ -13,13 +13,28 @@
 </head>
 
 <body>
+    
+<!--for nav bar-->
     <div id="app">
-        <!-- Vue will render the Navbar component here -->
-        <Navbar></Navbar>
+
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12 background backgroundImage">
+                    <img src="images/nav/shop.png">
+                    <p class="background-text">Buy & Sell</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Component -->
+        <div id="nav-component"></div>
+
     </div>
-    <div class="shop-header">
-        <h1>Shop</h1>
-    </div>
+    <!-- Scripts -->
+    <script src="./navbar.js" type="module"></script>
+<!--for nav bar-->
+
+    
     <div class="shop-container">
 
         <div class="filter-search">
