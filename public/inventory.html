@@ -104,7 +104,6 @@
 
 
       <script type="module">
-          import Navbar from './Navbar.js'; // Adjust the path based on your file structure
           import productModal from './productModal.js';
           import { addProductToFirestore,loadUserProducts } from './productlist/productlist.js';
           import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
@@ -116,7 +115,6 @@
           // Create and mount the Vue app
           const app = Vue.createApp({
               components: {
-                  Navbar, 
                   'product-modal': productModal
                 
               },
