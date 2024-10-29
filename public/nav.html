@@ -1,26 +1,62 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles/stylenav.css">
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-</head>
-<body>
-    <div id="app">
-        <Navbar></Navbar>
+<!-- nav.html -->
+<nav id="navbar" class="navbar navbar-expand-sm">
+    <div class="container-fluid">
+        <!-- Logo -->
+        <ul class="nav-menu">
+            <a class="navbar-brand" href="homePage.html">
+                <img class="nav-logo-img" src="images/nav/PawHubLogo.png">
+            </a>
+
+            <!-- Hamburger Button -->
+            <button class="mobile-toggle d-md-none" type="button" @click="toggleMobileMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="nav-text">
+                <li><a href="homepage.html" class="nav-link active">Home</a></li>
+                <li><a href="shop.html" class="nav-link">Shop</a></li>
+                <li><a href="inventory.html" class="nav-link">Inventory</a></li>
+            </div>
+
+            <!-- Right-aligned Chat and Profile -->
+            <div class="nav-personal">
+                <li><a href="chat.html" class="chat-icon">
+                    <img src="./images/nav/chat.png" alt="Chat" style="width:45px;">
+                </a></li>
+                <li class="profile-section">
+                    <div class="profile-hover">
+                        <a href="edit-profile.html" style="text-decoration: none;">
+                            <img v-if="!profilePicUrl" class="profile-pic" alt="Default Profile Pic" src="images/nav/defaultProfile.png" style="width:43px; height:auto;">
+                            <img v-else :src="profilePicUrl" class="profile-pic" alt="Profile Picture">
+                            <span class="username" style="padding-left:5px;">{{ username }}</span>
+                        </a>
+                    </div>
+                </li>
+            </div>
+        </ul>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" :class="{ 'active': isMobileMenuOpen }">
+            <div class="mobile-menu-header">
+                <button class="close-button" @click="toggleMobileMenu">×</button>
+            </div>
+            <ul class="mobile-menu-items">
+                <li><a href="homepage.html" @click="toggleMobileMenu">Home</a></li>
+                <li><a href="shop.html" @click="toggleMobileMenu">Shop</a></li>
+                <li><a href="inventory.html" @click="toggleMobileMenu">Inventory</a></li>
+                <li><a href="chat.html" @click="toggleMobileMenu">Chat</a></li>
+                <li class="mobile-profile">
+                    <a href="edit-profile.html" @click="toggleMobileMenu">
+                        <img v-if="!profilePicUrl" src="images/nav/defaultProfile.png" alt="Profile" class="mobile-profile-pic">
+                        <img v-else :src="profilePicUrl" alt="Profile" class="mobile-profile-pic">
+                        <span class="mobile-username">{{ username }}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 
-    <script type="module">
-        import Navbar from './navbar.js';
-        const app = Vue.createApp({
-            components: {
-                Navbar
-            },
-        });
-        app.mount('#app'); 
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    
+</nav>
+
+

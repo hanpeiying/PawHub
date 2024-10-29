@@ -1,66 +1,85 @@
-export default {
-    data() {
+// nav.js
+import { app } from "./firebase.js";
+import {
+  onAuthStateChanged,
+  getAuth,
+} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+let userUID;
+
+fetch("./nav.html") // Fetching HTML for the component
+  .then((response) => response.text())
+  .then((html) => {
+    const vueApp = Vue.createApp({
+      template: html, // Use the HTML fetched as the template
+      data() {
         return {
-            isActive: false
+          profilePicUrl: "",
+          username: "User",
+          isMobileMenuOpen: false,
         };
-    },
-    methods: {
-        toggleMenu() {
-            this.isActive = !this.isActive;
-        }
-    },
-template: `
-<nav class="navbar navbar-expand-lg navbar-light">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="homePage.html"><img class="nav-logo-img" src="images/nav/PawHubLogo.png"></a>
-                <button class="navbar-toggler" type="button" @click="toggleMenu" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+      },
+      mounted() {
+        // Set up sticky navbar functionality
+        const navbar = document.querySelector(".navbar");
+        const background = document.querySelector(".background"); // Adjust this selector if necessary
+        const stickyOffset = background ? background.offsetHeight : 0;
 
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <!-- Centered Navigation Links (hidden on mobile view) -->
-                    <ul class="navbar-nav mx-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="homePage.html">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="shop.html">Shop</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="places.html">Places</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="inventory.html">Inventory</a>
-                        </li>
-                    </ul>
+        window.addEventListener("scroll", function () {
+          if (window.pageYOffset >= stickyOffset) {
+            navbar.classList.add("sticky");
+          } else {
+            navbar.classList.remove("sticky");
+          }
+        });
 
-                    <div class="icons-container ms-auto">
-                        <a href="diary.html"><img src="images/nav/diaryIcon.png" alt="diaryIcon"></a>
-                        <a href="chat.html"><img src="images/nav/chatIcon.png" alt="chatIcon"></a>
-                        <a class="profile-pic" href="user.html"><img src="images/nav/DefaultPP.png" alt="defaultPP"></a>
-                    </div>
-                </div>
-            </div>
-        </nav>
+        // Handle user authentication
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            userUID = user.uid;
+            this.fetchUserData();
+          } else {
+            alert("You need to be logged in to list an item.");
+          }
+        });
+      },
+      methods: {
+        toggleMobileMenu() {
+          this.isMobileMenuOpen = !this.isMobileMenuOpen;
+          document.body.style.overflow = this.isMobileMenuOpen ? "hidden" : "";
+        },
+        async fetchUserData() {
+          try {
+            const uid = userUID;
+            if (uid) {
+              const userDocRef = doc(db, "users", uid);
+              const userDoc = await getDoc(userDocRef);
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                this.profilePicUrl =
+                  userData.uploadedImageUrl || "images/nav/defaultProfile.png";
+                this.username = userData.username || "User";
+              } else {
+                console.log("No user data found in Firestore.");
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+          }
+        },
+      },
+    });
 
-        <!-- Sidebar -->
-        <div class="side-menu" :class="{ active: isActive }">
-            <!-- Close Button ('X') -->
-            <br>
-            <div class="close-btn" @click="toggleMenu">&times;</div>
-            <br>
-
-            <div class="icons-container">
-                <a href="diary.html"><img src="images/nav/diaryIcon.png" alt="Diary Icon"></a>
-                <a href="chat.html"><img src="images/nav/chatIcon.png" alt="Chat Icon"></a>
-                <a class="profile-pic" href="user.html"><img src="images/nav/DefaultPP.png" alt="Default Profile Picture"></a>
-            </div>
-            <ul>
-                <li><a href="homePage.html">Home</a></li>
-                <li><a href="shop.html">Shop</a></li>
-                <li><a href="places.html">Places</a></li>
-                <li><a href="inventory.html">Inventory</a></li>
-            </ul>
-        </div>
-    </div>`
-};
+    vueApp.mount("#nav-component");
+  })
+  .catch((error) => console.error("Error loading navbar:", error));
