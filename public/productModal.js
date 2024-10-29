@@ -1,3 +1,27 @@
+import { app } from "./firebase.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+import { getFirestore, addDoc, collection, doc, updateDoc, query, where, getDocs} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+let userUID = null
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // User is signed in, get the UID
+        userUID = user.uid;
+        console.log("Logged-in user UID:", userUID);
+
+        // Load user-specific products after confirming user is logged in
+    } else {
+        console.log("No user is logged in");
+        alert("You need to be logged in to list an item.");
+    }
+});
+
 export default {
     data() {
         return {
@@ -25,20 +49,35 @@ export default {
         handleImageUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                this.imageFile = file;
-                this.downloadURL = URL.createObjectURL(file);
+                this.imageFile = file;  // store the file for uploading
                 this.uploadImageToFirebase(file);
             }
         },
-        uploadImageToFirebase(file) {
-            // Simulate Firebase upload logic (or integrate with Firebase Storage)
-            console.log("Image uploading...");
+        deleteImage() {
+            this.imageFile = null;
+            this.downloadURL = '';
+            console.log("Image deleted");
+        },
+        async uploadImageToFirebase(file) {
+            if (!file) return;
+            const storageRef = ref(storage, `inventory/productImages/${userUID}/${file.name}_${Date.now()}`);
+            const uploadTask = uploadBytesResumable(storageRef, file);
 
-            // Simulate an image upload with a fixed URL or a placeholder
+            uploadTask.on('state_changed',
+                snapshot => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log(`Upload is ${progress}% done`);
+                },
+                error => console.error("Error uploading file:", error),
+                async () => {
+                    this.downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    console.log("File available at:", this.downloadURL);
+                }
+            );
         },
         async addProduct() {
-            if (!this.productName || !this.quantity || !this.expiryDate) {
-                alert('Please fill out all required fields.');
+            if (!this.productName || !this.quantity || !this.expiryDate || !this.downloadURL) {
+                alert('Please fill out all fields and upload an image.');
                 return;
             }
 
@@ -46,29 +85,22 @@ export default {
                 name: this.productName,
                 price: parseFloat(this.price),
                 expiry: this.expiryDate,
-                image: this.downloadURL, // Assuming upload logic for image returns a URL
-                added: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
+                image: this.downloadURL, 
+                added: new Date().toISOString().split('T')[0], 
                 quantity: this.quantity
             };
 
-            // Use a custom event to send product data to the parent
             this.$emit('add-product', newProduct);
-
-            alert('Product added successfully!');
             this.closeModal();
             this.resetForm();
-        },
-        removeImage() {
-            this.downloadURL = '';
-            this.imageFile = null;
         },
         resetForm() {
             this.productName = '';
             this.price = '';
             this.quantity = '';
             this.expiryDate = '';
-            this.downloadURL = '';
             this.imageFile = null;
+            this.downloadURL = '';
         }
     },
     template: `
@@ -79,13 +111,11 @@ export default {
                 <span class="close-btn" @click="closeModal">&times;</span>
                 <h2>New Product</h2>
                 <form @submit.prevent="addProduct">
-                   <div class="image-upload">
+                    <div class="image-upload">
                         <div class="image-placeholder">
-                            <div v-if="downloadURL" class="image-preview-container">
-                                <img :src="downloadURL" alt="Uploaded Image" class="uploaded-image" />
-                                <div class="delete-icon" @click="removeImage">
-                                    <i class="fas fa-trash"></i>
-                                </div>
+                            <div v-if="downloadURL" class="uploaded-image-container">
+                                <img :src="downloadURL" alt="Uploaded Image" style="max-width: 100%; height: auto;" class="uploaded-image" />
+                                <div class="delete-icon" @click="deleteImage"><i class="fas fa-trash"></i></div>
                             </div>
                             <div v-else>
                                 Drag image here<br>or<br>

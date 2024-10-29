@@ -159,7 +159,7 @@ function displayProducts(filteredProducts, page) {
         row.innerHTML = `
             <td><input type="checkbox"></td>
             <td>
-                <div class="product-image-container" onclick="enlargeImage('${product.image}')">
+                <div class="product-image-container">
                     <img src="${product.image}" alt="${product.name}" />
                 </div>
             </td>

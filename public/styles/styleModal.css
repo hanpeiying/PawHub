@@ -148,16 +148,14 @@ button{
     }
   }
 
-  .image-preview-container {
+  .uploaded-image-container {
     position: relative;
     display: inline-block;
 }
 
 .uploaded-image {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 4px;
+    object-fit: cover;
+    border-radius: 10px;
 }
 
 .delete-icon {
@@ -170,10 +168,10 @@ button{
     border-radius: 50%;
     padding: 10px;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    display: none; /* Hidden by default */
 }
 
-.image-preview-container:hover .delete-icon {
-    opacity: 1;
+.uploaded-image-container:hover .delete-icon {
+    display: block; /* Show on hover */
 }
+

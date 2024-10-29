@@ -4,9 +4,12 @@ rules_version = '2';
 // allow write: if firestore.get(
 //    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
+	function userIsAuthenticated() {
+    return request.auth.uid != null;
+  }
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      allow read, write: if false;
+      allow read, write: if userIsAuthenticated();
     }
   }
 }
