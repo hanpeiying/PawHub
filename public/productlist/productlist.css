@@ -41,7 +41,6 @@ td{
     margin: 0 auto; /* Center container horizontally */
 }
 
-
 /* Table styles */
 .product-list {
     width: 100%;
@@ -152,33 +151,24 @@ td{
 
 /* General reset for buttons */
 button {
-    border: none;     
-    background: none;  
-    cursor: pointer;   
-    padding: 5px;      
-    margin: 10px;
-    padding: 10px;
-}
-
-.sort-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    margin: 0;
     padding: 0;
-    margin-left: 5px;  /* Small margin to separate from the text */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .add-btn, .minus-btn {
     border: none;
     border-radius: 4px;
-    padding: 8px 12px;
-    width: 40px; /* Ensure consistent width */
-    height: 40px; /* Ensure consistent height */
-    font-size: 18px; /* Consistent font size */
+    width: 50px;  /* Consistent width */
+    height: 50px; /* Consistent height */
+    font-size: 18px;  /* Consistent font size */
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s ease-in-out;
     color: white;
-
+    justify-content: center;
+    align-items: center;
 }
 
 .add-btn {
@@ -192,11 +182,6 @@ button {
 .add-btn:hover, .minus-btn:hover {
     transform: scale(1.1); /* Slight zoom on hover */
     transition: transform 0.2s ease-in-out;
-}
-
-/* Add hover effect */
-button:hover {
-    opacity: 0.8;  /* Reduce opacity slightly on hover */
 }
 
 /* Optional: Custom styling for the arrow icons */
@@ -256,7 +241,6 @@ button:hover {
     max-width: 600px;
     border-radius: 8px; /* Optional: Add some rounding for aesthetic purposes */
 }
-
 
 
 /* Style the zoomable image */

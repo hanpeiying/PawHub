@@ -83,14 +83,13 @@
         </div>
     </div>
 
-    <!-- Modal for when qty==0 -->
-    <div id="confirmationModal" class="modal">
-        <div class="modal-content">
-            <p>Are you sure you want to remove this product?</p>
-            <button id="deleteProductBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> Delete</button>
-            <button id="replenishProductBtn" class="replenish-btn"><i class="fas fa-sync-alt"></i> Replenish</button>
-            <button onclick="hideConfirmationModal()" id="cancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
-        </div>
+<!-- Modal for when qty==0 -->
+<div id="confirmationModal" class="modal">
+    <div class="modal-content">
+        <p>Are you sure you want to remove this product?</p>
+        <button id="deleteProductBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> Delete</button>
+        <button id="replenishProductBtn" class="replenish-btn"><i class="fas fa-sync-alt"></i> Replenish</button>
+        <button id="cancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
     </div>
 </div>
 
@@ -135,5 +134,11 @@
 <script src="./navbar.js" type="module"></script>
 <script type="module" src="productlist/productlist.js"></script>
 <script type="module" src="productModal.js"></script>
+
+<script type="module">
+    import { adjustStock } from './productlist/productlist.js';
+    window.adjustStock = adjustStock;  // Attach it to the global window object
+</script>
+
 </body>
 </html>

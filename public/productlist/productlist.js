@@ -37,6 +37,7 @@ export async function addProductToFirestore(product) {
             added: product.added,
             price: product.price,
             quantity: product.quantity,
+            serving: product.quantity,
             image: product.image,
             userUID: userUID  // Store user ID for personalized data
         });
@@ -81,38 +82,34 @@ export async function loadUserProducts(userId) {
     }
 }
 
-// Function to adjust stock quantity in the UI and Firestore
-async function adjustStock(productId, adjustment) {
+// Adjust stock and handle the confirmation modal when stock reaches 0
+export async function adjustStock(productId, adjustment) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) {
         console.error("Product not found with ID:", productId);
         return;
-    } 
+    }
 
-    const newQuantity = Math.max(0, product.quantity + adjustment); // Ensure quantity doesn’t go below 0
+    const newQuantity = Math.max(0, product.quantity + adjustment);  // Ensure quantity doesn’t go below 0
     product.quantity = newQuantity;
-    
+
     if (newQuantity === 0) {
-        // Show the confirmation modal when the quantity reaches 0
+        selectedProductIndex = allProducts.findIndex(p => p.id === productId);
         const modal = document.getElementById('confirmationModal');
-        modal.style.display = 'flex'; // Display the modal
+        modal.style.display = 'flex';  // Show modal
     } else {
         try {
-        
-            // Update the stock quantity in Firestore
             const productRef = doc(db, 'inventory', productId);
             await updateDoc(productRef, { quantity: newQuantity });
 
-            console.log("Product stock updated in Firestore.");
-
-            // Refresh the displayed products after updating
             displayProducts(allProducts, currentPage);
-        } catch (e) {
-            console.error("Error updating product stock: ", e);
+        } catch (error) {
+            console.error("Error updating product stock:", error);
         }
     }
 }
-window.adjustStock = adjustStock;
+
+// window.adjustStock = adjustStock;
 
 // Event listener for DOMContentLoaded to initialize UI components
 document.addEventListener('DOMContentLoaded', () => {
@@ -178,8 +175,8 @@ function displayProducts(filteredProducts, page) {
             <td>${product.price}</td>
              <td id="quantity-${product.id}" class="${stockClass}">${product.quantity}</td>
             <td>
-                    <button class="minus-btn" onclick="adjustStock('${product.id}', -1)" data-tooltip="Deduct serving">-</button> 
-                    <button class="add-btn" onclick="adjustStock('${product.id}', +1)" data-tooltip="Add serving">+</button>                
+                <button class="minus-btn" onclick="adjustStock('${product.id}', -1)" data-tooltip="Deduct serving">-</button> 
+                <button class="add-btn" onclick="adjustStock('${product.id}', +1)" data-tooltip="Add serving">+</button>                
             </td>
             
         
@@ -261,35 +258,90 @@ function sortTable(column, isAscending, filteredProducts) {
     }
     
 
-function hideConfirmationModal() {
-    const modal = document.getElementById('confirmationModal');
-    modal.style.display = 'none'; // Hide modal
-    console.log("closeee")
-}
+    let selectedProductIndex = null;
 
-function deleteProduct() {
-    if (selectedProductIndex !== null) {
-        products.splice(selectedProductIndex, 1); // Remove the product
-        hideConfirmationModal();
-        displayProducts(currentPage); // Update the display
-        selectedProductIndex = null;
+    function hideConfirmationModal() {
+        const modal = document.getElementById('confirmationModal');
+        modal.style.display = 'none';  // Hide modal
     }
-}
+    
+// Function to delete a product from Firestore
+        async function deleteProduct() {
+            if (selectedProductIndex !== null) {
+                const productId = allProducts[selectedProductIndex].id;  // Get the product ID
+                
+                try {
+                    const productRef = doc(db, 'inventory', productId);
+                    await deleteDoc(productRef);  // Delete the product from Firestore
+                    
+                    // Remove the product from the local list
+                    allProducts.splice(selectedProductIndex, 1);
+                    
+                    hideConfirmationModal();
+                    displayProducts(allProducts, currentPage);  // Refresh the displayed products
+                    
+                    selectedProductIndex = null;  // Reset the selected product index
+                    console.log("Product successfully deleted.");
+                } catch (error) {
+                    console.error("Error deleting product: ", error);
+                }
+            }
+        }
+    
+// Function to replenish the product (restore to original stock level)
+        async function replenishProduct() {
+            if (selectedProductIndex !== null) {
+                const productId = allProducts[selectedProductIndex].id;  // Get the selected product's ID
+                
+                try {
+                    // Fetch the product from Firestore to get the original serving (stock) value
+                    const productRef = doc(db, 'inventory', productId);
+                    const productSnapshot = await getDoc(productRef);
 
-// Replenish the product (redirect to another webpage)
-function replenishProduct() {
-    hideConfirmationModal();
-    window.location.href = "../shop.html"; // Redirect to the replenishment page
-}
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('deleteProductBtn').addEventListener('click', deleteProduct);
-    document.getElementById('replenishProductBtn').addEventListener('click', replenishProduct);
-    document.getElementById('cancelBtn').addEventListener('click', hideConfirmationModal);
-});
+                    if (productSnapshot.exists()) {
+                        const productData = productSnapshot.data();
+                        const originalStock = productData.serving;  // Get the original stock level
+                        
+                        // Update the 'quantity' field to match the original stock level
+                        await updateDoc(productRef, { quantity: originalStock });
+                        
+                        // Update the local list with the new stock level
+                        allProducts[selectedProductIndex].quantity = originalStock;
+                        
+                        hideConfirmationModal();
+                        displayProducts(allProducts, currentPage);  // Refresh the displayed products
+                        
+                        console.log("Product stock replenished to original level.");
+                    } else {
+                        console.log("Product does not exist in Firestore.");
+                    }
+                } catch (error) {
+                    console.error("Error replenishing product: ", error);
+                }
+            }
+        }
 
-window.hideConfirmationModal = hideConfirmationModal;
+    document.addEventListener('DOMContentLoaded', () => {
+        const deleteBtn = document.getElementById('deleteProductBtn');
+        const replenishBtn = document.getElementById('replenishProductBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
 
-    // Function to handle image enlargement and zoom
+        // Ensure buttons are present before adding event listeners
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', deleteProduct);
+        }
+        if (replenishBtn) {
+            replenishBtn.addEventListener('click', replenishProduct);
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', hideConfirmationModal);
+        }
+
+        // Make hideConfirmationModal globally accessible
+        window.hideConfirmationModal = hideConfirmationModal;
+    });
+
+// Function to handle image enlargement and zoom
     window.enlargeImage = function(imageSrc) {
         const modal = document.getElementById('imageModal');
         const enlargedImage = document.getElementById('enlargedImage');
