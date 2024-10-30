@@ -1,25 +1,105 @@
 /* General Container Styles */
+body{
+    font-family: 'Poppins Regular', sans-serif;
+}
 .container-fluid {
     height: 100vh;
-    background: #f8f8f8;
+    background: #e6f4ea; /* Light green background */
 }
 
 .chat-sidebar {
     background: white;
     border-right: 1px solid #ddd;
     padding: 20px;
-    height: 100vh; /* Full viewport height */
+    height: 100vh;
     overflow-y: auto;
     position: sticky;
-    top: 0; /* Sticks the sidebar to the top */
+    top: 0;
+    height: 100vh;
+}
+.chat-sidebar .inbox-header {
+    color: white;
+    text-align: center;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+.chat-messages-welcome {
+    position: relative;
+    width: auto;
+    height: 850px; /* Makes the container take up the full space of the chat messages area */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.welcome-image {
+    width: 100%;
+    height: auto; /* Ensures the image maintains its aspect ratio */
+    max-height: 70%; /* Adjusts the height to fit within the chat messages area */
+    object-fit: cover; /* Ensures the image fills the container without distortion */
+    display: block;
+    position: relative;
+}
+
+.welcome-text {
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.7); /* Shadow for readability */
+    position: absolute;
+    z-index: 1;
+    font-family: 'Lazydog', sans-serif;
+}
+
+
+/* Inbox Header Container */
+.chat-sidebar h4 {
+    background-color: #b0b0b0; /* Gray color */
+    color: white;
+    font-family: 'Lazydog', sans-serif; /* Use Lazydog font */
+    padding: 10px;
+    text-align: center;
+    border-radius: 5px;
+    margin-bottom: 10px;
 }
 
 .chat-area {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    height: 100vh;
     background: white;
-    flex-grow: 1;
+}
+
+.seller-profile {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.product-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.product-details p {
+    margin: 5px 0;
+}
+
+.product-image {
+    width: 150px; /* Adjust size as needed */
+    height: 150px;
+    border-radius: 10px; /* Adds rounded corners */
+    margin-top: 5px;
+    object-fit: cover;
 }
 
 .chat-header {
@@ -31,32 +111,11 @@
     align-items: center;
     flex-direction: column;
     padding: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
-.seller-profile {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    margin-bottom: 10px;
-}
-
-.product-details {
-    font-size: 16px;
-    margin-bottom: 10px;
-}
-
-.product-image-large {
-    width: 150px; /* Adjust size as needed */
-    height: 150px;
-    object-fit: cover;
-    border-radius: 8px; /* Optional: Adds a subtle rounding for aesthetics */
-}
-
-.chat-header h4 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #333;
-}
 
 /* Inbox List */
 .inbox-list {
@@ -97,26 +156,32 @@
 .chat-messages {
     flex-grow: 1;
     padding: 20px;
-    overflow-y: auto; /* Allows scrolling within the chat messages */
+    overflow-y: auto;
     background: #fafafa;
-    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers the messages */
+    width: 100%;
 }
 
 .message-sent,
 .message-received {
-    max-width: 70%;
+    max-width: 80%; /* Adjust this to control the maximum width of messages */
+    width: 100%;
     margin-bottom: 15px;
     padding: 10px 15px;
     border-radius: 10px;
     position: relative;
+    box-sizing: border-box;
 }
 
 .message-sent {
-    background: #d5ffb0;
+    background: rgb(255, 255, 182);
     align-self: flex-end;
     border-bottom-right-radius: 0;
-    text-align: right;
+    text-align: left;
 }
+
 
 .message-received {
     background: #fff;
@@ -162,7 +227,7 @@
 }
 
 .btn-send {
-    background-color: #9BA481;
+    background-color: #614b4b;
     border: none;
     color: white;
     padding: 10px;
@@ -175,7 +240,7 @@
 }
 
 .btn-send:hover {
-    background-color: #85946b;
+    background-color: grey;
 }
 
 /* Media Queries for Responsiveness */
@@ -196,3 +261,15 @@
         padding: 10px;
     }
 }
+@font-face {
+    font-family: "Poppins Regular";
+    src: url("../fonts/poppins/Poppins-Regular.ttf") format("truetype");
+    font-style: normal;
+    }
+
+    @font-face {
+        font-family: 'Lazydog';
+        src: url("../fonts/lazy_dog.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+    }

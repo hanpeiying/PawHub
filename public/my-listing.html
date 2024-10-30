@@ -14,7 +14,7 @@
 
 <body>
     <div id="app">
-        <Navbar></Navbar> <!-- Navbar component from Vue.js -->
+        <div id="nav-component"></div>
     </div>
 
     <div class="container">
@@ -50,6 +50,15 @@
                     <td>Description</td>
                     <td><span id="descriptionField" class="editable">No description available</span></td>
                 </tr>
+                <tr id="availabilityDropdownRow" style="display: none;">
+                    <td>Status</td>
+                    <td>
+                        <select id="availabilityDropdown">
+                            <option value="available">Available</option>
+                            <option value="sold">Sold</option>
+                        </select>
+                    </td>
+                </tr>
             </table>
         </div>
         
@@ -81,15 +90,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Use Firebase app initialization -->
-    <script type="module">
-        import Navbar from './Navbar.js';
-        const app = Vue.createApp({
-            components: {
-                Navbar
-            }
-        });
-        app.mount('#app');
-    </script>
+    <script src="./navbar.js" type="module"></script>
     <script type="module">
         import { app } from "./firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
@@ -134,9 +135,11 @@
                 const currentLocation = locationField.textContent.trim();
                 locationField.innerHTML = locationDropdown;
                 document.getElementById('locationDropdown').value = currentLocation; // Set current location in dropdown
+                availabilityDropdownRow.style.display = 'table-row';
             } else {
                 const selectedLocation = document.getElementById('locationDropdown').value;
                 locationField.innerHTML = selectedLocation; // Set the selected value back to the field
+                availabilityDropdownRow.style.display = 'none';
             }
         }
 
@@ -146,6 +149,7 @@
                 let updatedPrice = document.getElementById('productPrice').innerText; // Use 'let' here
                 const updatedLocation = document.getElementById('locationDropdown') ? document.getElementById('locationDropdown').value : document.getElementById('locationField').innerText;
                 const updatedDescription = document.getElementById('descriptionField').innerText;
+                const updatedAvailability = document.getElementById('availabilityDropdown').value;
 
                 // Ensure only one 'S$' is added
                 if (updatedPrice.startsWith('S$')) {
@@ -160,7 +164,8 @@
                     title: updatedTitle,
                     price: updatedPrice,
                     location: updatedLocation,
-                    description: updatedDescription
+                    description: updatedDescription,
+                    isAvailable: updatedAvailability === 'available'
                 };
 
                 try {
@@ -193,6 +198,7 @@
                     document.getElementById('productPrice').textContent = `S$${productData.price}`;
                     document.getElementById('locationField').textContent = productData.location || 'Unknown';
                     document.getElementById('descriptionField').textContent = productData.description || 'No description available';
+                    document.getElementById('availabilityDropdown').value = productData.isAvailable ? 'available' : 'sold';
         
                     // Display image
                     const images = productData.imageURLs || [];

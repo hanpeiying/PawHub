@@ -36,11 +36,11 @@
                         <div class="chat-header">
                             <img :src="sellerProfileImageURL || 'https://via.placeholder.com/120'" alt="Seller" class="rounded-circle" width="50">
                             <h4>{{ sellerUsername }}</h4>
-                            <p class="product-details">
+                            <p class="product-details" v-if="productAvailable">
                                 Inquiring about: {{ productName }}
-                                <img v-if="productImageURL" :src="productImageURL" alt="Product" width="50">
+                                <img v-if="productImageURL" :src="productImageURL" alt="Product" width="50" class="product-image">
                             </p>
-                        </div>                        
+                        </div>                      
                         
                         <div class="chat-messages">
                             <div v-for="(message, index) in messages" :key="index" :class="{'message-sent': message.senderId === userId, 'message-received': message.senderId !== userId}">
@@ -54,8 +54,9 @@
                             <button @click="sendMessage" class="btn-send"><i class="fas fa-paper-plane"></i></button>
                         </div>
                     </div>
-                    <div v-else>
-                        <p>Select a chat to start messaging</p>
+                    <div v-else class="chat-messages-welcome">
+                        <img src="images/shop/chat.gif" class="d-block w-100"  class="welcome-image" alt="chat!">
+                        <p class="welcome-text">Select a chat to start messaging...</p>
                     </div>
                 </div>
             </div>
@@ -90,7 +91,8 @@
                     sellerProfileImageURL: "https://via.placeholder.com/50", // Initial placeholder
                     sellerUsername: "Seller", // Placeholder username
                     productName: "",
-                    productImageURL: "" 
+                    productImageURL: "" ,
+                    productAvailable: true 
                 };
             },
             methods: {
@@ -179,31 +181,35 @@
                     try {
                         const productRef = doc(db, "products", productId);
                         const productDoc = await getDoc(productRef);
-            
+                
                         if (productDoc.exists()) {
                             const productData = productDoc.data();
                             
                             // Check if the product is marked as sold or deleted
                             if (productData.isAvailable === false) {
-                                // Product is not available, clear product details
+                                // Product is not available, clear product details and set flag
                                 this.productName = "";
                                 this.productImageURL = "";
+                                this.productAvailable = false; // Set flag to false
                             } else {
                                 // Product is available, set product details
                                 this.productName = productData.name;
                                 this.productImageURL = productData.imageUrl || "";
+                                this.productAvailable = true; // Set flag to true
                             }
                         } else {
-                            // Product does not exist, clear product details
+                            // Product does not exist, clear product details and set flag
                             this.productName = "";
                             this.productImageURL = "";
+                            this.productAvailable = false;
                         }
                     } catch (error) {
                         console.error("Error checking product availability:", error);
                         this.productName = "";
                         this.productImageURL = "";
+                        this.productAvailable = false; // Ensure flag is false on error
                     }
-                },                                        
+                },                                      
                 async selectChat(chatId) {
                     const chat = this.chats.find(chat => chat.id === chatId);
                     if (chat) {

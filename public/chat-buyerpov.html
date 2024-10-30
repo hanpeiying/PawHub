@@ -32,15 +32,16 @@
                 <!-- Chat Area -->
                 <div class="col-md-9 col-sm-12 chat-area">
                     <div v-if="selectedChat">
+                        <!-- Seller and Product Details Section -->
                         <div class="chat-header">
-                            <img :src="sellerProfileImageURL || 'https://via.placeholder.com/50'" alt="Seller" class="rounded-circle seller-profile" width="50">
+                            <img :src="sellerProfileImageURL || 'https://via.placeholder.com/120'" alt="Seller" class="rounded-circle" width="50">
                             <h4>{{ sellerUsername }}</h4>
                             <p class="product-details">
                                 Inquiring about: {{ productName }}
+                                <img v-if="productImageURL" :src="productImageURL" alt="Product" class="product-image">
                             </p>
-                            <img v-if="productImageURL" :src="productImageURL" alt="Product" class="product-image-large">
                         </div>                        
-        
+                        
                         <div class="chat-messages">
                             <div v-for="(message, index) in messages" :key="index" :class="{'message-sent': message.senderId === userId, 'message-received': message.senderId !== userId}">
                                 <p>{{ message.text }}</p>
@@ -53,8 +54,9 @@
                             <button @click="sendMessage" class="btn-send"><i class="fas fa-paper-plane"></i></button>
                         </div>
                     </div>
-                    <div v-else>
-                        <p>Select a chat to start messaging</p>
+                    <div v-else class="chat-messages-welcome">
+                        <img src="images/shop/chat.gif" class="d-block w-100"  class="welcome-image" alt="chat!">
+                        <p class="welcome-text">Select a chat to start messaging...</p>
                     </div>
                 </div>
             </div>
@@ -213,11 +215,13 @@
 
                             chatsData.push({
                                 id: docSnap.id,
-                                username: userData.username || userData.email || 'Unknown User',
+                                participants: chatData.participants,
+                                username: userData.username || 'Unknown User',
                                 photoURL: userData.uploadedImageUrl || "https://via.placeholder.com/50",
                                 lastMessage: chatData.lastMessage,
                                 timestamp: chatData.timestamp,
-                                productName: chatData.productName
+                                productName: chatData.productName,
+                                productImageURL: chatData.productImageURL,
                             });
                         }
                         this.chats = chatsData;
@@ -232,6 +236,8 @@
                         const otherUserId = chat.participants?.find(id => id !== this.userId);
                         if (otherUserId) {
                             await this.loadSellerProfile(otherUserId);
+                            this.productName = this.selectedChat.productName;
+                            this.productImageURL = this.selectedChat.productImageURL;
                         }
                         this.loadMessages(chatId);
                     } else {

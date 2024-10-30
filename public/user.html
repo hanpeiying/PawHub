@@ -112,20 +112,29 @@
             const userInfo = await getUserInfo(listing.userUID);
             const userDisplayName = userInfo ? (userInfo.username || 'User') : 'User';
             const dogAgeGroup = userInfo ? userInfo.dogAgeGroup : 'Unknown';
-            
+            const isSold = listing.isAvailable === false;
+            const cardClasses = `card clickable-card ${isSold ? 'dimmed' : ''}`;
+
             // HTML structure for the product card
             productCard.innerHTML = `
-            <div class="card clickable-card" style="position: relative;">
-                <div class="image-container"></div>
-                <div class="card-body">
-                    <h5 class="card-title">${listing.title}</h5>
-                    <p class="card-price">S$${listing.price}</p>
-                    <div class="location-info">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <p>${listing.location}</p>
+                <div class="${cardClasses}" style="position: relative;">
+                    <div class="image-container"></div>
+                    ${isSold ? '<div class="sold-overlay">Sold</div>' : ''}
+                    <div class="card-body">
+                        <h5 class="card-title">${listing.title}</h5>
+                        <p class="card-price">S$${listing.price}</p>
+                        <div class="location-info">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>${listing.location}</p>
+                        </div>
                     </div>
-                </div>
-            </div>`;
+                </div>`;
+
+            if (!isSold) {
+                productCard.querySelector('.card').addEventListener('click', () => {
+                    window.location.href = `my-listing.html?id=${id}`;
+                });
+            }
 
             productCard.querySelector('.card').addEventListener('click', () => {
                 window.location.href = `my-listing.html?id=${id}`; // Redirect to the product details page
