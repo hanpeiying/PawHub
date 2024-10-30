@@ -9,7 +9,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 let userUID = null;
 let allProducts = []; // Store all user products
-const rowsPerPage = 5;
+const rowsPerPage = 7;
 let currentPage = 1;
 
 // Monitor authentication state and get user ID
@@ -91,16 +91,25 @@ async function adjustStock(productId, adjustment) {
 
     const newQuantity = Math.max(0, product.quantity + adjustment); // Ensure quantity doesn’t go below 0
     product.quantity = newQuantity;
-    try {
-        // Update the stock quantity in Firestore
-        const productRef = doc(db, 'inventory', productId);
-        await updateDoc(productRef, { quantity: newQuantity });
-        console.log("Product stock updated in Firestore.");
+    
+    if (newQuantity === 0) {
+        // Show the confirmation modal when the quantity reaches 0
+        const modal = document.getElementById('confirmationModal');
+        modal.style.display = 'flex'; // Display the modal
+    } else {
+        try {
+        
+            // Update the stock quantity in Firestore
+            const productRef = doc(db, 'inventory', productId);
+            await updateDoc(productRef, { quantity: newQuantity });
 
-        // Refresh the displayed products after updating
-        displayProducts(allProducts, currentPage);
-    } catch (e) {
-        console.error("Error updating product stock: ", e);
+            console.log("Product stock updated in Firestore.");
+
+            // Refresh the displayed products after updating
+            displayProducts(allProducts, currentPage);
+        } catch (e) {
+            console.error("Error updating product stock: ", e);
+        }
     }
 }
 window.adjustStock = adjustStock;
@@ -160,7 +169,7 @@ function displayProducts(filteredProducts, page) {
             <td><input type="checkbox"></td>
             <td>
                 <div class="product-image-container">
-                    <img src="${product.image}" alt="${product.name}" />
+                    <img src="${product.image}" alt="${product.name}" onclick="enlargeImage('${product.image}')"/>
                 </div>
             </td>
             <td>${product.name}</td>
@@ -172,6 +181,8 @@ function displayProducts(filteredProducts, page) {
                     <button class="minus-btn" onclick="adjustStock('${product.id}', -1)" data-tooltip="Deduct serving">-</button> 
                     <button class="add-btn" onclick="adjustStock('${product.id}', +1)" data-tooltip="Add serving">+</button>                
             </td>
+            
+        
             `;
         tableBody.appendChild(row);
     });
@@ -277,6 +288,62 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.hideConfirmationModal = hideConfirmationModal;
+
+    // Function to handle image enlargement and zoom
+    window.enlargeImage = function(imageSrc) {
+        const modal = document.getElementById('imageModal');
+        const enlargedImage = document.getElementById('enlargedImage');
+        const zoomLens = document.getElementById('zoomLens');
+
+        // Set the clicked image source to the modal image
+        enlargedImage.src = imageSrc;
+
+        // Show the modal
+        modal.classList.add('show');
+
+        // Add event listeners for zoom
+        enlargedImage.addEventListener('mousemove', moveLens);
+        enlargedImage.addEventListener('mouseleave', hideLens);
+        zoomLens.style.display = 'block';
+
+        function moveLens(event) {
+            const rect = enlargedImage.getBoundingClientRect();
+            const lensSize = 150;
+
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            let lensX = x - lensSize / 2;
+            let lensY = y - lensSize / 2;
+
+            if (lensX < 0) lensX = 0;
+            if (lensY < 0) lensY = 0;
+            if (lensX > rect.width - lensSize) lensX = rect.width - lensSize;
+            if (lensY > rect.height - lensSize) lensY = rect.height - lensSize;
+
+            zoomLens.style.left = `${lensX}px`;
+            zoomLens.style.top = `${lensY}px`;
+
+            const scale = 2;
+            const zoomX = (lensX / rect.width) * 100;
+            const zoomY = (lensY / rect.height) * 100;
+
+            enlargedImage.style.transform = `scale(${scale})`;
+            enlargedImage.style.transformOrigin = `${zoomX}% ${zoomY}%`;
+        }
+
+        function hideLens() {
+            zoomLens.style.display = 'none';
+            enlargedImage.style.transform = 'scale(1)';
+        }
+        console.log(imageSrc)
+    }
+
+    window.closeImageModal = function() {
+        const modal = document.getElementById('imageModal');
+        modal.classList.remove('show');
+    }
+
 // Example product to test adding a new product to Firestore
 // function createAndAddProduct() {
 //     if (userUID) {

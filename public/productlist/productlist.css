@@ -7,6 +7,16 @@ body {
     width:100%;
 }
 
+/* h2 {
+    font-family: 'Chewy', cursive;
+    font-size: 36px;
+    color: #4a90e2;
+    text-align: center;
+    background: url('path-to-paw-print-icon.png') no-repeat;
+    background-size: contain;
+    background-position: left center;
+    padding-left: 50px;
+} */
 
 table{
     width:100%;
@@ -21,7 +31,6 @@ td{
 }
 
 
-
 .product-list-container {
     width: 90%; /* Adjusted to a larger percentage for better visibility */
     max-width: 1200px; 
@@ -30,10 +39,7 @@ td{
     padding: 20px;
     /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
     margin: 0 auto; /* Center container horizontally */
-    margin-top: 80px;
-
 }
-
 
 
 /* Table styles */
@@ -41,17 +47,21 @@ td{
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .product-list th, .product-list td {
     padding: 10px;
     border: 1px solid #ddd;
-    text-align: left;
+    text-align: center; /* Center content horizontally */
+    vertical-align: middle; /* Center content vertically */
 }
 
 .product-list th {
-    background-color: #f0f0f0;
-    font-weight: bold;
+    background-color: #f4f4f4;
+    color: #333;
 }
 
 .product-list td img {
@@ -140,17 +150,14 @@ td{
     text-align: center;
 }
 
-button {
-    margin: 10px;
-    padding: 10px;
-}
-
 /* General reset for buttons */
 button {
     border: none;     
     background: none;  
     cursor: pointer;   
     padding: 5px;      
+    margin: 10px;
+    padding: 10px;
 }
 
 .sort-btn {
@@ -165,22 +172,26 @@ button {
     border: none;
     border-radius: 4px;
     padding: 8px 12px;
+    width: 40px; /* Ensure consistent width */
+    height: 40px; /* Ensure consistent height */
+    font-size: 18px; /* Consistent font size */
     cursor: pointer;
     transition: background-color 0.3s;
+    color: white;
+
 }
 
 .add-btn {
     background-color: #5cb85c;
-    color: white;
 }
 
 .minus-btn {
     background-color: #d9534f;
-    color: white;
 }
 
 .add-btn:hover, .minus-btn:hover {
-    opacity: 0.9;
+    transform: scale(1.1); /* Slight zoom on hover */
+    transition: transform 0.2s ease-in-out;
 }
 
 /* Add hover effect */
@@ -308,4 +319,8 @@ button:hover {
 [data-tooltip]:hover:before {
     visibility: visible;
     opacity: 1;
+}
+
+#confirmationModal{
+    display:none;
 }

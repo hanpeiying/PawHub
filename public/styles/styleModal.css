@@ -1,4 +1,57 @@
 /* For Shop img */
+
+#addNewProduct {
+  background-color: #88C925; /* Pet-themed bright green */
+  color: white; /* White text for contrast */
+  border: none;
+  border-radius: 50px; /* Rounded button */
+  padding: 12px 24px;
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+  transition: all 0.3s ease; /* Smooth hover transition */
+  position: relative; /* Relative positioning for paw icon */
+  overflow: hidden; /* To hide any overflow on hover effects */
+  cursor: pointer; /* Pointer on hover */
+}
+
+/* Paw icon */
+#addNewProduct i {
+  margin-right: 10px;
+  color: #fff; /* White paw icon */
+  z-index: 2; /* Ensure the paw is on top */
+}
+
+/* Hover effect */
+#addNewProduct:hover {
+  background-color: #6FA51F; /* Darker green on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Increased shadow on hover */
+  transform: scale(1.05); /* Slight scaling effect */
+}
+
+/* Paw bounce animation */
+#addNewProduct:hover i {
+  animation: bounce 0.6s ease-in-out infinite;
+}
+
+/* Keyframes for the bounce animation */
+@keyframes bounce {
+  0%, 100% {
+      transform: translateY(0);
+  }
+  50% {
+      transform: translateY(-5px);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #addNewProduct {
+      font-size: 16px;
+      padding: 10px 20px;
+  }
+}
+
 .background {
     position: relative;
     width: 100%;
@@ -38,7 +91,8 @@ button{
 }
 
 .modal {
-    display:block;
+
+    display:flex;
     justify-content: center;
     align-items: center;
     position: fixed;
@@ -168,6 +222,7 @@ button{
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
+
   }
   
   .add-btn:hover,

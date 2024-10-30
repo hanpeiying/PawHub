@@ -105,7 +105,7 @@ export default {
     },
     template: `
     <div>
-        <button @click="openModal">Add New Product</button>
+        <button id="addNewProduct" @click="openModal"><i class="fas fa-paw"></i>Add New Product</button>
         <div v-if="isVisible" class="modal">
             <div class="modal-content">
                 <span class="close-btn" @click="closeModal">&times;</span>

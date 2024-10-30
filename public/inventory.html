@@ -7,86 +7,80 @@
     <link rel="stylesheet" href="./productlist/productlist.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Bootstrap JS bundle to be placed before the closing </body> tag -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js" ></script> 
-    
-    <link rel="stylesheet" href="./styles/stylenav.css"> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="./styles/stylenav.css">
     <link rel="stylesheet" href="./styles/styleModal.css">
-
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Vue 3 -->
-
-    
-
-
+    <!-- Use Vue Production build for deployment -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
 
 <body>
 
-    <!--for nav bar-->
-    <div id="app">
+<div id="app">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12 background backgroundImage">
+                <img src="images/nav/inventory.png">
+                <p class="background-text">Tracking Pet Inventory...</p>
+            </div>
+        </div>
+    </div>
 
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12 background backgroundImage">
-                    <img src="images/nav/inventory.png">
-                    <p class="background-text">Tracking Pet Inventory...</p>
+    <!-- Navigation Component -->
+    <div id="nav-component"></div>
+
+    <div class="product-list-container">
+        <div class="row d-flex align-items-center">
+            <!-- Search Bar -->
+            <div class="col-md-8">
+                <div class="search-bar">
+                    <input id="searchInput" type="text" class="form-control" placeholder="Search for pet treats ...">
                 </div>
+            </div>
+
+            <!-- Add New Product Button (Vue component) -->
+            <div class="col-md-4 text-md-right text-center mt-2 mt-md-0">
+                <product-modal @add-product="handleAddProduct"></product-modal>
             </div>
         </div>
 
-        <!-- Navigation Component -->
-        <div id="nav-component"></div>
-
-
-    <!-- Scripts -->
-    <script src="./navbar.js" type="module"></script>
-<!--for nav bar-->
-   
-
-    <div class="product-list-container">
-        <h2>Product List</h2>
-        <div class="search-bar">
-            <input id="searchInput" type="text" placeholder="Search for your products...">
-            <ul id="suggestionsList" class="suggestions"></ul> <!-- This will hold the dropdown suggestions -->
-        </div>
-
-        <product-modal @add-product="handleAddProduct"></product-modal>
-
-
-
         <table class="product-list">
             <thead>
-                <tr>
-                    <th>S/N</th>
-                    <th>Image</th>
-                    <th>Name</th>
-                    <th>Expiry Date
-                        <button id="sortExpiryBtn" class="sort-btn"> 
-                            <i id="sortIconExpiry" class="fa-solid fa-arrow-up-wide-short"></i> <!-- Font Awesome Icon -->
-                        </button>
-        
-                    </th>
-                    <th>Date Added 
-                        <button id="sortAddedBtn" class="sort-btn">
-                            <i id="sortIconAdded" class="fa-solid fa-arrow-up-wide-short"></i> <!-- Font Awesome Icon -->
-               
-                        </button>
-                    </th>
-                    <th>Price</th>
-                    <th>Servings</th>
-                    <th>Adjust Stock</th>
-
-                </tr>
+            <tr>
+                <th>S/N</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Expiry Date
+                    <button id="sortExpiryBtn" class="sort-btn">
+                        <i id="sortIconExpiry" class="fa-solid fa-arrow-up-wide-short"></i>
+                    </button>
+                </th>
+                <th>Date Added
+                    <button id="sortAddedBtn" class="sort-btn">
+                        <i id="sortIconAdded" class="fa-solid fa-arrow-up-wide-short"></i>
+                    </button>
+                </th>
+                <th>Price</th>
+                <th>Servings</th>
+                <th>Adjust Stock</th>
+            </tr>
             </thead>
             <tbody id="productTableBody">
-                <!-- Extract product and input into various parameters -->
-                    <!-- loop to count length of list -->
-            
-                <!-- Products will be dynamically loaded here -->
+            <!-- Products will be dynamically loaded here -->
             </tbody>
         </table>
         <div class="pagination"></div>
+    </div>
+
+    <!-- Modal for Image Enlargement -->
+    <div id="imageModal" class="image-modal">
+        <div class="image-modal-content">
+            <span class="close-btn" onclick="closeImageModal()">&times;</span>
+            <div class="image-zoom-container">
+                <img id="enlargedImage" class="zoomable-image"/>
+                <div id="zoomLens" class="zoom-lens"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal for when qty==0 -->
@@ -94,63 +88,52 @@
         <div class="modal-content">
             <p>Are you sure you want to remove this product?</p>
             <button id="deleteProductBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> Delete</button>
-            <button  id="replenishProductBtn" class="replenish-btn"><i class="fas fa-sync-alt"></i> Replenish</button>
+            <button id="replenishProductBtn" class="replenish-btn"><i class="fas fa-sync-alt"></i> Replenish</button>
             <button onclick="hideConfirmationModal()" id="cancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
         </div>
     </div>
-    </div>
+</div>
 
+<!-- Vue Application Code should be outside the template -->
+<script type="module">
+    import productModal from './productModal.js';
+    import { addProductToFirestore, loadUserProducts } from './productlist/productlist.js';
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
+    const app = Vue.createApp({
+        components: {
+            'product-modal': productModal
 
-      <script type="module">
-          import productModal from './productModal.js';
-          import { addProductToFirestore,loadUserProducts } from './productlist/productlist.js';
-          import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-
-            const auth = getAuth();
-
-            const currentUser = auth.currentUser;
-      
-          // Create and mount the Vue app
-          const app = Vue.createApp({
-              components: {
-                  'product-modal': productModal
-                
-              },
-              methods: {
-                async handleAddProduct(newProduct) {
-                    // const currentUser = auth.currentUser;
-                    // const userUID = currentUser ? currentUser.uid : null;
+        },
+        methods: {
+            async handleAddProduct(newProduct) {
                 try {
                     await addProductToFirestore(newProduct);
                     console.log('Product successfully added to Firestore:', newProduct);
                     if (currentUser) {
                         const userUID = currentUser.uid;
-                        console.log("The current user's UID is:", userUID);
                         await loadUserProducts(userUID);
                     }
                 } catch (error) {
                     console.error('Error adding product to Firestore:', error);
                 }
             }
-              },
-              mounted() {
-            // Ensure products are loaded when the component is mounted
+        },
+        mounted() {
             if (auth.currentUser) {
                 const userUID = auth.currentUser.uid;
-                console.log("Mounting and loading products for user:", userUID);
                 loadUserProducts(userUID);
             }
         }
-          });
-          
-          app.mount('#app'); // Mount the Vue app to #app div
-        </script>
+    });
 
-
-    <!-- <script src="productlist.js"></script> -->
-    <script type="module" src="productlist/productlist.js"></script>
-    <script src="productModal.js"></script>
+    app.mount('#app');
+</script>
+<script src="./navbar.js" type="module"></script>
+<script type="module" src="productlist/productlist.js"></script>
+<script type="module" src="productModal.js"></script>
 </body>
 </html>
