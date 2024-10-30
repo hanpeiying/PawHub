@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Listing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/stylenav.css">
+    <link rel="stylesheet" href="styles/pdtDetails.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <Navbar></Navbar> <!-- Navbar component from Vue.js -->
+    </div>
+
+    <div class="container">
+        <!-- Product Carousel -->
+        <div class="carousel-container">
+            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner"></div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+    
+        <div class="product-info">
+            <h1 id="productTitle" class="editable" contenteditable="false">Loading...</h1>
+            <div class="product-price editable" id="productPrice" contenteditable="false"></div>
+
+            <div class="separator-line"></div>
+    
+        <div class="details-section">
+            <h4>Details</h4>
+            <table class="details-table">
+                <tr>
+                    <td>MeetUp Location</td>
+                    <td><span id="locationField" class="editable">Unknown</span></td>
+                </tr>
+                <tr>
+                    <td>Description</td>
+                    <td><span id="descriptionField" class="editable">No description available</span></td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Edit and Save buttons -->
+        <div class="actions-container" style="text-align: right; margin-top: 20px;">
+            <button class="edit-btn" id="editBtn" onclick="window.toggleEdit(true)">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="save-btn" id="saveBtn" style="display: none;" onclick="window.saveListing()">
+                <i class="fas fa-save"></i> Save
+            </button>
+            <button class="delete-btn" onclick="deleteListing()">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+        
+        
+    </div>
+    
+    <div id="imageModal" class="image-modal">
+        <span class="close-btn" onclick="closeImageModal()">&times;</span>
+        <div class="image-modal-content">
+            <img id="enlargedImage" src="" alt="Product Image" class="zoomable-image">
+            <div id="zoomLens" class="zoom-lens"></div>
+        </div>
+    </div>
+
+    <!-- Firebase and Script -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Use Firebase app initialization -->
+    <script type="module">
+        import Navbar from './Navbar.js';
+        const app = Vue.createApp({
+            components: {
+                Navbar
+            }
+        });
+        app.mount('#app');
+    </script>
+    <script type="module">
+        import { app } from "./firebase.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getFirestore, doc, deleteDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+    
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+    
+        console.log(getProductIdFromURL());
+    
+        // Function to get the product ID from the URL query parameters
+        function getProductIdFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            console.log(params);
+            return params.get('id'); // Get the 'id' query parameter from the URL
+        }
+
+        let productId = getProductIdFromURL();
+        let originalData = {}; // Store original data to detect changes
+
+        // Make toggleEdit globally available
+        window.toggleEdit = function(enable) {
+            const editableFields = document.querySelectorAll('.editable');
+            editableFields.forEach(field => field.contentEditable = enable ? 'true' : 'false');
+
+            document.getElementById('editBtn').style.display = enable ? 'none' : 'inline';
+            document.getElementById('saveBtn').style.display = enable ? 'inline' : 'none';
+
+            // Handle location field - change to dropdown if editing
+            const locationField = document.getElementById('locationField');
+            if (enable) {
+                const locationDropdown = `
+                    <select id="locationDropdown">
+                        <option value="Central">Central</option>
+                        <option value="North">North</option>
+                        <option value="South">South</option>
+                        <option value="East">East</option>
+                        <option value="West">West</option>
+                    </select>`;
+                const currentLocation = locationField.textContent.trim();
+                locationField.innerHTML = locationDropdown;
+                document.getElementById('locationDropdown').value = currentLocation; // Set current location in dropdown
+            } else {
+                const selectedLocation = document.getElementById('locationDropdown').value;
+                locationField.innerHTML = selectedLocation; // Set the selected value back to the field
+            }
+        }
+
+        // Make saveListing globally available
+            window.saveListing = async function() {
+                const updatedTitle = document.getElementById('productTitle').innerText;
+                let updatedPrice = document.getElementById('productPrice').innerText; // Use 'let' here
+                const updatedLocation = document.getElementById('locationDropdown') ? document.getElementById('locationDropdown').value : document.getElementById('locationField').innerText;
+                const updatedDescription = document.getElementById('descriptionField').innerText;
+
+                // Ensure only one 'S$' is added
+                if (updatedPrice.startsWith('S$')) {
+                    updatedPrice = updatedPrice.replace('S$', '').trim();
+                }
+                
+                const formattedPrice = `S$${updatedPrice}`;
+                document.getElementById('productPrice').textContent = formattedPrice;
+
+                // Prepare the updated data
+                const updatedData = {
+                    title: updatedTitle,
+                    price: updatedPrice,
+                    location: updatedLocation,
+                    description: updatedDescription
+                };
+
+                try {
+                    const docRef = doc(db, "marketplace", productId);
+                    await updateDoc(docRef, updatedData);
+                    console.log("Listing updated successfully!");
+
+                    // Switch back to view mode
+                    window.toggleEdit(false);
+                    alert("Listing updated successfully!");
+                } catch (error) {
+                    console.error("Error updating listing: ", error);
+                    alert("Error saving the listing.");
+                }
+            }
+
+
+        // Load product details and save the original data
+        async function loadProductDetails() {
+            try {
+                const docRef = doc(db, "marketplace", productId);
+                const docSnap = await getDoc(docRef);
+        
+                if (docSnap.exists()) {
+                    const productData = docSnap.data();
+                    originalData = { ...productData }; // Store the original data
+        
+                    // Display title, price, location, and description
+                    document.getElementById('productTitle').textContent = productData.title;
+                    document.getElementById('productPrice').textContent = `S$${productData.price}`;
+                    document.getElementById('locationField').textContent = productData.location || 'Unknown';
+                    document.getElementById('descriptionField').textContent = productData.description || 'No description available';
+        
+                    // Display image
+                    const images = productData.imageURLs || [];
+                    const imageContainer = document.querySelector('.carousel-inner');
+                    imageContainer.innerHTML = ''; // Clear any existing content
+        
+                    // Populate the carousel with images
+                    images.forEach((url, index) => {
+                        const activeClass = index === 0 ? 'active' : '';
+                        const imageElement = `
+                            <div class="carousel-item ${activeClass}">
+                                <img src="${url}" class="d-block w-100" alt="Product Image">
+                            </div>
+                        `;
+                        imageContainer.innerHTML += imageElement;
+                    });
+
+                    const prevButton = document.querySelector('.carousel-control-prev');
+                    const nextButton = document.querySelector('.carousel-control-next');
+        
+                    if (images.length <= 1) {
+                        prevButton.style.display = 'none';
+                        nextButton.style.display = 'none';
+                    } else {
+                        prevButton.style.display = 'block';
+                        nextButton.style.display = 'block';
+                    }
+        
+                    // If no images are available, show a placeholder image
+                    if (images.length === 0) {
+                        imageContainer.innerHTML = `
+                            <div class="carousel-item active">
+                                <img src="https://via.placeholder.com/500" class="d-block w-100" alt="Placeholder Image">
+                            </div>
+                        `;
+                    }
+                } else {
+                    console.error('No such document!');
+                }
+            } catch (error) {
+                console.error('Error fetching document:', error);
+            }
+        }
+    
+        // Function to display product details on the page
+        function displayProductDetails(product) {
+            const productId = getProductIdFromURL();
+            document.getElementById('productTitle').textContent = product.title;
+            document.getElementById('productPrice').textContent = `S$${product.price}`;
+            document.getElementById('productDetailsTable').innerHTML = `
+                <tr>
+                    <td>MeetUp Location</td>
+                    <td>${product.location || 'Unknown'}</td>
+                </tr>
+                <tr>
+                    <td>Description</td>
+                    <td>${product.description || 'No description available'}</td>
+                </tr>`;
+    
+            // Populate image carousel
+            const carouselInner = document.querySelector('.carousel-inner');
+            carouselInner.innerHTML = ''; // Clear existing content
+            product.imageURLs.forEach((url, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                carouselInner.innerHTML += `
+                    <div class="carousel-item ${activeClass}">
+                        <img src="${url}" class="d-block w-100" alt="Product Image" onclick="enlargeImage('${url}')">
+                    </div>`;
+            });
+    
+            // Add the edit and delete buttons for the listing owner
+            const actionsContainer = document.createElement('div');
+            actionsContainer.classList.add('actions-container');
+            actionsContainer.innerHTML = `
+                <button class="edit-btn" onclick="editListing('${productId}')">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="delete-btn" onclick="window.deleteListing('${productId}', ${JSON.stringify(productData.imageURLs || [])})">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            `;
+            document.querySelector('.product-info').appendChild(actionsContainer);
+        }
+    
+        // Function to load and display seller details
+        async function loadSellerDetails(userUID) {
+            const sellerUsernameElement = document.getElementById('sellerUsername');
+            
+            try {
+                const userDocRef = doc(db, "users", userUID); // Assuming 'users' collection contains seller info
+                const userDoc = await getDoc(userDocRef);
+    
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    // Use `username` instead of `email` to display the seller's name
+                    sellerUsernameElement.innerHTML = `<i class="fas fa-paw"></i> ${userData.username || 'Seller'}`; // Display seller's username or a default label
+                } else {
+                    sellerUsernameElement.textContent = `Seller UID: ${userUID}`; 
+                }
+            } catch (error) {
+                console.error("Error fetching seller details:", error);
+                sellerUsernameElement.textContent = `Seller UID: ${userUID}`; 
+            }
+        }
+            
+        window.deleteListing = async function(id, imageURLs = []) {
+            if (confirm('Are you sure you want to delete this listing?')) {
+                try {
+                    // Log the product ID to confirm the function is working
+                    console.log(`Attempting to delete product with ID: ${productId}`);
+        
+                    // Delete the product from Firestore
+                    await deleteDoc(doc(db, "marketplace", productId));
+                    console.log("Product deleted from Firestore.");
+        
+                    // Loop through each image URL in the array and delete from Firebase Storage
+                    for (let imageUrl of imageURLs) {
+                        if (imageUrl && imageUrl.trim() !== '') {
+                            const imageRef = ref(storage, imageUrl);
+                            console.log("Attempting to delete image:", imageUrl);
+                            try {
+                                await deleteObject(imageRef);
+                                console.log("Image deleted from Storage:", imageUrl);
+                            } catch (error) {
+                                if (error.code === 'storage/object-not-found') {
+                                    console.warn(`Image already deleted or not found: ${imageUrl}`);
+                                } else {
+                                    console.error(`Failed to delete image ${imageUrl}:`, error);
+                                }
+                            }
+                        } else {
+                            console.log("No valid image URL provided, skipping image deletion.");
+                        }
+                    }
+        
+                    // Alert the user that the item was successfully deleted
+                    alert('Item successfully deleted');
+        
+                    // Redirect to a different page after deletion (e.g., the listings page)
+                    window.location.href = 'user.html';
+                } catch (error) {
+                    console.error("Error deleting product: ", error);
+                    alert("Error deleting the listing.");
+                }
+            }
+        };
+        
+
+        window.editListing = function(productId) {
+            console.log(`Editing product with ID: ${productId}`);
+            window.location.href = `edit-listing.html?id=${productId}`;
+        };        
+    
+        // Function to handle image enlargement and zoom
+        window.enlargeImage = function(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const enlargedImage = document.getElementById('enlargedImage');
+            const zoomLens = document.getElementById('zoomLens');
+    
+            // Set the clicked image source to the modal image
+            enlargedImage.src = imageSrc;
+    
+            // Show the modal
+            modal.classList.add('show');
+    
+            // Add event listeners for zoom
+            enlargedImage.addEventListener('mousemove', moveLens);
+            enlargedImage.addEventListener('mouseleave', hideLens);
+            zoomLens.style.display = 'block';
+    
+            function moveLens(event) {
+                const rect = enlargedImage.getBoundingClientRect();
+                const lensSize = 150;
+    
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+    
+                let lensX = x - lensSize / 2;
+                let lensY = y - lensSize / 2;
+    
+                if (lensX < 0) lensX = 0;
+                if (lensY < 0) lensY = 0;
+                if (lensX > rect.width - lensSize) lensX = rect.width - lensSize;
+                if (lensY > rect.height - lensSize) lensY = rect.height - lensSize;
+    
+                zoomLens.style.left = `${lensX}px`;
+                zoomLens.style.top = `${lensY}px`;
+    
+                const scale = 2;
+                const zoomX = (lensX / rect.width) * 100;
+                const zoomY = (lensY / rect.height) * 100;
+    
+                enlargedImage.style.transform = `scale(${scale})`;
+                enlargedImage.style.transformOrigin = `${zoomX}% ${zoomY}%`;
+            }
+    
+            function hideLens() {
+                zoomLens.style.display = 'none';
+                enlargedImage.style.transform = 'scale(1)';
+            }
+            console.log(imageSrc)
+        }
+    
+        window.closeImageModal = function() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+        }
+    
+        document.addEventListener('DOMContentLoaded', loadProductDetails);
+    </script>
+</body>
+
+</html>

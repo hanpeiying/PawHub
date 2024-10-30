@@ -7,11 +7,8 @@
     
     <!-- Bootstrap CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- External CSS -->
     <link rel="stylesheet" href="styles/styleregisterdetails.css">
 
-    <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
     <style scoped>
@@ -25,6 +22,46 @@
             cursor: pointer;
             border: 4px solid #695c5c;
         }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        #save {
+            background-color: #9BA481;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+        #save:hover {
+            background-color: #85946b;
+        }
+        #backToProfile {
+            background-color: white;
+            color: #9BA481;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            border: 2px solid #9BA481;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        #backToProfile:hover {
+            background-color: #f0f0f0;
+        }
+        .change-password {
+            width: 100%;
+            color: #9BA481;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .change-password:hover {
+            color: #5a6268;
+        }
+        
     </style>
 </head> 
 <body>
@@ -32,13 +69,12 @@
         <div class="container-fluid h-100">
             <div class="row h-100 d-flex">
                 <div id="left-half" class="col-md-6 col-sm-12 p-0 left-half">
-                    <img src="images/signIn/dog_welcome.gif" class="d-block w-100" alt="Welcome!">
+                    <img src="images/shop/edit-profile.gif" class="d-block w-100" alt="Welcome!">
                 </div>
                 <div id="right-half" class="col-md-6 col-sm-12 d-flex align-items-center justify-content-center right-half">
                     <div class="signup-form-container">
-                        <h1 class="mb-4" style="color: black;">More information</h1>
-
-                        <!-- Profile Photo Section -->
+                        <h1 class="mb-4" style="color: black;">Edit Profile</h1>
+    
                         <div class="profile-photo-container">
                             <img 
                                 class="circular-image" 
@@ -47,26 +83,12 @@
                             >
                             <input type="file" ref="fileInput" @change="onFileChange" style="display: none;" />
                         </div>
-
-                        <!-- Dog's Name -->
+    
                         <div class="form-group mt-4">
                             <label for="username">Username</label>
                             <input type="text" id="username" class="form-control" v-model="username" placeholder="Enter Username" />
                         </div>
-
-                        <!-- Dog Breed Dropdown -->
-                        <!-- <div class="form-group mt-3">
-                            <label for="dogBreed">Dog's Breed</label>
-                            <select id="dogBreed" class="form-control" v-model="dogBreed">
-                                <option>Corgi</option>
-                                <option>Golden Retriever</option>
-                                <option>Bulldog</option>
-                                <option>Poodle</option>
-                                <option>Beagle</option>
-                            </select>
-                        </div> -->
-
-                        <!-- Age Group Dropdown -->
+    
                         <div class="form-group mt-4">
                             <label for="dogAgeGroup">Dog's Age Group</label>
                             <select id="dogAgeGroup" class="form-control" v-model="dogAgeGroup">
@@ -76,15 +98,24 @@
                                 <option>Mature</option>
                             </select>
                         </div>
-
-                        <!-- Submit Button -->
-                        <button class="btn btn-primary mt-4" @click="submitForm">Go to Log In</button>
+    
+                        <div class="form-group mt-4">
+                            <a href="forgotPassword.html" class="change-password">
+                                Change Password
+                            </a>
+                        </div>
+                        <br>            
+    
+                        <div class="button-container d-flex justify-content-between">
+                            <a href="user.html" id="backToProfile">Back</a>
+                            <button id="save" @click="submitForm">Save</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
+    
     <script type="module">
         import { app } from "./firebase.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
@@ -96,98 +127,91 @@
         const storage = getStorage(app);
 
         const vueApp = Vue.createApp({
-        data() {
-            return {
-                uploadedImageUrl: '',
-                username: '',
-                dogAgeGroup: 'Puppy',
-            };
-        },
-        methods: {
-            triggerFileUpload() {
-                this.$refs.fileInput.click();
+            data() {
+                return {
+                    uploadedImageUrl: '',
+                    username: '',
+                    dogAgeGroup: 'Puppy',
+                };
             },
-            async onFileChange(event) {
-                const file = event.target.files[0];
-                if (file) await this.uploadImage(file);
-            },
-            async uploadImage(file) {
-                const userUID = window.currentUserUID;
-                const storageRef = ref(storage, `dogs/${userUID}/${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                uploadTask.on('state_changed', null, 
-                    error => console.error("Upload failed:", error), 
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        this.uploadedImageUrl = downloadURL;  // Just set the image URL, no submission yet
-                        console.log("Image uploaded successfully:", downloadURL);
-                    }
-                );
-            },
-            async saveDogDetails() {
-                const userUID = window.currentUserUID;
-                if (!userUID) {
-                    console.error("User UID is not defined. Cannot save dog details.");
-                    return;
-                }
-                console.log("Dog Name:", this.username); 
-                try {
-                    const userDocRef = doc(db, "users", userUID);
-                    await setDoc(userDocRef, {
-                        uploadedImageUrl: this.uploadedImageUrl,
-                        username: this.username,
-                        dogAgeGroup: this.dogAgeGroup,
-                        timestamp: new Date()
-                    }, { merge: true });  // Use merge: true to avoid overwriting existing data like email and uid
-                    console.log("Dog details saved successfully!");
-                } catch (error) {
-                    console.error("Error saving dog details:", error);
-                }
-            },
-            submitForm() {
-                // Check if all necessary fields are filled before saving
-                if (!this.username) {
-                    alert("Please enter your username before submitting.");
-                    return;
-                }
-                // Save dog details and then redirect to the homepage
-                this.saveDogDetails().then(() => {
-                    // After saving successfully, redirect to the homepage
-                    window.location.href = "homepageBeforeLogin.html";
-                }).catch((error) => {
-                    console.error("Error during form submission:", error);
-                    alert("There was an issue saving the details. Please try again.");
-                });
-            },
-            async loadUploadedDogImage() {
-                const userUID = window.currentUserUID;
-                if (!userUID) return;
-
-                try {
-                    const docRef = doc(db, "users", userUID);
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists() && docSnap.data().uploadedImageUrl) {
-                        this.uploadedImageUrl = docSnap.data().uploadedImageUrl;
+            methods: {
+                triggerFileUpload() {
+                    this.$refs.fileInput.click();
+                },
+                async onFileChange(event) {
+                    const file = event.target.files[0];
+                    if (file) await this.uploadImage(file);
+                },
+                async uploadImage(file) {
+                    const userUID = auth.currentUser.uid;
+                    const storageRef = ref(storage, `dogs/${userUID}/${file.name}`);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+                    uploadTask.on('state_changed', null, 
+                        error => console.error("Upload failed:", error), 
+                        async () => {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            this.uploadedImageUrl = downloadURL;
+                            console.log("Image uploaded successfully:", downloadURL);
                         }
-                } catch (error) {
-                    console.error("Error loading image:", error);
-                }
+                    );
+                },
+                async loadUserData() {
+                    const user = auth.currentUser;
+                    if (user) {
+                        const userUID = user.uid;
+                        const userDocRef = doc(db, "users", userUID);
+                        const userDoc = await getDoc(userDocRef);
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data();
+                            this.username = userData.username || "User";
+                            this.dogAgeGroup = userData.dogAgeGroup || "Unknown";
+                            this.uploadedImageUrl = userData.uploadedImageUrl || "https://via.placeholder.com/120";
+                        }
+                    }
+                },
+                async saveDogDetails() {
+                    const userUID = auth.currentUser.uid;
+                    if (!userUID) return;
+
+                    try {
+                        const userDocRef = doc(db, "users", userUID);
+                        await setDoc(userDocRef, {
+                            uploadedImageUrl: this.uploadedImageUrl,
+                            username: this.username,
+                            dogAgeGroup: this.dogAgeGroup,
+                            timestamp: new Date()
+                        }, { merge: true });
+                        console.log("Dog details saved successfully!");
+                    } catch (error) {
+                        console.error("Error saving dog details:", error);
+                    }
+                },
+                submitForm() {
+                    if (!this.username) {
+                        alert("Please enter your username before submitting.");
+                        return;
+                    }
+                    this.saveDogDetails().then(() => {
+                        alert("Save successful!"); 
+                        window.location.href = "user.html";
+                    }).catch((error) => {
+                        console.error("Error during form submission:", error);
+                        alert("There was an issue saving the details. Please try again.");
+                    });
+                },
+            },
+            mounted() {
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        this.loadUserData();
+                    }
+                });
             }
-        },
-        mounted() {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    window.currentUserUID = user.uid;
-                    this.loadUploadedDogImage();  // Load existing image if available
-                }
-            });
-        }
-    });
+        });
 
-    vueApp.mount("#app");
-</script>
+        vueApp.mount("#app");
+    </script>
 
-    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

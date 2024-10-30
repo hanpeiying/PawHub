@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Seller - PawHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/chat.css">
+    <link rel="stylesheet" href="styles/stylenav.css">
+</head>
+<body>
+    <div id="app">
+        <Navbar></Navbar>
+        
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar for Inbox -->
+                <div class="col-md-3 col-sm-12 chat-sidebar">
+                    <h4>Inbox</h4>
+                    <div class="inbox-list">
+                        <div v-for="chat in chats" :key="chat.id" class="inbox-item" @click="selectChat(chat.id)">
+                            <img :src="chat.photoURL || 'https://via.placeholder.com/50'" alt="User" class="rounded-circle" width="50">
+                            <div class="inbox-info">
+                                <h5>{{ chat.username }}</h5>
+                                <p>{{ chat.lastMessage }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="col-md-9 col-sm-12 chat-area">
+                    <div v-if="selectedChat">
+                        <div class="chat-header">
+                            <img :src="sellerProfileImageURL || 'https://via.placeholder.com/50'" alt="Seller" class="rounded-circle seller-profile" width="50">
+                            <h4>{{ sellerUsername }}</h4>
+                            <p class="product-details">
+                                Inquiring about: {{ productName }}
+                            </p>
+                            <img v-if="productImageURL" :src="productImageURL" alt="Product" class="product-image-large">
+                        </div>                        
+        
+                        <div class="chat-messages">
+                            <div v-for="(message, index) in messages" :key="index" :class="{'message-sent': message.senderId === userId, 'message-received': message.senderId !== userId}">
+                                <p>{{ message.text }}</p>
+                                <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+                            </div>
+                        </div>
+
+                        <div class="chat-input">
+                            <input type="text" v-model="newMessage" placeholder="Type your message..." @keyup.enter="sendMessage">
+                            <button @click="sendMessage" class="btn-send"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <p>Select a chat to start messaging</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script type="module">
+        import Navbar from './Navbar.js';
+        const app = Vue.createApp({
+            components: {
+                Navbar
+            }
+        });
+        app.mount('#app');
+    </script>
+    <script type="module">
+        import { app as firebaseApp } from "./firebase.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, query, where, onSnapshot, orderBy, Timestamp, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+
+        const vueApp = Vue.createApp({
+            data() {
+                return {
+                    userId: null,
+                    sellerId: null,
+                    sellerUsername: null,
+                    sellerProfileImageURL: "https://via.placeholder.com/50",
+                    productName: null,
+                    productImageURL: null,
+                    chats: [],
+                    selectedChat: null,
+                    messages: [],
+                    newMessage: '',
+                    isLoading: true,
+                    error: null,
+                    searchQuery: ''
+                };
+            },
+            computed: {
+                filteredChats() {
+                    if (!this.searchQuery) return this.chats;
+                    const query = this.searchQuery.toLowerCase();
+                    return this.chats.filter(chat => 
+                        chat.username.toLowerCase().includes(query) ||
+                        chat.lastMessage.toLowerCase().includes(query)
+                    );
+                }
+            },
+            methods: {
+                async initializeChat() {
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        this.sellerId = params.get('sellerId');
+                        this.sellerUsername = params.get('username');
+                        this.sellerProfileImageURL = params.get('profilePicUrl');
+                        this.productName = params.get('productName');
+                        this.productImageURL = params.get('productImageURL');
+
+                        if (!this.sellerId) {
+                            throw new Error('Seller ID not found in URL parameters');
+                        }
+
+                        // Automatically load the chat with the seller
+                        await this.loadOrCreateChat();
+                        await this.loadExistingChats();
+
+                        this.isLoading = false;
+                    } catch (error) {
+                        console.error('Error initializing chat:', error);
+                        this.error = error.message;
+                        this.isLoading = false;
+                    }
+                },                
+        
+                async loadOrCreateChat() {
+                    const chatQuery = query(
+                        collection(db, "chats"),
+                        where("participants", "array-contains", this.userId)
+                    );
+                
+                    const querySnapshot = await getDocs(chatQuery);
+                    const existingChat = querySnapshot.docs.find(doc => {
+                        const data = doc.data();
+                        return data.participants && data.participants.includes(this.sellerId);
+                    });
+                
+                    if (existingChat) {
+                        // Chat exists, select it automatically
+                        console.log("Existing chat found with ID:", existingChat.id);
+                        this.selectChat(existingChat.id);
+                    } else {
+                        // Create new chat with both participants included
+                        const chatData = {
+                            participants: [this.userId, this.sellerId],
+                            lastMessage: "",
+                            timestamp: Timestamp.now(),
+                            productName: this.productName,
+                            productImageURL: this.productImageURL,
+                            sellerInfo: {
+                                username: this.sellerUsername,
+                                profilePicUrl: this.sellerProfileImageURL
+                            }
+                        };
+                
+                        const newChatRef = await addDoc(collection(db, "chats"), chatData);
+                        console.log("New chat created with ID:", newChatRef.id);
+                        this.selectChat(newChatRef.id);  // Automatically open the newly created chat
+                    }
+                },                                              
+                async loadSellerProfile(sellerId) {
+                    try {
+                        const userDocRef = doc(db, "users", sellerId);
+                        const userDoc = await getDoc(userDocRef);
+                
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data();
+                            this.sellerUsername = userData.username || "Seller";
+                            this.sellerProfileImageURL = userData.uploadedImageUrl || "https://via.placeholder.com/120";
+                        } else {
+                            console.warn("Seller profile not found for ID:", sellerId);
+                            this.sellerUsername = "Unknown Seller";
+                            this.sellerProfileImageURL = "https://via.placeholder.com/120";
+                        }
+                    } catch (error) {
+                        console.error("Error loading seller profile:", error);
+                        this.sellerUsername = "Unknown Seller";
+                        this.sellerProfileImageURL = "https://via.placeholder.com/120";
+                    }
+                },
+                async loadExistingChats() {
+                    const chatsQuery = query(
+                        collection(db, "chats"),
+                        where("participants", "array-contains", this.userId),
+                        orderBy("timestamp", "desc")
+                    );
+
+                    onSnapshot(chatsQuery, async (snapshot) => {
+                        const chatsData = [];
+                        for (const docSnap of snapshot.docs) {
+                            const chatData = docSnap.data();
+                            const otherUserId = chatData.participants.find(id => id !== this.userId);
+                    
+                            if (!otherUserId) {
+                                console.warn("No other user found in chat participants for chat:", docSnap.id);
+                                continue; // Skip this loop iteration if `otherUserId` is undefined
+                            }
+
+                            // Get other user's info
+                            const userDoc = await getDoc(doc(db, "users", otherUserId));
+                            const userData = userDoc.data() || {};
+
+                            chatsData.push({
+                                id: docSnap.id,
+                                username: userData.username || userData.email || 'Unknown User',
+                                photoURL: userData.uploadedImageUrl || "https://via.placeholder.com/50",
+                                lastMessage: chatData.lastMessage,
+                                timestamp: chatData.timestamp,
+                                productName: chatData.productName
+                            });
+                        }
+                        this.chats = chatsData;
+                    });
+                },
+
+                async selectChat(chatId) {
+                    console.log("selectChat called with chatId:", chatId);
+                    const chat = this.chats.find(chat => chat.id === chatId);
+                    if (chat) {
+                        this.selectedChat = chat;
+                        const otherUserId = chat.participants?.find(id => id !== this.userId);
+                        if (otherUserId) {
+                            await this.loadSellerProfile(otherUserId);
+                        }
+                        this.loadMessages(chatId);
+                    } else {
+                        console.log("Chat not found in chats list, loading manually");
+                        // Fallback to load directly if not in `this.chats`
+                        this.selectedChat = { id: chatId };
+                        const chatDoc = await getDoc(doc(db, "chats", chatId));
+                        if (chatDoc.exists()) {
+                            const chatData = chatDoc.data();
+                            const otherUserId = chatData.participants?.find(id => id !== this.userId);
+                            if (otherUserId) {
+                                await this.loadSellerProfile(otherUserId);
+                            }
+                        }
+                        this.loadMessages(chatId);
+                    }
+                },                             
+
+                async loadMessages(chatId) {
+                    console.log("Loading messages for chatId:", chatId);
+                    const messagesQuery = query(
+                        collection(db, "chats", chatId, "messages"),
+                        orderBy("timestamp")
+                    );
+                
+                    onSnapshot(messagesQuery, (snapshot) => {
+                        this.messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        console.log("Loaded messages:", this.messages);
+                    });
+                },                
+
+                async sendMessage() {
+                    if (!this.newMessage.trim() || !this.selectedChat) return;
+
+                    const message = {
+                        text: this.newMessage.trim(),
+                        senderId: this.userId,
+                        timestamp: Timestamp.now()
+                    };
+
+                    await addDoc(collection(db, "chats", this.selectedChat.id, "messages"), message);
+
+                    await setDoc(doc(db, "chats", this.selectedChat.id), {
+                        lastMessage: message.text,
+                        timestamp: message.timestamp,
+                    }, { merge: true });
+
+                    this.newMessage = '';
+                },
+
+                formatTime(timestamp) {
+                    if (!timestamp) return "";
+                    const date = timestamp.toDate();
+                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+            },
+
+            mounted() {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        this.userId = user.uid;
+                        this.initializeChat(); // Automatically initialize and open chat on load
+                    } else {
+                        // Redirect to login page
+                        const currentUrl = encodeURIComponent(window.location.href);
+                        window.location.href = `login.html?redirect=${currentUrl}`;
+                    }
+                });
+            }
+        });
+
+        vueApp.mount('#app');
+    </script>
+</body>
+</html>

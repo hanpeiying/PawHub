@@ -58,7 +58,9 @@
                     </span>
                     <span>(5 Customer Reviews)</span>
                 </div>
-                <button class="chat-btn"><i class="fas fa-comment"></i> Chat</button>
+                <button class="chat-btn" onclick="openChat('sellerIdHere', 'usernameHere', 'profilePicUrlHere', 'productNameHere')">
+                    <i class="fas fa-comment"></i> Chat
+                </button>
             </div>
         </div>
     </div>
@@ -102,6 +104,28 @@
             console.log(params);
             return params.get('id'); // Get the 'id' query parameter from the URL
         }
+        function openChat(sellerId, username, profilePicUrl, productName, productImageURL) {
+            // Get the current user's auth state
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+            
+            if (!currentUser) {
+                // If user is not logged in, redirect to login page
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+        
+            // Encode parameters to ensure they are safe for use in URLs
+            const params = new URLSearchParams({
+                sellerId: sellerId,
+                username: username,
+                profilePicUrl: profilePicUrl || '',
+                productName: productName,
+                productImageURL: productImageURL, // Include productImageURL in the query
+                productId: getProductIdFromURL() // Include the product ID
+            });
+            window.location.href = `chat-buyerpov.html?${params.toString()}`;
+        }        
 
         // Function to load and display the product details
         async function loadProductDetails() {
@@ -130,7 +154,7 @@
         }
 
         // Function to display product details on the page
-        function displayProductDetails(product) {
+        async function displayProductDetails(product) {
             document.getElementById('productTitle').textContent = product.title;
             document.getElementById('productPrice').textContent = `S$${product.price}`;
             document.getElementById('productDetailsTable').innerHTML = `
@@ -142,7 +166,10 @@
                     <td>Description</td>
                     <td>${product.description || 'No description available'}</td>
                 </tr>`;
-
+        
+            // Set productImageURL to the first image in the product's imageURLs array
+            const productImageURL = product.imageURLs && product.imageURLs.length > 0 ? product.imageURLs[0] : '';
+        
             // Populate image carousel
             const carouselInner = document.querySelector('.carousel-inner');
             carouselInner.innerHTML = ''; // Clear existing content
@@ -153,7 +180,32 @@
                         <img src="${url}" class="d-block w-100" alt="Product Image" onclick="enlargeImage('${url}')">
                     </div>`;
             });
-        }
+        
+            const userDocRef = doc(db, "users", product.userUID);
+            try {
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    
+                    // Update the chat button to include seller information and product image URL
+                    const chatButton = document.querySelector('.chat-btn');
+                    chatButton.onclick = () => openChat(
+                        product.userUID,
+                        userData.username || userData.email,
+                        userData.profilePicUrl || '',
+                        product.title,
+                        productImageURL // Pass product image URL here
+                    );
+                    
+                    // Display seller information
+                    document.getElementById('sellerUsername').innerHTML = `
+                        <i class="fas fa-paw"></i> ${userData.username || userData.email}
+                    `;
+                }
+            } catch (error) {
+                console.error("Error fetching seller details:", error);
+            }
+        }        
 
         // Function to load and display seller details
         async function loadSellerDetails(userUID) {
@@ -162,16 +214,18 @@
             try {
                 const userDocRef = doc(db, "users", userUID); // Assuming 'users' collection contains seller info
                 const userDoc = await getDoc(userDocRef);
-
+        
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    sellerUsernameElement.innerHTML = `<i class="fas fa-paw"></i> ${userData.email || 'Seller'}`; // Display seller's email or name
+                    // Display only the username, fallback to "Unknown User" if username is missing
+                    sellerUsernameElement.innerHTML = `<i class="fas fa-paw"></i> ${userData.username || "Unknown User"}`;
                 } else {
-                    sellerUsernameElement.textContent = `${userUID}`; 
+                    // If user data is not found, set default "Unknown User"
+                    sellerUsernameElement.innerHTML = `<i class="fas fa-paw"></i> Unknown User`;
                 }
             } catch (error) {
                 console.error("Error fetching seller details:", error);
-                sellerUsernameElement.textContent = `Seller UID: ${userUID}`; 
+                sellerUsernameElement.innerHTML = `<i class="fas fa-paw"></i> Unknown User`;
             }
         }
 

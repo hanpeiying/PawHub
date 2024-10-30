@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - PawHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/chat.css">
+    <link rel="stylesheet" href="styles/stylenav.css">
+</head>
+<body>
+    <div id="app">
+        <Navbar></Navbar>
+        
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar for Inbox -->
+                <div class="col-md-3 col-sm-12 chat-sidebar">
+                    <h4>Inbox</h4>
+                    <div class="inbox-list">
+                        <div v-for="chat in chats" :key="chat.id" class="inbox-item" @click="selectChat(chat.id)">
+                            <img :src="chat.photoURL || 'https://via.placeholder.com/50'" alt="User" class="rounded-circle" width="50">
+                            <div class="inbox-info">
+                                <h5>{{ chat.username }}</h5>
+                                <p>{{ chat.lastMessage }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="col-md-9 col-sm-12 chat-area">
+                    <div v-if="selectedChat">
+                        <!-- Seller and Product Details Section -->
+                        <div class="chat-header">
+                            <img :src="sellerProfileImageURL || 'https://via.placeholder.com/120'" alt="Seller" class="rounded-circle" width="50">
+                            <h4>{{ sellerUsername }}</h4>
+                            <p class="product-details">
+                                Inquiring about: {{ productName }}
+                                <img v-if="productImageURL" :src="productImageURL" alt="Product" width="50">
+                            </p>
+                        </div>                        
+                        
+                        <div class="chat-messages">
+                            <div v-for="(message, index) in messages" :key="index" :class="{'message-sent': message.senderId === userId, 'message-received': message.senderId !== userId}">
+                                <p>{{ message.text }}</p>
+                                <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+                            </div>
+                        </div>
+
+                        <div class="chat-input">
+                            <input type="text" v-model="newMessage" placeholder="Type your message..." @keyup.enter="sendMessage">
+                            <button @click="sendMessage" class="btn-send"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <p>Select a chat to start messaging</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script type="module">
+        import Navbar from './Navbar.js';
+        const app = Vue.createApp({
+            components: {
+                Navbar
+            }
+        });
+        app.mount('#app');
+    </script>
+    <script type="module">
+        import { app as firebaseApp } from "./firebase.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, query, where, onSnapshot, orderBy, Timestamp, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        const vueApp = Vue.createApp({
+            data() {
+                return {
+                    userId: null,
+                    chats: [],
+                    selectedChat: null,
+                    messages: [],
+                    sellerProfileImageURL: "https://via.placeholder.com/50", // Initial placeholder
+                    sellerUsername: "Seller", // Placeholder username
+                    productName: "",
+                    productImageURL: "" 
+                };
+            },
+            methods: {
+                async initializeChat(productId, productName, productImageURL) {
+                    const chatData = {
+                        participants: [this.userId, sellerId],
+                        lastMessage: "",
+                        timestamp: Timestamp.now(),
+                        productId: productId,
+                        productName: productName,
+                        productImageURL: productImageURL
+                    };
+                
+                    // Save this data to Firestore only if a new chat is created
+                    const chatDoc = await addDoc(collection(db, "chats"), chatData);
+                    this.selectedChat = chatDoc.id;
+                },                
+                async loadSellerProfile(sellerId) {
+                    try {
+                        const userDocRef = doc(db, "users", sellerId);
+                        const userDoc = await getDoc(userDocRef);
+                
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data();
+                            this.sellerUsername = userData.username || "Seller";
+                            this.sellerProfileImageURL = userData.uploadedImageUrl || "https://via.placeholder.com/120";
+                        } else {
+                            console.warn("Seller profile not found for ID:", sellerId);
+                            this.sellerUsername = "Unknown Seller";
+                            this.sellerProfileImageURL = "https://via.placeholder.com/120";
+                        }
+                    } catch (error) {
+                        console.error("Error loading seller profile:", error);
+                        this.sellerUsername = "Unknown Seller";
+                        this.sellerProfileImageURL = "https://via.placeholder.com/120";
+                    }
+                },
+                async loadChats() {
+                    const chatsQuery = query(
+                        collection(db, "chats"),
+                        where("participants", "array-contains", this.userId),
+                        orderBy("timestamp", "desc")
+                    );
+                
+                    onSnapshot(chatsQuery, async (snapshot) => {
+                        const chatPromises = snapshot.docs.map(async (docSnap) => {
+                            const data = docSnap.data();
+                            const participants = data.participants || [];
+                            const otherUserId = participants.find(id => id !== this.userId) || null;
+                            
+                            // Fetch other user's profile data
+                            if (otherUserId) {
+                                const userDocRef = doc(db, "users", otherUserId);
+                                const userDoc = await getDoc(userDocRef);
+                                const userData = userDoc.exists() ? userDoc.data() : {};
+                
+                                console.log("Loaded product image URL:", data.productImageURL); // Debugging line
+                
+                                return {
+                                    id: docSnap.id,
+                                    ...data,
+                                    otherUserId,
+                                    username: userData.username || "Unknown User",
+                                    photoURL: userData.uploadedImageUrl || "https://via.placeholder.com/50",
+                                    lastMessage: data.lastMessage || "",
+                                    productName: data.productName || "", // Load product details
+                                    productImageURL: data.productImageURL || "" // Load product image if needed
+                                };
+                            } else {
+                                return {
+                                    id: docSnap.id,
+                                    ...data,
+                                    username: "Unknown User",
+                                    photoURL: "https://via.placeholder.com/50",
+                                    lastMessage: data.lastMessage || "",
+                                    productName: data.productName || "", // Load product details
+                                    productImageURL: data.productImageURL || "" // Load product image if needed
+                                };
+                            }
+                        });
+                
+                        this.chats = await Promise.all(chatPromises);
+                    });
+                },
+                async checkProductAvailability(productId) {
+                    try {
+                        const productRef = doc(db, "products", productId);
+                        const productDoc = await getDoc(productRef);
+            
+                        if (productDoc.exists()) {
+                            const productData = productDoc.data();
+                            
+                            // Check if the product is marked as sold or deleted
+                            if (productData.isAvailable === false) {
+                                // Product is not available, clear product details
+                                this.productName = "";
+                                this.productImageURL = "";
+                            } else {
+                                // Product is available, set product details
+                                this.productName = productData.name;
+                                this.productImageURL = productData.imageUrl || "";
+                            }
+                        } else {
+                            // Product does not exist, clear product details
+                            this.productName = "";
+                            this.productImageURL = "";
+                        }
+                    } catch (error) {
+                        console.error("Error checking product availability:", error);
+                        this.productName = "";
+                        this.productImageURL = "";
+                    }
+                },                                        
+                async selectChat(chatId) {
+                    const chat = this.chats.find(chat => chat.id === chatId);
+                    if (chat) {
+                        this.selectedChat = chat;
+                        this.loadMessages(chatId);
+            
+                        // Load seller profile based on otherUserId
+                        if (chat.otherUserId) {
+                            await this.loadSellerProfile(chat.otherUserId);
+                        }
+            
+                        // Check product availability and set product details for display
+                        if (chat.productId) {
+                            await this.checkProductAvailability(chat.productId);
+                        }
+                    }
+                },                                              
+                async loadMessages(chatId) {
+                    const messagesQuery = query(
+                        collection(db, "chats", chatId, "messages"),
+                        orderBy("timestamp")
+                    );
+                    onSnapshot(messagesQuery, snapshot => {
+                        this.messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    });
+                },
+                async sendMessage() {
+                    // Ensure there’s a message to send and a selected chat
+                    if (!this.newMessage.trim() || !this.selectedChat) return;
+            
+                    // Prepare the message object
+                    const message = {
+                        text: this.newMessage.trim(),        // Message content
+                        senderId: this.userId,               // Current user ID as the sender
+                        timestamp: Timestamp.now()           // Current timestamp
+                    };
+            
+                    try {
+                        // Add the new message to the 'messages' subcollection of the selected chat
+                        await addDoc(collection(db, "chats", this.selectedChat.id, "messages"), message);
+            
+                        // Update the main chat document with the last message for inbox previews
+                        await setDoc(doc(db, "chats", this.selectedChat.id), {
+                            lastMessage: message.text,
+                            timestamp: message.timestamp
+                        }, { merge: true });
+            
+                        // Clear the input field after sending
+                        this.newMessage = '';
+            
+                    } catch (error) {
+                        console.error("Error sending message:", error);
+                    }
+                },
+                formatTime(timestamp) {
+                    if (!timestamp) return "";
+                    const date = timestamp.toDate();
+                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                },
+            },
+            mounted() {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        this.userId = user.uid;
+                        this.loadChats();
+                    }
+                });
+            }
+        });
+
+        vueApp.mount('#app');
+    </script>
+</body>
+</html>
