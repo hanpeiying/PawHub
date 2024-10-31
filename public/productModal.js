@@ -1,6 +1,6 @@
 import { app } from "./firebase.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { getFirestore, addDoc, collection, doc, updateDoc, query, where, getDocs} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { getFirestore} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
 const auth = getAuth(app);
@@ -31,7 +31,9 @@ export default {
             quantity: '',
             expiryDate: '',
             imageFile: '',
-            downloadURL: ''
+            downloadURL: '',
+            alertMessage: '', // Add this for alert messages
+            showAlert: false
         };
     },
     methods: {
@@ -75,9 +77,41 @@ export default {
                 }
             );
         },
+
+        validateExpiryDate() {
+            if (this.expiryDate) {
+                const selectedDate = new Date(this.expiryDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Clear time to compare dates only
+                
+                // Set date 20 years from today
+                const maxDate = new Date();
+                maxDate.setFullYear(today.getFullYear() + 20);
+
+                if (selectedDate < today) {
+                    this.alertMessage = "Expiry date cannot be in the past.";
+                    this.showAlert = true; // Show the alert message
+                    return false;
+                } else if (selectedDate > maxDate) {
+                    this.alertMessage = "Expiry date must be within 20 years from today.";
+                    this.showAlert = true; // Show the alert message
+                    return false;
+                } else {
+                    this.alertMessage = ''; // Clear error if date is valid
+                    this.showAlert = false; // Hide the alert
+                    return true;
+                }
+            }
+            return false;
+        },
         async addProduct() {
             if (!this.productName || !this.quantity || !this.expiryDate || !this.downloadURL) {
                 alert('Please fill out all fields and upload an image.');
+                return;
+
+            }
+            if (!this.validateExpiryDate()) {
+                // alert(this.expiryError);
                 return;
             }
 
@@ -101,6 +135,8 @@ export default {
             this.expiryDate = '';
             this.imageFile = null;
             this.downloadURL = '';
+            this.alertMessage = ''; // Clear any alert message when form is reset
+            this.showAlert = false; //
         }
     },
     template: `
@@ -110,6 +146,7 @@ export default {
             <div class="modal-content">
                 <span class="close-btn" @click="closeModal">&times;</span>
                 <h2>New Product</h2>
+                 <div v-if="showAlert" class="alert" style="color: red; font-weight: bold;">{{ alertMessage }}</div>
                 <form @submit.prevent="addProduct">
                     <div class="image-upload">
                         <div class="image-placeholder">
@@ -138,7 +175,7 @@ export default {
                     </div>
                     <div class="form-group">
                         <label for="expiryDate">Expiry Date</label>
-                        <input v-model="expiryDate" type="date" required />
+                          <input v-model="expiryDate" type="date" required />
                     </div>
                     <div class="modal-actions">
                         <button type="button" @click="closeModal" class="discard-btn">Discard</button>

@@ -308,3 +308,82 @@ button {
 #confirmationModal{
     display:none;
 }
+
+.deleted-inventory-container {
+    background-color: #f9f4f4; /* Softer, distinct background color */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.deleted-inventory-container h2 {
+    font-size: 24px;
+    color: #8b0000; /* Dark red to signify deletion or archival */
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.deleted-note {
+    font-size: 14px;
+    color: #555;
+    text-align: center;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+.deleted-inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.deleted-inventory-table th, .deleted-inventory-table td {
+    padding: 12px 15px;
+    text-align: center;
+    color: #333;
+}
+
+.deleted-inventory-table th {
+    background-color: #ffdede;
+    color: #8b0000;
+    font-weight: bold;
+}
+
+.deleted-inventory-table td {
+    background-color: #fff5f5;
+}
+
+.deleted-inventory-table tr:hover td {
+    background-color: #ffeaea; /* Light hover effect */
+}
+
+.product-image-small {
+    width: 50px;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.deleted-inventory-table td:first-child {
+    position: relative;
+}
+
+/* .deleted-icon {
+    color: #8b0000;
+    font-size: 18px;
+    margin-right: 8px;
+} */
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: #d9534f; /* Red color */
+    cursor: pointer;
+    font-size: 1.2em;
+}
+
+.delete-icon i {
+    display: inline-block;
+}
+.delete-icon:hover {
+    color: #c9302c; /* Darker red when hovered */
+}

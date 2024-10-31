@@ -1,7 +1,7 @@
 // Firebase setup
 import { app } from "../firebase.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { getFirestore, addDoc, collection, doc, updateDoc, query, where, getDocs} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { getFirestore, addDoc, collection, doc, updateDoc, query, where, getDocs, getDoc, deleteDoc} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
 const auth = getAuth(app);
@@ -21,6 +21,7 @@ onAuthStateChanged(auth, (user) => {
 
         // Load user-specific products after confirming user is logged in
         loadUserProducts(userUID);
+        loadDeletedProducts(userUID);
     } else {
         console.log("No user is logged in");
         alert("You need to be logged in to list an item.");
@@ -68,18 +69,21 @@ export async function loadUserProducts(userId) {
     const q = query(collection(db, 'inventory'), where("userUID", "==", userId));
     try {
         const querySnapshot = await getDocs(q);
-        console.log("Query executed, snapshot size:", querySnapshot.size);
         querySnapshot.forEach(doc => {
-            console.log("hi", doc.id)
             products.push({ id: doc.id, ...doc.data() });
         });
-        console.log("User products loaded:", products);
-        allProducts = products; // Update the global list with fetched products
-        console.log("Displaying products:", allProducts);
-        displayProducts(allProducts, currentPage); // Display the loaded products
+        allProducts = products;  // Update the global allProducts array
+        displayProducts(allProducts, currentPage);  // Initial display with all products
     } catch (e) {
         console.error("Error loading products: ", e);
     }
+}
+
+function filterProducts(searchValue) {
+    const filtered = allProducts.filter(product => 
+        product.name.toLowerCase().includes(searchValue)
+    );
+    displayProducts(filtered, 1);  // Start on the first page of filtered results
 }
 
 // Adjust stock and handle the confirmation modal when stock reaches 0
@@ -144,14 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Function to filter products based on the search value
-function filterProducts(searchValue) {
-    return allProducts.filter(product => 
-        product.name.toLowerCase().includes(searchValue)
-    );
-}
+
 
 // Function to render products in the table
-function displayProducts(filteredProducts, page) {
+// Store filtered products for pagination control
+let filteredProducts = [];
+
+function displayProducts(products, page = 1) {
+    currentPage = page;  // Update the current page
+    filteredProducts = products;  // Update the global filteredProducts variable
+
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const paginatedProducts = filteredProducts.slice(start, end);
@@ -159,7 +165,7 @@ function displayProducts(filteredProducts, page) {
     const tableBody = document.getElementById('productTableBody');
     tableBody.innerHTML = ""; // Clear existing rows
 
-    paginatedProducts.forEach((product, index) => {
+    paginatedProducts.forEach((product) => {
         let stockClass = product.quantity <= 5 ? 'low-stock' : 'sufficient-stock';
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -173,19 +179,18 @@ function displayProducts(filteredProducts, page) {
             <td>${isValidDate(product.expiry) ? formatDate(product.expiry) : 'Invalid Date'}</td>
             <td>${formatDate(product.added)}</td>
             <td>${product.price}</td>
-             <td id="quantity-${product.id}" class="${stockClass}">${product.quantity}</td>
+            <td id="quantity-${product.id}" class="${stockClass}">${product.quantity}</td>
             <td>
                 <button class="minus-btn" onclick="adjustStock('${product.id}', -1)" data-tooltip="Deduct serving">-</button> 
                 <button class="add-btn" onclick="adjustStock('${product.id}', +1)" data-tooltip="Add serving">+</button>                
             </td>
-            
-        
-            `;
+        `;
         tableBody.appendChild(row);
     });
 
-    updatePaginationButtons(filteredProducts);
+    updatePaginationButtons();
 }
+
 
 // Utility functions for date formatting and validation
 function formatDate(isoDateString) {
@@ -212,7 +217,7 @@ function sortTable(column, isAscending, filteredProducts) {
     displayProducts(filteredProducts, currentPage);
     }
 
-    function updatePaginationButtons(filteredProducts) {
+    function updatePaginationButtons() {
         const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
         const paginationContainer = document.querySelector('.pagination');
         paginationContainer.innerHTML = '';
@@ -223,8 +228,7 @@ function sortTable(column, isAscending, filteredProducts) {
         prevButton.disabled = currentPage === 1;
         prevButton.addEventListener('click', () => {
             if (currentPage > 1) {
-                currentPage--;
-                displayProducts(filteredProducts, currentPage);
+                displayProducts(filteredProducts, currentPage - 1);
             }
         });
         paginationContainer.appendChild(prevButton);
@@ -237,10 +241,7 @@ function sortTable(column, isAscending, filteredProducts) {
             if (i === currentPage) {
                 pageButton.classList.add('active');
             }
-            pageButton.addEventListener('click', () => {
-                currentPage = i;
-                displayProducts(filteredProducts, currentPage);
-            });
+            pageButton.addEventListener('click', () => displayProducts(filteredProducts, i));
             paginationContainer.appendChild(pageButton);
         }
     
@@ -250,12 +251,12 @@ function sortTable(column, isAscending, filteredProducts) {
         nextButton.disabled = currentPage === totalPages;
         nextButton.addEventListener('click', () => {
             if (currentPage < totalPages) {
-                currentPage++;
-                displayProducts(filteredProducts, currentPage);
+                displayProducts(filteredProducts, currentPage + 1);
             }
         });
         paginationContainer.appendChild(nextButton);
     }
+    
     
 
     let selectedProductIndex = null;
@@ -269,6 +270,7 @@ function sortTable(column, isAscending, filteredProducts) {
         async function deleteProduct() {
             if (selectedProductIndex !== null) {
                 const productId = allProducts[selectedProductIndex].id;  // Get the product ID
+                await archiveDeletedProduct(productId);
                 
                 try {
                     const productRef = doc(db, 'inventory', productId);
@@ -280,8 +282,10 @@ function sortTable(column, isAscending, filteredProducts) {
                     hideConfirmationModal();
                     displayProducts(allProducts, currentPage);  // Refresh the displayed products
                     
+                    
                     selectedProductIndex = null;  // Reset the selected product index
                     console.log("Product successfully deleted.");
+                    loadDeletedProducts(userUID);
                 } catch (error) {
                     console.error("Error deleting product: ", error);
                 }
@@ -396,6 +400,106 @@ function sortTable(column, isAscending, filteredProducts) {
         modal.classList.remove('show');
     }
 
+    async function archiveDeletedProduct(productId) {
+        try {
+            const productRef = doc(db, 'inventory', productId);
+            const productSnapshot = await getDoc(productRef);
+            
+            if (productSnapshot.exists()) {
+                const productData = productSnapshot.data();
+                await addDoc(collection(db, 'deleted_inventory'), {
+                    ...productData,
+                    deletedAt: new Date().toISOString(),
+                });
+                console.log("Product archived to deleted_inventory:", productData.name);
+            } else {
+                console.log("Product does not exist in inventory.");
+            }
+        } catch (error) {
+            console.error("Error archiving deleted product:", error);
+        }
+    }
+    
+    
+    // async function deleteProduct(productId) {
+    //     if (confirm('Are you sure you want to delete this listing?')) {
+    //         await archiveDeletedProduct(productId); // Archive the product first
+    //         try {
+    //             await deleteDoc(doc(db, 'inventory', productId)); // Delete from inventory
+    //             console.log("Product deleted from inventory.");
+    //             loadUserProducts(userUID); // Refresh the product list
+    //         } catch (error) {
+    //             console.error("Error deleting product:", error);
+    //         }
+    //     }
+    // }
+
+    async function loadDeletedProducts(userId) {
+        const deletedProducts = [];
+        const q = query(collection(db, 'deleted_inventory'), where("userUID", "==", userId));
+        try {
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                deletedProducts.push({ id: doc.id, ...doc.data() });
+            });
+            displayDeletedProducts(deletedProducts);
+        } catch (error) {
+            console.error("Error loading deleted products:", error);
+        }
+    }
+
+    function formatDeletedDate(isoDateString) {
+        const date = new Date(isoDateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+    
+    
+    function displayDeletedProducts(deletedProducts) {
+        const deletedTableBody = document.getElementById('deletedTableBody');
+        deletedTableBody.innerHTML = ""; // Clear existing rows
+    
+        deletedProducts.forEach((product) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><img src="${product.image}" alt="${product.name}" class="product-image-small"></td>
+                <td>${product.name}</td>
+                <td>${product.price}</td>
+                <td>${formatDeletedDate(product.deletedAt)}</td> 
+                <td>
+                <button class="delete-btn" onclick="deletePermanently('${product.id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+                </td>
+            `;
+            console.log('Adding delete icon for product:', product);
+            deletedTableBody.appendChild(row);
+        });
+    }
+
+    async function deletePermanently(productId) {
+        if (confirm('Do you want to permanently delete this product?')) {
+            try {
+                // Delete the product from Firestore 'deleted_inventory' collection
+                const productRef = doc(db, 'deleted_inventory', productId);
+                await deleteDoc(productRef);
+    
+                // Log the deletion and refresh the deleted inventory display
+                console.log(`Product with ID: ${productId} permanently deleted.`);
+                loadDeletedProducts(userUID); // Reload the deleted products to update the table
+            } catch (error) {
+                console.error('Error permanently deleting product:', error);
+            }
+        }
+    }
+    window.deletePermanently = deletePermanently;
+    
+    // Call this function when you load the page
+ 
+    
+
 // Example product to test adding a new product to Firestore
 // function createAndAddProduct() {
 //     if (userUID) {
@@ -414,4 +518,5 @@ function sortTable(column, isAscending, filteredProducts) {
 //         console.error("User UID is not available. Ensure the user is logged in before adding a product.");
 //     }
 // }
+
 
