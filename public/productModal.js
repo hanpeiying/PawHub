@@ -60,6 +60,24 @@ export default {
             this.downloadURL = '';
             console.log("Image deleted");
         },
+        formatPriceInput() {
+            if (this.price) {
+                // Allow only valid number input with up to 2 decimal places
+                const formattedValue = this.price.replace(/[^0-9.]/g, ''); // Remove non-numeric characters except '.'
+                const parts = formattedValue.split('.');
+    
+                if (parts.length > 2) {
+                    // Prevent multiple decimal points
+                    this.price = parts[0] + '.' + parts.slice(1).join('');
+                } else if (parts[1] && parts[1].length > 2) {
+                    // Limit to 2 decimal places
+                    this.price = `${parts[0]}.${parts[1].slice(0, 2)}`;
+                } else {
+                    this.price = formattedValue;
+                }
+            }
+        },
+    
         async uploadImageToFirebase(file) {
             if (!file) return;
             const storageRef = ref(storage, `inventory/productImages/${userUID}/${file.name}_${Date.now()}`);
@@ -139,51 +157,59 @@ export default {
             this.showAlert = false; //
         }
     },
-    template: `
-    <div>
-        <button id="addNewProduct" @click="openModal"><i class="fas fa-paw"></i>Add New Product</button>
-        <div v-if="isVisible" class="modal">
-            <div class="modal-content">
-                <span class="close-btn" @click="closeModal">&times;</span>
-                <h2>New Product</h2>
-                 <div v-if="showAlert" class="alert" style="color: red; font-weight: bold;">{{ alertMessage }}</div>
-                <form @submit.prevent="addProduct">
-                    <div class="image-upload">
-                        <div class="image-placeholder">
-                            <div v-if="downloadURL" class="uploaded-image-container">
-                                <img :src="downloadURL" alt="Uploaded Image" style="max-width: 100%; height: auto;" class="uploaded-image" />
-                                <div class="delete-icon" @click="deleteImage"><i class="fas fa-trash"></i></div>
-                            </div>
-                            <div v-else>
-                                Drag image here<br>or<br>
-                                <a href="#" @click="triggerFileInput">Browse image</a>
-                                <input type="file" ref="fileInput" @change="handleImageUpload" style="display:none;" />
-                            </div>
+    // Inside your Vue component
+template: `
+<div>
+    <button id="addNewProduct" @click="openModal"><i class="fas fa-paw"></i>Add New Product</button>
+    <div v-if="isVisible" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" @click="closeModal">&times;</span>
+            <h2>New Product</h2>
+            <div v-if="showAlert" class="alert" style="color: red; font-weight: bold;">{{ alertMessage }}</div>
+            <form @submit.prevent="addProduct">
+                <div class="image-upload">
+                    <div class="image-placeholder">
+                        <div v-if="downloadURL" class="uploaded-image-container">
+                            <img :src="downloadURL" alt="Uploaded Image" class="uploaded-image" />
+                            <div class="delete-icon" @click="deleteImage"><i class="fas fa-trash"></i></div>
+                        </div>
+                        <div v-else>
+                            Drag image here<br>or<br>
+                            <a href="#" @click="triggerFileInput">Browse image</a>
+                            <input type="file" ref="fileInput" @change="handleImageUpload" style="display:none;" />
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="productName">Product Name</label>
-                        <input v-model="productName" type="text" placeholder="Enter product name" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="price">Buying Price</label>
-                        <input v-model="price" type="number" placeholder="Enter buying price" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="serving">Servings</label>
-                        <input v-model="quantity" type="number" placeholder="Enter servings quantity" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="expiryDate">Expiry Date</label>
-                          <input v-model="expiryDate" type="date" required />
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" @click="closeModal" class="discard-btn">Discard</button>
-                        <button type="submit" class="add-btn">Add Product</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="form-group">
+                    <label for="productName">Product Name</label>
+                    <input v-model="productName" type="text" placeholder="Enter product name" required />
+                </div>
+                <div class="form-group">
+                    <label for="price">Buying Price</label>
+                    <input 
+                    v-model="price" 
+                    type="text" 
+                    placeholder="Enter buying price" 
+                   @input="formatPriceInput" 
+                    required
+                />
+                </div>
+                <div class="form-group">
+                    <label for="serving">Servings</label>
+                    <input v-model="quantity" type="number" placeholder="Enter servings quantity" required />
+                </div>
+                <div class="form-group">
+                    <label for="expiryDate">Expiry Date</label>
+                    <input v-model="expiryDate" type="date" required />
+                </div>
+                <div class="modal-actions">
+                    <button type="button" @click="closeModal" class="discard-btn">Discard</button>
+                    <button type="submit" class="add-btn">Add Product</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 `
+
 };

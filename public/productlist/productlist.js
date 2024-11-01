@@ -278,6 +278,7 @@ function sortTable(column, isAscending, filteredProducts) {
                     
                     // Remove the product from the local list
                     allProducts.splice(selectedProductIndex, 1);
+                    currentPage = 1;
                     
                     hideConfirmationModal();
                     displayProducts(allProducts, currentPage);  // Refresh the displayed products

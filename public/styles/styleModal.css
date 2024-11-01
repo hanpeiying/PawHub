@@ -287,3 +287,11 @@ button{
   font-size: 0.9em;
   margin-top: 5px;
 }
+
+.uploaded-image-container img {
+  width: 200px; /* Set fixed width */
+  height: 200px; /* Set fixed height */
+  object-fit: cover; /* Ensure image fits within the container */
+  border: 1px solid #ccc; /* Optional: add border for better appearance */
+  border-radius: 5px; /* Optional: add rounded corners */
+}
