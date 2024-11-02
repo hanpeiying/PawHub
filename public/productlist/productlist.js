@@ -367,9 +367,22 @@ function sortTable(column, isAscending, filteredProducts) {
             }
         }
 
+    function searchProduct() {
+        if (selectedProductIndex !== null) {
+            const productName = allProducts[selectedProductIndex]?.name;
+            if (productName) {
+                localStorage.setItem("searchItemName", productName);
+                window.location.href = "./shop.html"; // Debug
+            } else {
+                console.error("Product name not found");
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const deleteBtn = document.getElementById('deleteProductBtn');
         const replenishBtn = document.getElementById('replenishProductBtn');
+        const searchBtn = document.getElementById('searchProductBtn');
         const cancelBtn = document.getElementById('cancelBtn');
 
         // Ensure buttons are present before adding event listeners
@@ -378,6 +391,9 @@ function sortTable(column, isAscending, filteredProducts) {
         }
         if (replenishBtn) {
             replenishBtn.addEventListener('click', replenishProduct);
+        }
+        if (searchBtn) {
+            searchBtn.addEventListener('click', searchProduct); 
         }
         if (cancelBtn) {
             cancelBtn.addEventListener('click', hideConfirmationModal);

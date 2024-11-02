@@ -111,15 +111,19 @@
         <p>Are you sure you want to remove this product?</p>
         <button id="deleteProductBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> Delete</button>
         <button id="replenishProductBtn" class="replenish-btn"><i class="fas fa-sync-alt"></i> Replenish</button>
+        <button id="searchProductBtn" class="search-btn"><i class="fas fa-search"></i> Search Product</button>
         <button id="cancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+        
     </div>
 </div>
+
 
 <!-- Vue Application Code should be outside the template -->
 <script type="module">
     import productModal from './productModal.js';
     import { addProductToFirestore, loadUserProducts } from './productlist/productlist.js';
     import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    
 
     const auth = getAuth();
     const currentUser = auth.currentUser;

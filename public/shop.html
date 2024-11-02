@@ -245,8 +245,8 @@
             );
         
             const querySnapshot = await getDocs(listingsQuery);
+            allProducts = []; // Clear the array to avoid duplicates
             if (!querySnapshot.empty) {
-                allProducts = []; // Clear the array to avoid duplicates
                 for (const doc of querySnapshot.docs) {
                     const listing = doc.data();
                     const each_id = doc.id;  // Get the document ID
@@ -256,14 +256,42 @@
                     // Add the product to the array, including ageGroup
                     allProducts.push({ ...listing, each_id, dogAgeGroup });
                 }
-        
                 // Initially load the first batch of products
                 productsShown = 0;  // Reset the number of products shown
                 loadBatchOfProducts();  // Load the first batch
             }
         }
 
-        loadAllListings();
+            // Inventory to Shop Auto-Search-Product Function  
+            document.addEventListener('DOMContentLoaded', async () => {
+                const searchInput = document.getElementById('searchInput');
+                const storedProductName = localStorage.getItem("searchItemName");
+
+                // Clear allProducts array to avoid duplicates
+                allProducts = [];
+
+                // Wait for all products to load
+                await loadAllListings();  // Ensure allProducts is populated first
+
+                if (storedProductName) {
+                    searchInput.value = storedProductName;  // Set the input value for search
+                    searchInput.placeholder = `Searching for ${storedProductName}...`;  // Set a placeholder message
+                    localStorage.removeItem("searchItemName");  // Clear the item from localStorage
+
+                    // Apply the search immediately and load only matching products
+                    const filteredProducts = allProducts.filter((product, index, self) => 
+                        product.title.toLowerCase() === storedProductName.toLowerCase() &&
+                        index === self.findIndex(p => p.title === product.title)
+                    );
+                    
+                    // Display only the matching products
+                    loadProducts(filteredProducts);
+                    
+                    // Hide "Show More" and "Show Less" buttons, as only one product should be displayed
+                    showMoreBtn.style.display = 'none';
+                    showLessBtn.style.display = 'none';
+                }
+            });
 
 
         searchInput.addEventListener('input', () => {
