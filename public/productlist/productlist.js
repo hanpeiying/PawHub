@@ -165,9 +165,12 @@ function displayProducts(products, page = 1) {
     const tableBody = document.getElementById('productTableBody');
     tableBody.innerHTML = ""; // Clear existing rows
 
-    paginatedProducts.forEach((product) => {
+    paginatedProducts.forEach((product,index) => {
         let stockClass = product.quantity <= 5 ? 'low-stock' : 'sufficient-stock';
         const row = document.createElement('tr');
+        row.draggable = true;  // Make the row draggable
+        row.dataset.index = index;  // Store index as a data attribute
+
         row.innerHTML = `
             <td><input type="checkbox"></td>
             <td>
@@ -185,12 +188,50 @@ function displayProducts(products, page = 1) {
                 <button class="add-btn" onclick="adjustStock('${product.id}', +1)" data-tooltip="Add serving">+</button>                
             </td>
         `;
+
+        // Add drag event listeners
+        row.addEventListener('dragstart', handleDragStart);
+        row.addEventListener('dragover', handleDragOver);
+        row.addEventListener('drop', handleDrop);
+        row.addEventListener('dragend', handleDragEnd);
+        
         tableBody.appendChild(row);
     });
 
     updatePaginationButtons();
 }
 
+let dragStartIndex;
+
+function handleDragStart(event) {
+    dragStartIndex = event.target.closest('tr').dataset.index;  // Get the starting index
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', event.target.outerHTML);
+    event.target.classList.add('dragging');
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(event) {
+    event.stopPropagation();
+
+    const dragEndIndex = event.target.closest('tr').dataset.index;  // Get the ending index
+
+    // Swap items in the array
+    const temp = filteredProducts[dragStartIndex];
+    filteredProducts[dragStartIndex] = filteredProducts[dragEndIndex];
+    filteredProducts[dragEndIndex] = temp;
+
+    // Redisplay products
+    displayProducts(filteredProducts, currentPage);
+}
+
+function handleDragEnd(event) {
+    event.target.classList.remove('dragging');
+}
 
 // Utility functions for date formatting and validation
 function formatDate(isoDateString) {

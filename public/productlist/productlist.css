@@ -74,6 +74,10 @@ td{
     background-color: lightcyan;
 }
 
+.dragging {
+    opacity: 0.5;
+}
+
 .low-stock, .sufficient-stock {
     background-color: #C69B9B; /* Light red background */
     color: black;
