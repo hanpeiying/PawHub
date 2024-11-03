@@ -10,11 +10,18 @@
     <link rel="stylesheet" href="styles/stylenav.css">
 </head>
 <body>
+    <script src="./navbar.js" type="module"></script>
+    
     <div id="app">
-        <Navbar></Navbar>
-        
-        <div class="container-fluid">
+        <div class="container-fluid main-content">
             <div class="row">
+
+                <div class="col-12 background backgroundImage">
+                    <img src="images/nav/chat3.png">
+                    <p class="background-text">Chat</p>
+                </div>
+                <div id="nav-component"></div>
+
                 <!-- Sidebar for Inbox -->
                 <div class="col-md-3 col-sm-12 chat-sidebar">
                     <h4>Inbox</h4>
@@ -64,15 +71,7 @@
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script type="module">
-        import Navbar from './Navbar.js';
-        const app = Vue.createApp({
-            components: {
-                Navbar
-            }
-        });
-        app.mount('#app');
-    </script>
+
     <script type="module">
         import { app as firebaseApp } from "./firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";

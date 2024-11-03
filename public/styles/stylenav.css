@@ -11,13 +11,13 @@ html, body {
     background-color: #f9f1e7;
     font-family: 'Poppins Regular', sans-serif;
     font-size: 15px;
-    padding: 10px 20px;
-    position: relative;  /* Start as relative */
+    padding: 10px 20px; /* Same padding as the sticky class */
+    position: relative; /* Start as relative */
     justify-content: space-between;
     top: 0;
     z-index: 1000;
     width: 100%;
-    transition: top 0.3s ease;  /* Smooth transition for sticky */
+    transition: top 0.3s ease, padding 0.3s ease; /* Smooth transition for sticky */
 }
 
 .sticky {
@@ -25,7 +25,8 @@ html, body {
     top: 0;
     z-index: 1000;
     width: 100%;
-    /* box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); Optional shadow */
+    padding: 10px 20px; /* Ensure the same padding for consistency */
+    background-color: #f9f1e7; /* Ensure consistent background */
 }
 
 /* Logo styling */

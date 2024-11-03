@@ -11,6 +11,8 @@
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
+    
+
     <style>
         html, body {
             height: 100%;
@@ -19,7 +21,6 @@
             background-color: #F9F1E7;
         }
         body{
-            padding-top: 80px;
             font-family: 'Poppins Regular', sans-serif;
         }
 
@@ -168,27 +169,66 @@
                 opacity: 1;
             }
 
+            /* For Shop img */
+            .background {
+                position: relative;
+                width: 100%;
+                height: 200px;
+                overflow: hidden;
+                margin: 0; /* Ensures no additional margin */
+                padding: 0;
+            }
+
+            .background img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block; /* Removes any default gap below the image */
+            }
+            .background-text {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-family: 'Hangyaboly';
+                font-size: 45px;
+                font-weight: bold;
+                text-align: center;
+                z-index: 1;
+                white-space: normal;
+                padding: 0 10px;
+                text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7); /* Shadow with opacity */
+            }
+
+            /* For Shop img */
+
     </style>
 </head>
 
 <body>
 
+    <!--for nav bar-->
     <div id="app">
-        <!-- Header Section (Navbar) -->
-        <Navbar></Navbar>
-    <script type="module">
-        import Navbar from './navbar.js';
-    
-        // Create and mount the Vue app after the DOM is ready
-        const app = Vue.createApp({
-            components: {
-                Navbar
-            }
-        });
-    
-        app.mount('#app'); // Mount the app to the #app element
-    </script>
+
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12 background">
+                    <img src="images/nav/shop.png">
+                    <p class="background-text">Buy & Sell</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Component -->
+        <div id="nav-component"></div>
+
     </div>
+    <!-- Scripts -->
+    <script src="./navbar.js" type="module"></script>
+    <!--for nav bar-->
+
+
     <div class="container">
         <h2>List a New Item</h2>
         <form id="dogForm">

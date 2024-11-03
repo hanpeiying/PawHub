@@ -25,7 +25,7 @@ fetch('./nav.html') // Fetching HTML for the component
       mounted() {
         // Set up sticky navbar functionality
         const navbar = document.querySelector(".navbar");
-        const background = document.querySelector(".background"); // Adjust this selector if necessary
+        const background = document.querySelector(".background");
         const stickyOffset = background ? background.offsetHeight : 0;
 
         window.addEventListener("scroll", function () {
@@ -46,6 +46,13 @@ fetch('./nav.html') // Fetching HTML for the component
 
           // Add 'active' class if the href matches the current page
           if (link.getAttribute("href") === currentPage) {
+            link.classList.add("active");
+          }
+          if (
+            (link.getAttribute("href") === "shop.html" &&
+              ["shop.html", "new-listing.html"].includes(currentPage)) ||
+            link.getAttribute("href") === currentPage
+          ) {
             link.classList.add("active");
           }
         });
