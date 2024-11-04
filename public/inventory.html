@@ -10,11 +10,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="./styles/stylenav.css">
     <link rel="stylesheet" href="./styles/styleModal.css">
-    <!-- Use Vue Production build for deployment -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
 
 <body>
+
+
 
 <div id="app">
     <div class="container-fluid">
@@ -42,6 +43,7 @@
             <div class="col-md-4 text-md-right text-center mt-2 mt-md-0">
                 <product-modal @add-product="handleAddProduct"></product-modal>
             </div>
+        </div>
         </div>
 
         <table class="product-list">
@@ -108,14 +110,23 @@
 <!-- Modal for when qty==0 -->
 <div id="confirmationModal" class="modal">
     <div class="modal-content">
-        <p>Are you sure you want to remove this product?</p>
+        <p>Remove or replenish this item?</p>
         <button id="deleteProductBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> Delete</button>
-        <button id="replenishProductBtn" class="replenish-btn"><i class="fas fa-sync-alt"></i> Replenish</button>
+        <!-- <button id="replenishProductBtn" class="replenish-btn"><i class="fas fa-sync-alt"></i> Replenish</button> -->
         <button id="searchProductBtn" class="search-btn"><i class="fas fa-search"></i> Search Product</button>
         <button id="cancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
-        
     </div>
 </div>
+
+<!-- <div id="deleteConfirmation" class="modal">
+    <div class="modal-content">
+        <p class="modal-text">Confirm delete item?</p>
+        <div class="modal-buttons">
+            <button id="confirmDeleteBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> Yes, Delete</button>
+            <button id="confirmCancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+    </div>
+</div> -->
 
 
 <!-- Vue Application Code should be outside the template -->
@@ -156,6 +167,7 @@
     });
 
     app.mount('#app');
+
 </script>
 <script src="./navbar.js" type="module"></script>
 <script type="module" src="productlist/productlist.js"></script>
@@ -163,7 +175,7 @@
 
 <script type="module">
     import { adjustStock } from './productlist/productlist.js';
-    window.adjustStock = adjustStock;  // Attach it to the global window object
+    window.adjustStock = adjustStock;  
 </script>
 
 </body>

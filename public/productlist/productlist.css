@@ -69,6 +69,14 @@ td{
     border-radius: 5px;
 }
 
+.edit-input {
+    width: 100%; /* Makes it take the full width of the cell */
+    max-width: 40px; /* Limit the maximum width for a cleaner look */
+    padding: 4px; /* Add padding for better spacing */
+    box-sizing: border-box; /* Ensures padding doesn’t affect the total width */
+    font-size: inherit; /* Matches the font size of the cell */
+}
+
 /* Row hover effect */
 .product-list tr:hover {
     background-color: lightcyan;

@@ -79,11 +79,24 @@ export async function loadUserProducts(userId) {
     }
 }
 
+// function filterProducts(searchValue) {
+//     const filtered = allProducts.filter(product => 
+//         product.name.toLowerCase().includes(searchValue)
+//     );
+//     displayProducts(filtered, 1);  // Start on the first page of filtered results
+// }
+
 function filterProducts(searchValue) {
+    if (!allProducts) {
+        // If allProducts is undefined or null, return an empty array
+        return [];
+    }
+
     const filtered = allProducts.filter(product => 
-        product.name.toLowerCase().includes(searchValue)
+        product.name.toLowerCase().includes(searchValue.toLowerCase())
     );
-    displayProducts(filtered, 1);  // Start on the first page of filtered results
+    
+    return filtered; // Always return an array
 }
 
 // Adjust stock and handle the confirmation modal when stock reaches 0
@@ -125,7 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sort by expiry date
     sortExpiryBtn.addEventListener('click', () => {
-        const filteredProducts = filterProducts(searchInput.value);
+        const filteredProducts = filterProducts(searchInput.value); // This should always return an array now
+        console.log("Filtered Products:", filteredProducts); // Log to verify filteredProducts is an array
         sortTable('expiry', sortExpiryAscending, filteredProducts);
         toggleSortIcon(sortExpiryBtn, sortExpiryAscending);
         sortExpiryAscending = !sortExpiryAscending;
@@ -147,8 +161,55 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Function to filter products based on the search value
+window.enableEditing=function(productId) {
+    const quantityCell = document.getElementById(`quantity-${productId}`);
+    const currentQuantity = quantityCell.textContent.trim();
 
+    // Replace the quantity cell content with an input field
+    quantityCell.innerHTML = `<input type="number" id="edit-quantity-${productId}" value="${currentQuantity}" class="edit-input" />`;
+
+    // Focus on the input and select the current value
+    const input = document.getElementById(`edit-quantity-${productId}`);
+    input.focus();
+    input.select();
+
+    // Save the new quantity when Enter is pressed or editing is lost
+    input.addEventListener('blur', () => saveQuantity(productId));
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveQuantity(productId);
+    });
+}
+
+async function saveQuantity(productId) {
+    const input = document.getElementById(`edit-quantity-${productId}`);
+    const newQuantity = parseInt(input.value);
+
+    // Check if the new quantity is a valid number
+    if (!isNaN(newQuantity)) {
+        try {
+            // Update quantity in Firestore
+            const productRef = doc(db, 'inventory', productId);
+            await updateDoc(productRef, { quantity: newQuantity });
+
+            // Update the quantity in the local allProducts array
+            const product = allProducts.find(p => p.id === productId);
+            if (product) product.quantity = newQuantity;
+
+            // Refresh the displayed products
+            displayProducts(allProducts, currentPage);
+            console.log("Product quantity updated successfully.");
+        } catch (error) {
+            console.error("Error updating product quantity:", error);
+        }
+    } else {
+        console.error("Invalid quantity entered.");
+        // Revert to the original value if input is invalid
+        const product = allProducts.find(p => p.id === productId);
+        if (product) document.getElementById(`quantity-${productId}`).textContent = product.quantity;
+    }
+}
+
+// Function to filter products based on the search value
 
 // Function to render products in the table
 // Store filtered products for pagination control
@@ -182,7 +243,7 @@ function displayProducts(products, page = 1) {
             <td>${isValidDate(product.expiry) ? formatDate(product.expiry) : 'Invalid Date'}</td>
             <td>${formatDate(product.added)}</td>
             <td>${product.price}</td>
-            <td id="quantity-${product.id}" class="${stockClass}">${product.quantity}</td>
+            <td id="quantity-${product.id}" class="${stockClass}" onclick="enableEditing('${product.id}')">${product.quantity}</td>
             <td>
                 <button class="minus-btn" onclick="adjustStock('${product.id}', -1)" data-tooltip="Deduct serving">-</button> 
                 <button class="add-btn" onclick="adjustStock('${product.id}', +1)" data-tooltip="Add serving">+</button>                
@@ -199,63 +260,71 @@ function displayProducts(products, page = 1) {
     });
 
     updatePaginationButtons();
-}
+    }
 
-let dragStartIndex;
+    let dragStartIndex;
 
-function handleDragStart(event) {
-    dragStartIndex = event.target.closest('tr').dataset.index;  // Get the starting index
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/html', event.target.outerHTML);
-    event.target.classList.add('dragging');
-}
+    function handleDragStart(event) {
+        dragStartIndex = event.target.closest('tr').dataset.index;  // Get the starting index
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/html', event.target.outerHTML);
+        event.target.classList.add('dragging');
+    }
 
-function handleDragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-}
+    function handleDragOver(event) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }
 
-function handleDrop(event) {
-    event.stopPropagation();
+    function handleDrop(event) {
+        event.stopPropagation();
 
-    const dragEndIndex = event.target.closest('tr').dataset.index;  // Get the ending index
+        const dragEndIndex = event.target.closest('tr').dataset.index;  // Get the ending index
 
-    // Swap items in the array
-    const temp = filteredProducts[dragStartIndex];
-    filteredProducts[dragStartIndex] = filteredProducts[dragEndIndex];
-    filteredProducts[dragEndIndex] = temp;
+        // Swap items in the array
+        const temp = filteredProducts[dragStartIndex];
+        filteredProducts[dragStartIndex] = filteredProducts[dragEndIndex];
+        filteredProducts[dragEndIndex] = temp;
 
-    // Redisplay products
-    displayProducts(filteredProducts, currentPage);
-}
+        // Redisplay products
+        displayProducts(filteredProducts, currentPage);
+    }
 
-function handleDragEnd(event) {
-    event.target.classList.remove('dragging');
-}
+    function handleDragEnd(event) {
+        event.target.classList.remove('dragging');
+    }
 
-// Utility functions for date formatting and validation
-function formatDate(isoDateString) {
-    const [year, month, day] = isoDateString.split('-');
-    return `${day}-${month}-${year.slice(-2)}`;
-}
+    // Utility functions for date formatting and validation
+    function formatDate(isoDateString) {
+        const [year, month, day] = isoDateString.split('-');
+        return `${day}-${month}-${year.slice(-2)}`;
+    }
 
-function isValidDate(dateString) {
-    return !isNaN(Date.parse(dateString)) && /^\d{4}-\d{2}-\d{2}$/.test(dateString);
-}
+    function isValidDate(dateString) {
+        return !isNaN(Date.parse(dateString)) && /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+    }
 
-// Toggle the sort icons for expiry and date added
-function toggleSortIcon(iconElement, isAscending) {
-    iconElement.classList.remove('fa-arrow-down-wide-short', 'fa-arrow-up-wide-short');
-    iconElement.classList.add(isAscending ? 'fa-arrow-up-wide-short' : 'fa-arrow-down-wide-short');
-}
+    // Toggle the sort icons for expiry and date added
+    function toggleSortIcon(iconElement, isAscending) {
+        console.log(`Toggling icon for ${iconElement.id}, ascending: ${isAscending}`);
+        iconElement.classList.remove('fa-arrow-down-wide-short', 'fa-arrow-up-wide-short');
+        iconElement.classList.add(isAscending ? 'fa-arrow-up-wide-short' : 'fa-arrow-down-wide-short');
+    }
 
-function sortTable(column, isAscending, filteredProducts) {
-    filteredProducts.sort((a, b) => {
-        const dateA = new Date(a[column]);
-        const dateB = new Date(b[column]);
-        return isAscending ? dateA - dateB : dateB - dateA;
-    });
-    displayProducts(filteredProducts, currentPage);
+    function sortTable(column, isAscending, products) {
+        // Ensure that products is an array
+        if (!Array.isArray(products)) {
+            console.error("Error: products is undefined or not an array.");
+            return;
+        }
+    
+        products.sort((a, b) => {
+            const dateA = new Date(a[column]);
+            const dateB = new Date(b[column]);
+            return isAscending ? dateA - dateB : dateB - dateA;
+        });
+        
+        displayProducts(products, currentPage);
     }
 
     function updatePaginationButtons() {
@@ -298,74 +367,75 @@ function sortTable(column, isAscending, filteredProducts) {
         paginationContainer.appendChild(nextButton);
     }
     
-    
-
     let selectedProductIndex = null;
-
+    
     function hideConfirmationModal() {
         const modal = document.getElementById('confirmationModal');
         modal.style.display = 'none';  // Hide modal
     }
-    
-// Function to delete a product from Firestore
-        async function deleteProduct() {
-            if (selectedProductIndex !== null) {
-                const productId = allProducts[selectedProductIndex].id;  // Get the product ID
-                await archiveDeletedProduct(productId);
-                
-                try {
-                    const productRef = doc(db, 'inventory', productId);
-                    await deleteDoc(productRef);  // Delete the product from Firestore
-                    
-                    // Remove the product from the local list
-                    allProducts.splice(selectedProductIndex, 1);
-                    currentPage = 1;
-                    
-                    hideConfirmationModal();
-                    displayProducts(allProducts, currentPage);  // Refresh the displayed products
-                    
-                    
-                    selectedProductIndex = null;  // Reset the selected product index
-                    console.log("Product successfully deleted.");
-                    loadDeletedProducts(userUID);
-                } catch (error) {
-                    console.error("Error deleting product: ", error);
-                }
-            }
-        }
-    
-// Function to replenish the product (restore to original stock level)
-        async function replenishProduct() {
-            if (selectedProductIndex !== null) {
-                const productId = allProducts[selectedProductIndex].id;  // Get the selected product's ID
-                
-                try {
-                    // Fetch the product from Firestore to get the original serving (stock) value
-                    const productRef = doc(db, 'inventory', productId);
-                    const productSnapshot = await getDoc(productRef);
 
-                    if (productSnapshot.exists()) {
-                        const productData = productSnapshot.data();
-                        const originalStock = productData.serving;  // Get the original stock level
-                        
-                        // Update the 'quantity' field to match the original stock level
-                        await updateDoc(productRef, { quantity: originalStock });
-                        
-                        // Update the local list with the new stock level
-                        allProducts[selectedProductIndex].quantity = originalStock;
-                        
-                        hideConfirmationModal();
-                        displayProducts(allProducts, currentPage);  // Refresh the displayed products
-                        
-                        console.log("Product stock replenished to original level.");
-                    } else {
-                        console.log("Product does not exist in Firestore.");
-                    }
-                } catch (error) {
-                    console.error("Error replenishing product: ", error);
-                }
+    // Function to delete a product from Firestore
+    async function deleteProduct() {
+        // Show a confirmation prompt before proceeding with the delete action
+        const userConfirmed = confirm("Are you sure you want to delete this product?");
+        
+        if (userConfirmed && selectedProductIndex !== null) {
+            const productId = allProducts[selectedProductIndex].id;  // Get the product ID
+            await archiveDeletedProduct(productId);
+            
+            try {
+                const productRef = doc(db, 'inventory', productId);
+                await deleteDoc(productRef);  // Delete the product from Firestore
+                
+                // Remove the product from the local list
+                allProducts.splice(selectedProductIndex, 1);
+                currentPage = 1;
+                
+                hideConfirmationModal();
+                displayProducts(allProducts, currentPage);  // Refresh the displayed products
+                
+                selectedProductIndex = null;  // Reset the selected product index
+                console.log("Product successfully deleted.");
+                loadDeletedProducts(userUID);
+            } catch (error) {
+                console.error("Error deleting product: ", error);
             }
         }
+    }
+
+    
+    // Function to replenish the product (restore to original stock level)
+        // async function replenishProduct() {
+        //     if (selectedProductIndex !== null) {
+        //         const productId = allProducts[selectedProductIndex].id;  // Get the selected product's ID
+                
+        //         try {
+        //             // Fetch the product from Firestore to get the original serving (stock) value
+        //             const productRef = doc(db, 'inventory', productId);
+        //             const productSnapshot = await getDoc(productRef);
+
+        //             if (productSnapshot.exists()) {
+        //                 const productData = productSnapshot.data();
+        //                 const originalStock = productData.serving;  // Get the original stock level
+                        
+        //                 // Update the 'quantity' field to match the original stock level
+        //                 await updateDoc(productRef, { quantity: originalStock });
+                        
+        //                 // Update the local list with the new stock level
+        //                 allProducts[selectedProductIndex].quantity = originalStock;
+                        
+        //                 hideConfirmationModal();
+        //                 displayProducts(allProducts, currentPage);  // Refresh the displayed products
+                        
+        //                 console.log("Product stock replenished to original level.");
+        //             } else {
+        //                 console.log("Product does not exist in Firestore.");
+        //             }
+        //         } catch (error) {
+        //             console.error("Error replenishing product: ", error);
+        //         }
+        //     }
+        // }
 
     function searchProduct() {
         if (selectedProductIndex !== null) {
@@ -380,30 +450,31 @@ function sortTable(column, isAscending, filteredProducts) {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const deleteBtn = document.getElementById('deleteProductBtn');
+        const deleteBtn = document.getElementById('deleteProductBtn'); // Updated to match HTML ID
         const replenishBtn = document.getElementById('replenishProductBtn');
         const searchBtn = document.getElementById('searchProductBtn');
         const cancelBtn = document.getElementById('cancelBtn');
-
+    
         // Ensure buttons are present before adding event listeners
         if (deleteBtn) {
             deleteBtn.addEventListener('click', deleteProduct);
         }
-        if (replenishBtn) {
-            replenishBtn.addEventListener('click', replenishProduct);
-        }
+        // Uncomment if you want to use replenish function
+        // if (replenishBtn) {
+        //     replenishBtn.addEventListener('click', replenishProduct);
+        // }
         if (searchBtn) {
             searchBtn.addEventListener('click', searchProduct); 
         }
         if (cancelBtn) {
             cancelBtn.addEventListener('click', hideConfirmationModal);
         }
-
+        
         // Make hideConfirmationModal globally accessible
         window.hideConfirmationModal = hideConfirmationModal;
     });
 
-// Function to handle image enlargement and zoom
+    // Function to handle image enlargement and zoom
     window.enlargeImage = function(imageSrc) {
         const modal = document.getElementById('imageModal');
         const enlargedImage = document.getElementById('enlargedImage');
@@ -555,8 +626,8 @@ function sortTable(column, isAscending, filteredProducts) {
     window.deletePermanently = deletePermanently;
     
     // Call this function when you load the page
- 
-    
+
+
 
 // Example product to test adding a new product to Firestore
 // function createAndAddProduct() {

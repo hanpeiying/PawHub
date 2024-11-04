@@ -1,0 +1,37 @@
+/* styles.css */
+.inventory-overview {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.inventory-overview h2, .inventory-overview h3 {
+    text-align: center;
+    color: #333;
+}
+
+.category-chart {
+    margin: 20px 0;
+}
+
+.low-stock-alert {
+    margin-top: 20px;
+}
+
+.low-stock-alert table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.low-stock-alert table, th, td {
+    border: 1px solid #ddd;
+}
+
+.low-stock-alert th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+.low-stock-alert th {
+    background-color: #f4f4f4;
+}
