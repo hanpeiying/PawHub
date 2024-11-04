@@ -252,7 +252,7 @@
                     const each_id = doc.id;  // Get the document ID
                     const userInfo = await getUserInfo(listing.userUID); // Fetch user info
                     const dogAgeGroup = userInfo ? userInfo.dogAgeGroup : 'Unknown'; // Get the age group from user data
-                    
+                    const meetupLocation = listing.meetup || 'N/A';
                     // Add the product to the array, including ageGroup
                     allProducts.push({ ...listing, each_id, dogAgeGroup });
                 }
@@ -262,38 +262,51 @@
             }
         }
 
-        // Inventory to Shop Auto-Search-Product Function  
-        document.addEventListener('DOMContentLoaded', async () => {
-            const searchInput = document.getElementById('searchInput');
-            const storedProductName = localStorage.getItem("searchItemName");
+            // Inventory to Shop Auto-Search-Product Function  
+            document.addEventListener('DOMContentLoaded', async () => {
+                const searchInput = document.getElementById('searchInput');
+                const storedProductName = localStorage.getItem("searchItemName");
 
-            // Clear allProducts array to avoid duplicates
-            allProducts = [];
+                // Clear allProducts array to avoid duplicates
+                allProducts = [];
 
-            // Wait for all products to load
-            await loadAllListings();  // Ensure allProducts is populated first
+                // Wait for all products to load
+                await loadAllListings();  // Ensure allProducts is populated first
 
-            if (storedProductName) {
-                searchInput.value = storedProductName;  // Set the input value for search
-                searchInput.placeholder = `Searching for ${storedProductName}...`;  // Set a placeholder message
-                localStorage.removeItem("searchItemName");  // Clear the item from localStorage
+                if (storedProductName) {
+                    searchInput.value = storedProductName;  // Set the input value for search
+                    searchInput.placeholder = `Searching for ${storedProductName}...`;  // Set a placeholder message
+                    localStorage.removeItem("searchItemName");  // Clear the item from localStorage
 
-                // Trigger the 'input' event to activate the search functionality
-                searchInput.dispatchEvent(new Event('input'));
-            }
-        });
+                    // Apply the search immediately and load only matching products
+                    const filteredProducts = allProducts.filter((product, index, self) => 
+                        product.title.toLowerCase() === storedProductName.toLowerCase() &&
+                        index === self.findIndex(p => p.title === product.title)
+                    );
+                    
+                    // Display only the matching products
+                    loadProducts(filteredProducts);
+                    
+                    // Hide "Show More" and "Show Less" buttons, as only one product should be displayed
+                    showMoreBtn.style.display = 'none';
+                    showLessBtn.style.display = 'none';
+                }
+            });
 
-        // Existing search input event listener for manual searches
+
         searchInput.addEventListener('input', () => {
             const searchText = searchInput.value.toLowerCase();
+            // Filter products based on the search input
             const filteredProducts = allProducts.filter(product => 
                 product.title.toLowerCase().includes(searchText)
             );
+            // Display filtered products in the container
             productContainer.innerHTML = '';  // Clear existing products
-            loadProducts(filteredProducts);
-
+            loadProducts(filteredProducts);  // Load filtered products
+        
+            // Hide "Show More" button when filtering, as we're showing all matched products
             showMoreBtn.style.display = filteredProducts.length >= productsToShow ? "block" : "none";
-            showLessBtn.style.display = 'none';
+            showLessBtn.style.display = 'none';  // Hide the "Show Less" button when filtering
         });
 
         // Event listener for "Show More" button to load more listings

@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="styles/stylenav.css">
     <link rel="stylesheet" href="styles/pdtDetails.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAoSXajgbCwxezGaOUlDeLeBA-HLIBHi4g"></script>
 </head>
 
 <body>
@@ -37,32 +38,33 @@
         <div class="product-info">
             <h1 id="productTitle">Loading...</h1>
             <div class="product-price" id="productPrice"></div>
-
+        
+            <div class="separator-line"></div>
+        
             <div class="details-section">
                 <h4>Details</h4>
                 <table class="details-table" id="productDetailsTable"></table>
             </div>
-
+        
             <!-- Seller Section -->
-            <div class="ratings-chat-container">
+            <div class="ratings-chat-container" style="text-align: right; margin-top: 20px;"">
                 <div class="username" id="sellerUsername">
                     <i class="fas fa-paw"></i> Loading Seller Info...
                 </div>
-                <div class="ratings">
-                    <span>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star-half-alt"></i>
-                    </span>
-                    <span>(5 Customer Reviews)</span>
+                <a id="showMapBtn" href="#" class="map-link">
+                    <i class="fas fa-map-marker-alt"></i>  View MeetUp Location
+                </a>
+                <div id="mapModal" class="modal">
+                    <div class="modal-content">
+                        <span id="closeMapBtn" class="close">&times;</span>
+                        <div id="mapContainer" style="height: 400px; width: 100%;"></div>
+                    </div>
                 </div>
                 <button class="chat-btn" onclick="openChat('sellerIdHere', 'usernameHere', 'profilePicUrlHere', 'productNameHere')">
                     <i class="fas fa-comment"></i> Chat
                 </button>
             </div>
-        </div>
+        </div>        
     </div>
 
     <div id="imageModal" class="image-modal">
@@ -163,6 +165,9 @@
                     <td>${product.location || 'Unknown'}</td>
                 </tr>
                 <tr>
+                    <td></td>
+                    <td>${product.meetupLocation || 'Unknown'}</td>
+                <tr>
                     <td>Description</td>
                     <td>${product.description || 'No description available'}</td>
                 </tr>`;
@@ -180,6 +185,25 @@
                         <img src="${url}" class="d-block w-100" alt="Product Image" onclick="enlargeImage('${url}')">
                     </div>`;
             });
+            const prevButton = document.querySelector('.carousel-control-prev');
+    const nextButton = document.querySelector('.carousel-control-next');
+    if (product.imageURLs.length <= 1) {
+        prevButton.style.display = 'none';
+        nextButton.style.display = 'none';
+    } else {
+        prevButton.style.display = 'block';
+        nextButton.style.display = 'block';
+    }
+            
+            if (product.meetupLocation) {
+                geocodeAddress(product.meetupLocation);
+            } else {
+                console.warn('No meetup location provided, falling back to default.');
+                initMapWithCoordinates(1.3039, 103.8318); // Fallback to a default location (Central)
+            }
+            
+            
+        
         
             const userDocRef = doc(db, "users", product.userUID);
             try {
@@ -283,7 +307,96 @@
             modal.classList.remove('show');
         }
 
-        document.addEventListener('DOMContentLoaded', loadProductDetails);
+        function geocodeAddress(address) {
+            const apiKey = 'AIzaSyAoSXajgbCwxezGaOUlDeLeBA-HLIBHi4g'; // Replace with your actual Google Maps API key
+            const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+        
+            fetch(geocodeUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'OK') {
+                        const coordinates = data.results[0].geometry.location;
+                        console.log('Geocoded coordinates:', coordinates);
+                        initMapWithCoordinates(coordinates.lat, coordinates.lng);
+                    } else {
+                        console.error('Geocoding failed:', data.status);
+                        initMap('Central'); // Fallback to default location if geocoding fails
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching geocoding data:', error);
+                    initMap('Central'); // Fallback if an error occurs
+                });
+        }
+        function initMap(defaultLocation = 'Central') {
+            const locationCoordinates = {
+                'North': { lat: 1.41803, lng: 103.8198 },
+                'South': { lat: 1.2802, lng: 103.851959 },
+                'East': { lat: 1.3508, lng: 103.9443 },
+                'West': { lat: 1.3521, lng: 103.7084 },
+                'Central': { lat: 1.3039, lng: 103.8318 }
+            };
+        
+            const location = locationCoordinates[defaultLocation] || locationCoordinates['Central'];
+        
+            const map = new google.maps.Map(document.getElementById('map'), {
+                center: location,
+                zoom: 13  // Adjust the zoom level as needed
+            });
+        
+            new google.maps.Marker({
+                position: location,
+                map: map,
+                title: `Default Location`
+            });
+        }
+        function initMapWithCoordinates(lat, lng) {
+            const location = { lat: lat, lng: lng };
+            const map = new google.maps.Map(document.getElementById('mapContainer'), {
+                center: location,
+                zoom: 15  // Adjust the zoom level as needed
+            });
+        
+            new google.maps.Marker({
+                position: location,
+                map: map,
+                title: 'MeetUp Location'
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const showMapBtn = document.getElementById('showMapBtn');
+            const mapModal = document.getElementById('mapModal');
+            const closeMapBtn = document.getElementById('closeMapBtn');
+        
+            showMapBtn.addEventListener('click', () => {
+                mapModal.style.display = 'block';
+                // Initialize the map once the modal is visible
+                if (!window.mapInitialized) {
+                    geocodeAddress(product.meetup);
+                    window.mapInitialized = true; // Ensure the map is only initialized once
+                }
+            });
+        
+            closeMapBtn.addEventListener('click', () => {
+                mapModal.style.display = 'none';
+            });
+        
+            // Close the modal if the user clicks outside of it
+            window.addEventListener('click', (event) => {
+                if (event.target === mapModal) {
+                    mapModal.style.display = 'none';
+                }
+            });
+        });
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            const product = await loadProductDetails();
+            if (product) {
+                await displayProductDetails(product);
+            }
+        });
+        
     </script>
 </body>
 

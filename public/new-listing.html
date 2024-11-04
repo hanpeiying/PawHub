@@ -266,7 +266,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="location" class="form-label">Location</label>
+                <label for="location" class="form-label">General Location</label>
                 <select id="location" class="form-select" required>
                     <option value="Central">Central</option>
                     <option value="North">North</option>
@@ -274,6 +274,11 @@
                     <option value="East">East</option>
                     <option value="West">West</option>
                 </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="meetup" class="form-label">Meet Up Location</label>
+                <input type="text" id="meetup" class="form-control" required>
             </div>
 
             <div class="mb-3">
@@ -417,16 +422,16 @@ async function uploadPhotos() {
 
     // Wait for all uploads to finish and return an array of download URLs
         // Function to add listing to Firestore
-        async function addListing(listingTitle, description, category, price, expiryDate, locations, imageURLs) {
+        async function addListing(listingTitle, description, category, price, locations, meetupLocation, imageURLs) {
             try {
                 const docRef = await addDoc(collection(db, "marketplace"), {
                     title: listingTitle,
                     description: description,
                     category: category,
                     price: price,
-                    expiryDate: expiryDate,
                     location: locations,
-                    imageURLs: imageURLs,  // Store an array of image URLs
+                    meetupLocation: meetupLocation,
+                    imageURLs: imageURLs, 
                     userUID: userUID
                 });
                 console.log("Document written with ID: ", docRef.id);
@@ -453,9 +458,8 @@ async function uploadPhotos() {
             const listingTitle = document.getElementById('listingTitle').value;
             const description = document.getElementById('description').value;
             const price = document.getElementById('price').value;
-            const expiryDate = document.getElementById('expiryDate').value;
-
             const locationSelect = document.getElementById('location');
+            const meetupLocation = document.getElementById('meetup').value;
             const selectedLocations = Array.from(locationSelect.selectedOptions).map(option => option.value);
     
             // Upload the photos and get their download URLs
@@ -465,7 +469,7 @@ async function uploadPhotos() {
             console.log('All uploaded URLs:', imageURLs);
     
             // Add dog listing to Firestore with the uploaded image URLs
-            addListing(listingTitle, description, category, price, expiryDate, selectedLocations, imageURLs);
+            addListing(listingTitle, description, category, price, selectedLocations, meetupLocation, imageURLs);
     
             // Clear form
             form.reset();
