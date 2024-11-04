@@ -90,11 +90,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Use Firebase app initialization -->
-    <script src="./navbar.js" type="module"></script>
+    <!-- <script src="./navbar.js" type="module"></script> -->
     <script type="module">
         import { app } from "./firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        import { getFirestore, doc, deleteDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getFirestore, doc, deleteDoc, getDoc, updateDoc, serverTimestamp, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
         import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
     
         const auth = getAuth(app);
@@ -142,6 +142,27 @@
                 availabilityDropdownRow.style.display = 'none';
             }
         }
+        window.getListingCategory = async function(itemId) {
+        try {
+            const itemRef = doc(db, 'marketplace', itemId);
+            const itemDoc = await getDoc(itemRef);
+
+            if (itemDoc.exists()) {
+                const itemData = itemDoc.data();
+                console.log('Category of the item:', itemData.category);
+                return itemData.category;
+            } else {
+                console.error('No such document found');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error fetching the listing category:', error);
+        }
+    };
+
+
+
+
 
         // Make saveListing globally available
             window.saveListing = async function() {
@@ -160,27 +181,43 @@
                 document.getElementById('productPrice').textContent = formattedPrice;
 
                 // Prepare the updated data
-                const updatedData = {
-                    title: updatedTitle,
-                    price: updatedPrice,
-                    location: updatedLocation,
-                    description: updatedDescription,
-                    isAvailable: updatedAvailability === 'available'
-                };
-
                 try {
-                    const docRef = doc(db, "marketplace", productId);
-                    await updateDoc(docRef, updatedData);
-                    console.log("Listing updated successfully!");
+        // Fetch the current category of the listing
+                    const productId = getProductIdFromURL(); // Replace this with the actual item ID logic
+                    const itemCategory = await getListingCategory(productId);
 
-                    // Switch back to view mode
-                    window.toggleEdit(false);
-                    alert("Listing updated successfully!");
-                } catch (error) {
-                    console.error("Error updating listing: ", error);
-                    alert("Error saving the listing.");
+                    // Log or use the category as needed
+                    console.log('Fetched category:', itemCategory);
+
+                    // Prepare the updated data
+                    const updatedData = {
+                        title: updatedTitle,
+                        price: updatedPrice,
+                        location: updatedLocation,
+                        description: updatedDescription,
+                        isAvailable: updatedAvailability === 'available',
+                        category: itemCategory // Include the category in your update if needed
+                    };
+
+                    // Update Firestore with the new data
+                    const docRef = doc(db, 'marketplace', productId);
+                    await updateDoc(docRef, updatedData);
+                    console.log('Listing updated successfully!');
+                    alert('Listing updated successfully!');
+
+                    if (updatedAvailability === 'sold' && originalData.isAvailable) {
+                    const userUID = originalData.userUID; // Ensure the user UID is included in your product data
+                    const price = parseFloat(updatedPrice);
+                    if (userUID && price) {
+                        console.log('successfully triggered')
+                        onItemSold(productId, price, userUID, itemCategory);
+                    }
+
+                }} catch (error) {
+                    console.error('Error updating listing:', error);
+                    alert('Error saving the listing.');
                 }
-            }
+            };
 
 
         // Load product details and save the original data
@@ -408,6 +445,46 @@
         }
     
         document.addEventListener('DOMContentLoaded', loadProductDetails);
+
+        async function markItemAsSold(itemId, price, userUID, category) {
+            console.log('markItemAsSold called with:', { itemId, price, userUID, category });
+        if (!itemId || !price || !userUID || !category) {
+            console.error('Invalid itemId, price, or userUID provided.');
+            return;
+        }
+
+        try {
+            // Update the item status to sold
+            console.log(`Attempting to update item status for item ID: ${itemId}`);
+            const itemRef = doc(db, 'marketplace', itemId);
+            await updateDoc(itemRef, {
+                status: 'sold',
+                soldAt: serverTimestamp()
+            });
+
+            // Log the profit in a new Firestore collection called 'sales'
+            console.log(`Attempting to record profit in 'sales' collection for item ID: ${itemId}`);
+            const salesRef = collection(db, 'sales');
+            await addDoc(salesRef, {
+                itemId: itemId,
+                profit: price, // Record the profit as the item price
+                userUID: userUID,
+                category: category,
+                timestamp: serverTimestamp()
+            });
+
+            console.log(`Item marked as sold and profit recorded for item ID: ${itemId}`);
+        } catch (error) {
+            console.error('Error details:', error.message);
+        console.error('Stack trace:', error.stack);
+        console.error('Error marking item as sold or recording profit:', error);
+        }
+    }
+
+    // Example function call when a user toggles an item to sold
+    function onItemSold(itemId, price, userUID, category) {
+        markItemAsSold(itemId, price, userUID, category);
+    }
     </script>
 </body>
 

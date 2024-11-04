@@ -78,24 +78,43 @@
         
     </div>
     </div>
+
+    <div class="graph-section">
+        <div class="row">
+            <div class="col-6">
+                <h3 >Weekly Traffic Overview</h3>
+                <canvas id="trafficChart"></canvas>
+            </div>
+            <div class="col-6">    
+                <h3>Sales Overview (Profit and Expenses)</h3>
+                <canvas id="salesChart"></canvas>
+            </div>
+    
+        </div>
+    </div>
 </div>
+
+
 
 <!-- Scripts -->
 <script src="./navbar.js" type="module"></script>
 <script src="./homepage.js" type="module"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <script type="module">
     import { app } from "./firebase.js";
     import { onAuthStateChanged ,getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
     import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
-
+   
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
 
 
     let userUID;  // Declare a global variable to store the UID
+    let userItemIds;
 
     const vueApp = Vue.createApp({
         data() {
@@ -325,6 +344,182 @@
                 }
         }
     }).mount('#app');
+    
+    auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in, get the UID
+                userUID = user.uid;
+                console.log("Logged-in user UID:", userUID);
+
+                getUserItemIds(userUID).then((itemIds) => {
+                userItemIds = itemIds; // Set the global item IDs array
+                // Proceed with the onSnapshot listener
+});
+
+                // You can now pass `uid` to functions or use it to filter listings for this specific user
+            } else {
+                // No user is signed in
+                console.log("No user is logged in");
+            }
+        });
+
+
+    // Create Chart instances
+    let trafficData = [0, 0, 0, 0, 0, 0, 0];
+    let profitData = {
+    'dogFood': 0,
+    'dogAccessories': 0,
+    'dogToys': 0
+};
+
+// Function to get user's listed item IDs from Firestore
+async function getUserItemIds(userId) {
+    const userItemsRef = collection(db, 'marketplace'); // Replace 'items' with your collection name
+    console.log('User ID:', userId);
+    const q = query(userItemsRef, where('userId', '==', userId)); // Assuming 'userId' field in your items
+
+    const querySnapshot = await getDocs(q);
+    const itemIds = [];
+    querySnapshot.forEach((doc) => {
+        itemIds.push(doc.id); // Collect item IDs
+    });
+    return itemIds;
+}
+
+// Call this function and set up the listener once you have the item IDs
+
+// Initialize the chart with empty data before setting up the Firestore listener
+const trafficCtx = document.getElementById('trafficChart')?.getContext('2d');
+let trafficChart;
+
+if (trafficCtx) {
+    trafficChart = new Chart(trafficCtx, {
+        type: 'line',
+        data: {
+            labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+            datasets: [{
+                label: 'Number of Visits',
+                data: [0, 0, 0, 0, 0, 0, 0], // Initial empty data
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Firestore real-time listener
+const trafficRef = collection(db, 'itemViews');
+onSnapshot(trafficRef, (snapshot) => {
+    // Reset traffic data for real-time updates
+    trafficData = [0, 0, 0, 0, 0, 0, 0];
+    const currentUserUID = userUID
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        console.log('Document data:', data);
+
+        // Check if the current item's ID matches any ID in the userItemIds array
+        if (data.userUID === currentUserUID) {
+            const dayIndex = data.dayIndex;
+            trafficData[dayIndex] += data.views; // Accumulate views for the day
+        }
+    });
+
+    // Ensure trafficChart is initialized before trying to update
+    if (trafficChart && trafficChart.data && trafficChart.data.datasets) {
+        // Update the traffic chart
+        trafficChart.data.datasets[0].data = trafficData;
+        trafficChart.update();
+    } else {
+        console.error('Traffic chart is not initialized.');
+    }
+});
+
+
+
+
+
+
+const salesCtx = document.getElementById('salesChart')?.getContext('2d');
+let salesChart;
+
+if (salesCtx) {
+    salesChart = new Chart(salesCtx, {
+        type: 'bar',
+            data: {
+                labels: ['dog Food', 'Dog Accessories', 'Dog Toys'],
+                datasets: [{
+                    label: 'Profits Earned',
+                    data: [0,0,0],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(75, 192, 192, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Real-time listener for the sales data collection
+const salesRef = collection(db, 'sales');
+    onSnapshot(salesRef, (snapshot) => {
+        // Reset category data
+        let profitData = {
+            'dogFood': 0,
+            'dogAccessories': 0,
+            'dogToys': 0
+        };
+
+    const currentUserUID = userUID; // Replace this with the UID of the current logged-in user or dynamically set it
+
+    snapshot.forEach(doc => {
+            const data = doc.data();
+            console.log('Sales data:', data);
+            if (data.userUID === currentUserUID) {
+                const category = data.category
+                console.log(category)
+                profitData[data.category] += data.profit; // Accumulate profit for the category
+            }
+        });
+
+    // Update the sales chart if initialized
+    if (salesChart && salesChart.data && salesChart.data.datasets) {
+            
+            salesChart.data.datasets[0].data = [
+                profitData['dogFood'],
+                profitData['dogAccessories'],
+                profitData['dogToys']
+            ];
+            salesChart.update();
+            console.log('Chart updated with new profit data:', profitData);
+        } else {
+            console.error('Sales chart is not initialized.');
+        }
+    });
+    
 </script>
 
 </body>
