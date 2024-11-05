@@ -256,6 +256,7 @@
                     // Add the product to the array, including ageGroup
                     allProducts.push({ ...listing, each_id, dogAgeGroup });
                 }
+                allProducts = allProducts.filter(product => product.isAvailable !== false);
                 // Initially load the first batch of products
                 productsShown = 0;  // Reset the number of products shown
                 loadBatchOfProducts();  // Load the first batch

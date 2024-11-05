@@ -8,6 +8,46 @@
     <link rel="stylesheet" href="styles/stylehomepage.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
+
+<style>
+.graph-section {
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.chart-container {
+    background-color: #FAF3E0; /* Light beige background */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 10px 0;
+}
+
+/* Add spacing for large screens */
+@media (min-width: 992px) {
+    .graph-section .row {
+        column-gap: 80px; /* Increase horizontal space between charts */
+    }
+}
+
+/* Add vertical spacing for small screens */
+@media (max-width: 768px) {
+    .chart-container {
+        margin-bottom: 30px; /* Extra space between charts on smaller screens */
+    }
+}
+
+
+.chart-title {
+    text-align: center;
+    color: #8B4513; /* Dark brown text color for dog-themed feel */
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+
+</style>
 <body>
 
 <div id="app">
@@ -74,25 +114,23 @@
             </div>
         </div>
 
-        <br><br><br><br>
+        <!-- <br><br> -->
         
     </div>
     </div>
 
     <div class="graph-section">
-        <div class="row">
-            <div class="col-6">
-                <h3 >Weekly Traffic Overview</h3>
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-6 col-lg-5 chart-container">
+                <h3 class="chart-title">Weekly Traffic Overview</h3>
                 <canvas id="trafficChart"></canvas>
             </div>
-            <div class="col-6">    
-                <h3>Sales Overview (Profit and Expenses)</h3>
+            <div class="col-12 col-md-6 col-lg-5 chart-container">
+                <h3 class="chart-title">Sales Overview (Profit)</h3>
                 <canvas id="salesChart"></canvas>
             </div>
-    
         </div>
     </div>
-</div>
 
 
 
@@ -398,24 +436,67 @@ if (trafficCtx) {
         data: {
             labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
             datasets: [{
-                label: 'Number of Visits',
-                data: [0, 0, 0, 0, 0, 0, 0], // Initial empty data
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
+                label: 'Number of Visits 🐾', // Add paw emoji to label
+                data: trafficData,
+                backgroundColor: 'rgba(160, 82, 45, 0.2)', // Earthy brown with transparency
+                borderColor: 'rgba(139, 69, 19, 1)', // Darker brown for lines
+                borderWidth: 3,
+                pointBackgroundColor: 'rgba(139, 69, 19, 1)', // Point color
+                pointBorderColor: '#fff',
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: 'rgba(139, 69, 19, 0.8)', // Hover color
+                pointHoverBorderColor: '#fff',
+                pointRadius: 6,
+                fill: true,
             }]
         },
+        
         options: {
             responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(222, 184, 135, 0.2)' // Light beige grid lines
+                    },
+                    ticks: {
+                        color: '#654321', // Dark brown ticks
+                        font: { size: 14, family: 'Comic Sans MS' } // Friendly font for a dog-themed style
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#654321',
+                        font: { size: 14, family: 'Comic Sans MS' }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#8B4513', // Saddle brown
+                        font: { size: 16, family: 'Comic Sans MS' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(160, 82, 45, 0.8)', // Brownish background for tooltips
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 12 },
+                    borderColor: '#8B4513',
+                    borderWidth: 2,
+                    borderRadius: 10,
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            return `🐾 ${context.dataset.label}: ${context.raw}`;
+                        }
+                    }
                 }
             }
         }
     });
 }
-
 // Firestore real-time listener
 const trafficRef = collection(db, 'itemViews');
 onSnapshot(trafficRef, (snapshot) => {
@@ -454,29 +535,71 @@ let salesChart;
 if (salesCtx) {
     salesChart = new Chart(salesCtx, {
         type: 'bar',
-            data: {
-                labels: ['dog Food', 'Dog Accessories', 'Dog Toys'],
-                datasets: [{
-                    label: 'Profits Earned',
-                    data: [0,0,0],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.6)',
-                        'rgba(54, 162, 235, 0.6)',
-                        'rgba(75, 192, 192, 0.6)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(75, 192, 192, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
+        data: {
+            labels: ['Dog Food 🦴', 'Dog Accessories 🐶', 'Dog Toys 🐕'],
+            datasets: [{
+                label: 'Profits Earned',
+                data: [profitData.dogFood, profitData.dogAccessories, profitData.dogToys],
+                backgroundColor: [
+                    'rgba(139, 69, 19, 0.6)', // Brown for Dog Food
+                    'rgba(205, 133, 63, 0.6)', // Tan for Accessories
+                    'rgba(85, 107, 47, 0.6)'   // Green for Toys
+                ],
+                borderColor: [
+                    'rgba(139, 69, 19, 1)',
+                    'rgba(205, 133, 63, 1)',
+                    'rgba(85, 107, 47, 1)'
+                ],
+                borderWidth: 2,
+                borderRadius: 8, // Rounded corners
+                hoverBackgroundColor: [
+                    'rgba(139, 69, 19, 0.8)',
+                    'rgba(205, 133, 63, 0.8)',
+                    'rgba(85, 107, 47, 0.8)'
+                ]
+            }]
+        },
         options: {
             responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(222, 184, 135, 0.2)' // Light beige grid
+                    },
+                    ticks: {
+                        color: '#654321',
+                        font: { size: 14, family: 'Comic Sans MS' }
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#654321',
+                        font: { size: 14, family: 'Comic Sans MS' }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#8B4513',
+                        font: { size: 16, family: 'Comic Sans MS' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(85, 107, 47, 0.9)', // Dark green tooltip background
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 12 },
+                    borderColor: 'rgba(85, 107, 47, 1)',
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            return `🐾 ${context.label}: ${context.raw}`;
+                        }
+                    }
                 }
             }
         }
@@ -487,7 +610,7 @@ if (salesCtx) {
 const salesRef = collection(db, 'sales');
     onSnapshot(salesRef, (snapshot) => {
         // Reset category data
-        let profitData = {
+        profitData = {
             'dogFood': 0,
             'dogAccessories': 0,
             'dogToys': 0

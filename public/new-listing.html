@@ -304,7 +304,7 @@
         // Firebase setup
         import {app} from "./firebase.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getFirestore, addDoc, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
     
         const auth = getAuth(app);
@@ -432,15 +432,19 @@ async function uploadPhotos() {
                     location: locations,
                     meetupLocation: meetupLocation,
                     imageURLs: imageURLs, 
-                    userUID: userUID
+                    userUID: userUID,
+                    isAvailable: true
                 });
                 console.log("Document written with ID: ", docRef.id);
                 alert('Listing added successfully!');
+                
+                
                 window.location.href = 'shop.html'; // Redirect back to shop page
             } catch (error) {
                 console.error('Error while saving listing: ' + error.message);
                 alert('Error while saving listing: ' + error.message);
             }
+            
         }
     
         // Event listener for form submission
@@ -475,6 +479,21 @@ async function uploadPhotos() {
             form.reset();
             selectedFiles = [];
         });
+
+        // async function addIsAvailableToDocuments() {
+        //     const marketplaceRef = collection(db, 'marketplace');
+        //     const querySnapshot = await getDocs(marketplaceRef);
+
+        //     querySnapshot.forEach(async (docSnapshot) => {
+        //         const data = docSnapshot.data();
+        //         if (!('isAvailable' in data)) {
+        //             const docRef = doc(db, 'marketplace', docSnapshot.id);
+        //             await updateDoc(docRef, { isAvailable: true }); // Add default value
+        //             console.log(`Updated document ${docSnapshot.id} with isAvailable: true`);
+        //         }
+        //     });
+        // }
+        
     </script>
     
 </body>

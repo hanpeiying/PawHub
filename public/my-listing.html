@@ -54,7 +54,7 @@
                     <td>Status</td>
                     <td>
                         <select id="availabilityDropdown">
-                            <option value="available">Available</option>
+                            <option value="available" selected>Available</option>
                             <option value="sold">Sold</option>
                         </select>
                     </td>
@@ -160,12 +160,27 @@
         }
     };
 
+    async function refreshOriginalData() {
+    try {
+        const docRef = doc(db, "marketplace", productId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            originalData = { ...docSnap.data() };
+            console.log('Refreshed originalData:', originalData);
+        } else {
+            console.error('No such document found during refresh.');
+        }
+    } catch (error) {
+        console.error('Error refreshing original data:', error);
+    }
+}
 
 
 
 
         // Make saveListing globally available
             window.saveListing = async function() {
+                await refreshOriginalData();
                 const updatedTitle = document.getElementById('productTitle').innerText;
                 let updatedPrice = document.getElementById('productPrice').innerText; // Use 'let' here
                 const updatedLocation = document.getElementById('locationDropdown') ? document.getElementById('locationDropdown').value : document.getElementById('locationField').innerText;
@@ -188,6 +203,8 @@
 
                     // Log or use the category as needed
                     console.log('Fetched category:', itemCategory);
+                    console.log('Original data:', originalData);
+                    console.log('Updated availability:', updatedAvailability);
 
                     // Prepare the updated data
                     const updatedData = {
@@ -204,6 +221,7 @@
                     await updateDoc(docRef, updatedData);
                     console.log('Listing updated successfully!');
                     alert('Listing updated successfully!');
+                    console.log(originalData.isAvailable)
 
                     if (updatedAvailability === 'sold' && originalData.isAvailable) {
                     const userUID = originalData.userUID; // Ensure the user UID is included in your product data
@@ -235,7 +253,12 @@
                     document.getElementById('productPrice').textContent = `S$${productData.price}`;
                     document.getElementById('locationField').textContent = productData.location || 'Unknown';
                     document.getElementById('descriptionField').textContent = productData.description || 'No description available';
-                    document.getElementById('availabilityDropdown').value = productData.isAvailable ? 'available' : 'sold';
+                    if (productData.isAvailable !== undefined) {
+                        document.getElementById('availabilityDropdown').value = productData.isAvailable ? 'available' : 'sold';
+                    } else {
+                        // Default value if `isAvailable` is not present
+                        document.getElementById('availabilityDropdown').value = 'available';
+                    }
         
                     // Display image
                     const images = productData.imageURLs || [];
