@@ -10,39 +10,37 @@
     <link rel="stylesheet" href="styles/stylenav.css">
     <link rel="stylesheet" href="styles/mystyle.css">
 </head>
+
 <body>
-    <!--for nav bar-->
-    <div id="app">
+        <!--for nav bar-->
+            <div id="app">
 
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12 background backgroundImage">
-                    <img src="images/nav/profile.png">
-                    <p class="background-text">Profile</p>
+                <div id="nav-component"></div>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12 background backgroundImage">
+                            <img src="images/nav/profile.png">
+                            <p class="background-text">Profile</p>
+                        </div>
+                    </div>
                 </div>
+            
             </div>
-        </div>
-
-        <!-- Navigation Component -->
-        <div id="nav-component"></div>
-
-    </div>
-    <!-- Scripts -->
-    <script src="./navbar.js" type="module"></script>
-    <!--for nav bar-->
-
+            <!-- Scripts -->
+            <script src="./navbar.js" type="module"></script>
+        <!--for nav bar-->
 
     <div class="container">
         <!-- My Profile Header -->
         <div class="profile-header">
-            <h2>My Profile</h2>
+            <h3>My Profile</h3>
         </div>
 
         <!-- Profile Section -->
-        <div class="profile-section">
+        <div class="profile-section1">
             <img id="profilePicture" src="https://via.placeholder.com/120" class="profile-img" alt="Profile Picture">
             <div class="profile-details">
-                <h3 id="username">Username</h3>
+                <h4 id="username">Username</h4>
                 <p id="dogAgeGroup">Dog Age Group: Unknown</p>
                 <button class="edit-profile-btn"><a href="edit-profile.html" >Edit Profile</a></button>
             </div>
@@ -50,7 +48,7 @@
 
         <!-- My Listings Header -->
         <div class="listings-header">
-            <h2>My Listings</h2>
+            <h3>My Listings</h3>
             <a class='newListing' href="new-listing.html">
                 <button class="add-btn">
                     <i class="fas fa-plus"></i>
@@ -62,12 +60,26 @@
         <div class="row" id="listingContainer">
             <!-- Listings will be dynamically loaded here -->
         </div>
+
+        <div class="no-listings-container">
+            <div class="no-listings-message">
+                <i class="fas fa-folder-open icon"></i>
+                <p>No listings yet</p>
+                <button onclick="window.location.href='new-listing.html'" class="add-listing-btn">
+                    <i class="fas fa-plus"></i> Add Listing
+                </button>
+            </div>
+        </div>
+
+        <div class="logout-container">
+            <button id="logoutButton" class="logout-btn">Logout</button>
+        </div>
     </div>
 
     <script type="module">
         import { app } from "./firebase.js";
         import { getFirestore, collection, query, getDocs, doc, getDoc} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
         import { getStorage, ref } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
 
@@ -89,6 +101,25 @@
                 document.getElementById('profilePicture').src = profileImageURL;
             }
         }
+
+        function checkAndDisplayNoListings() {
+            const listingContainer = document.getElementById("listingContainer");
+            if (!listingContainer.hasChildNodes()) {
+                listingContainer.innerHTML = `
+                    <div class="no-listings-container">
+                        <div class="no-listings-message">
+                            <i class="fas fa-folder-open icon"></i>
+                            <p>No listings yet</p>
+                            <button onclick="window.location.href='new-listing.html'" class="add-listing-btn">
+                                <i class="fas fa-plus"></i> Add Listing
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        // Call this function after loading listings
+        checkAndDisplayNoListings();
 
         // Function to load user listings and apply image rotation
         async function loadUserListings(uid) {
@@ -178,14 +209,26 @@
             return userDoc.exists() ? userDoc.data() : null;
         }
 
+        // Logout function
+        async function logoutUser() {
+            try {
+                await signOut(auth);
+                // Redirect to the homepage before login immediately after sign-out
+                window.location.href = "homepageBeforeLogin.html";
+            } catch (error) {
+                console.error("Error logging out:", error);
+            }
+        }
+
+        // Attach event listener to the logout button
+        document.getElementById("logoutButton").addEventListener("click", logoutUser);
+
         // On Auth state changed, load profile and listings
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const uid = user.uid;
                 loadUserProfile(uid);
                 loadUserListings(uid);
-            } else {
-                console.log("No user logged in");
             }
         });
 

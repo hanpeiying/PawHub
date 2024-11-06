@@ -63,7 +63,7 @@ fetch('./nav.html') // Fetching HTML for the component
             userUID = user.uid;
             this.fetchUserData();
           } else {
-            alert("You need to be logged in to list an item.");
+            window.location.href = "homepageBeforeLogin.html";
           }
         });
       },

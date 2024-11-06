@@ -14,28 +14,54 @@ body {
     font-size: 1.8rem;
     font-weight: bold;
 }
-.profile-section:hover {
+.profile-section1:hover {
     transform: none;
 }
 .profile-header:hover,
-.profile-section:hover {
+.profile-section1:hover {
     transform: none;
     transition: none; /* Ensure no transition animation is applied */
 }
+/* Edit Profile and Logout button styles */
 .edit-profile-btn {
     padding: 8px 15px;
     border-radius: 5px;
-    background-color: #F9F1E7 ;
-    color: grey;
-    border: none;
-    cursor: pointer;
+    background-color: #F9F1E7;
+    color: rgb(0, 0, 0);
     border: 2px solid grey;
+    cursor: pointer;
 }
-.edit-profile-btn, a{
+
+.logout-btn {
+    padding: 8px 15px;
+    border-radius: 5px;
+    background-color: #F9F1E7;
+    color: rgb(0, 0, 0);
+    border: 2px solid grey;
+    cursor: pointer;
+    width: 150px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.logout-container {
+    text-align: center;
+}
+
+/* Hover effect for both Edit Profile and Logout buttons */
+.edit-profile-btn:hover, .logout-btn:hover {
+    background-color: #9BA481; /* Changes color on hover */
+    color: white;
+    border: 2px solid #9BA481;
+}
+
+/* Remove underline for the anchor link within Edit Profile button */
+.edit-profile-btn a, .logout-btn a {
     text-decoration: none;
     color: inherit;
 }
-.profile-section {
+
+.profile-section1 {
     display: flex;
     align-items: center;
     margin-bottom: 30px;
@@ -46,6 +72,7 @@ body {
     height: 120px;
     border-radius: 50%;
     margin-right: 20px;
+    border: 3px solid rgb(187, 187, 187);
 }
 
 .profile-details h3 {
@@ -195,12 +222,71 @@ body {
 .newListing {
     display: flex;
     align-items: center;
+    text-decoration: none;
 }
+
+/* Start: If user has 0 listings */
+.no-listings-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 20px;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.no-listings-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #777;
+}
+
+.no-listings-message .icon {
+    font-size: 48px;
+    color: #a0a0a0;
+    margin-bottom: 10px;
+}
+
+.no-listings-message p {
+    font-size: 18px;
+    margin: 10px 0;
+    color: #555;
+}
+
+.add-listing-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #6f9366;
+    /* background-color: #d32f2f; */
+    color: #fff;
+    cursor: pointer;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-listing-btn i {
+    font-size: 16px;
+}
+
+.add-listing-btn:hover {
+    background-color: #5d7d56;
+}
+/*End: If user has 0 listings */
 
 
 /* Custom Responsive Breakpoints */
 @media (max-width: 768px) {
-    .profile-section {
+    .profile-section1 {
         flex-direction: column;
         align-items: center;
         text-align: center;
