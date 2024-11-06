@@ -20,60 +20,63 @@
 
 
 <div id="app">
-    <div class="container-fluid">
+    <div class="container-fluid px-3">
+        <!-- Navigation Component -->
+         <div id="nav-component"></div>
         <div class="row">
-            <div class="col-12 background backgroundImage">
+            <div class="col-12 text-centre">
                 <img src="images/nav/inventory.png">
                 <p class="background-text">Tracking Pet Inventory...</p>
             </div>
         </div>
     </div>
 
-    <!-- Navigation Component -->
-    <div id="nav-component"></div>
 
     <div class="product-list-container">
-        <div class="row d-flex align-items-center">
-            <!-- Search Bar -->
-            <div class="col-md-8">
+
+          <!-- Search Bar and Add Product Button -->
+          <div class="row d-flex align-items-center my-3">
+            <div class="col-12 col-md-6">
                 <div class="search-bar">
                     <input id="searchInput" type="text" class="form-control" placeholder="Search for pet treats ...">
                 </div>
             </div>
-
-            <!-- Add New Product Button (Vue component) -->
-            <div class="col-md-4 text-md-right text-center mt-2 mt-md-0">
+            <div class="col-12 col-md-6 text-md-right mt-2 mt-md-0">
                 <product-modal @add-product="handleAddProduct"></product-modal>
             </div>
         </div>
+
+        <div class="table-responsive">
+            <h2>Your Inventory table</h2>
+            <table class="product-list">
+                <thead>
+                <tr>
+                    <th>Consumption Rate</th>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Expiry Date
+                        <button id="sortExpiryBtn" class="sort-btn">
+                            <i id="sortIconExpiry" class="fa-solid fa-arrow-up-wide-short"></i>
+                        </button>
+                    </th>
+                    <th>Date Added
+                        <button id="sortAddedBtn" class="sort-btn">
+                            <i id="sortIconAdded" class="fa-solid fa-arrow-up-wide-short"></i>
+                        </button>
+                    </th>
+                    <th>Price</th>
+                    <th>Servings</th>
+                    <th>Adjust Stock</th>
+                </tr>
+                </thead>
+                <tbody id="productTableBody">
+                <!-- Products will be dynamically loaded here -->
+                </tbody>
+            </table>
         </div>
 
-        <table class="product-list">
-            <thead>
-            <tr>
-                <th>Consumption Rate</th>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Expiry Date
-                    <button id="sortExpiryBtn" class="sort-btn">
-                        <i id="sortIconExpiry" class="fa-solid fa-arrow-up-wide-short"></i>
-                    </button>
-                </th>
-                <th>Date Added
-                    <button id="sortAddedBtn" class="sort-btn">
-                        <i id="sortIconAdded" class="fa-solid fa-arrow-up-wide-short"></i>
-                    </button>
-                </th>
-                <th>Price</th>
-                <th>Servings</th>
-                <th>Adjust Stock</th>
-            </tr>
-            </thead>
-            <tbody id="productTableBody">
-            <!-- Products will be dynamically loaded here -->
-            </tbody>
-        </table>
         <div class="pagination"></div>
+
     </div>
 
     <div class="chart-container">
@@ -81,30 +84,27 @@
         <canvas id="consumptionChart"></canvas>
     </div>
 
-    
-
 
     <div class="deleted-inventory-container">
         <h2>Deleted Products History</h2>
         <p class="deleted-note">This is a list of products that you have deleted. Items here are archived for your reference.</p>
         
 
-
-    <table class="deleted-inventory-table">
-    <thead>
-        <tr>
-            <th>Image</th>
-            <th>Product Name</th>
-            <th>Price</th>
-            <th>Date Deleted</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="deletedTableBody">
-        <!-- Deleted products will appear here -->
-    </tbody>
-</table>
-</div>
+        <table class="deleted-inventory-table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Date Deleted</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="deletedTableBody">
+            <!-- Deleted products will appear here -->
+            </tbody>
+        </table>
+    </div>
 
     <!-- Modal for Image Enlargement -->
     <div id="imageModal" class="image-modal">

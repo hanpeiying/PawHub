@@ -7,7 +7,7 @@ body {
     width:100%;
 }
 
-/* h2 {
+h2 {
     font-family: 'Chewy', cursive;
     font-size: 36px;
     color: #4a90e2;
@@ -16,7 +16,56 @@ body {
     background-size: contain;
     background-position: left center;
     padding-left: 50px;
-} */
+}
+
+/* For very small screens, stack elements vertically and adjust padding */
+@media (max-width: 320px) {
+    .background-text {
+        font-size: 18px;
+    }
+    
+    .product-list th, .product-list td {
+        font-size: 10px;
+        padding: 3px;
+    }
+    
+    .add-btn, .minus-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    
+    .search-bar input {
+        width: 100%; /* Full width on small screens */
+    }
+
+    .product-list-container, .deleted-inventory-container {
+        padding: 5px;
+    }
+
+    /* Center-align chart title */
+    .chart-title {
+        font-size: 14px;
+    }
+}
+
+/* Adjust table columns for mobile devices */
+@media (max-width: 576px) {
+    .product-list th, .product-list td {
+        padding: 5px;
+        font-size: 12px;
+    }
+    
+    /* Stack the "Add New Product" button and search bar on small screens */
+    .row.d-flex.align-items-center {
+        flex-direction: column;
+    }
+
+    .add-btn, .minus-btn {
+        width: 35px;
+        height: 35px;
+    }
+}
 
 table{
     width:100%;
@@ -32,7 +81,7 @@ td{
 
 
 .product-list-container {
-    width: 90%; /* Adjusted to a larger percentage for better visibility */
+    width: 80%; /* Adjusted to a larger percentage for better visibility */
     max-width: 1200px; 
     background-color: #F9F1E7;
     border-radius: 8px;
