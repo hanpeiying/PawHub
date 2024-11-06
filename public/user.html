@@ -61,13 +61,15 @@
             <!-- Listings will be dynamically loaded here -->
         </div>
 
-        <div class="no-listings-container">
-            <div class="no-listings-message">
-                <i class="fas fa-folder-open icon"></i>
-                <p>No listings yet</p>
-                <button onclick="window.location.href='new-listing.html'" class="add-listing-btn">
-                    <i class="fas fa-plus"></i> Add Listing
-                </button>
+        <div id="no-listings-app">
+            <div v-if="!hasListings" class="no-listings-container">
+                <div class="no-listings-message">
+                    <i class="fas fa-folder-open icon"></i>
+                    <p>No listings yet</p>
+                    <button @click="goToNewListing" class="add-listing-btn">
+                        <i class="fas fa-plus"></i> Add Listing
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -82,9 +84,35 @@
         import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
         import { getStorage, ref } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
-
         const db = getFirestore(app);
         const auth = getAuth(app);
+
+        Vue.createApp({
+            data() {
+                return {
+                    hasListings: false // Track if there are any listings
+                };
+            },
+            mounted() {
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        this.checkForListings(user.uid);
+                    }
+                });
+            },
+            methods: {
+                async checkForListings(uid) {
+                    const listingsQuery = query(collection(db, "marketplace"));
+                    const querySnapshot = await getDocs(listingsQuery);
+
+                    // Check if there are any listings for the current user
+                    this.hasListings = querySnapshot.docs.some(doc => doc.data().userUID === uid);
+                },
+                goToNewListing() {
+                    window.location.href = 'new-listing.html';
+                }
+            }
+        }).mount('#no-listings-app');
 
         // Function to load user profile details
         async function loadUserProfile(uid) {
@@ -101,25 +129,6 @@
                 document.getElementById('profilePicture').src = profileImageURL;
             }
         }
-
-        function checkAndDisplayNoListings() {
-            const listingContainer = document.getElementById("listingContainer");
-            if (!listingContainer.hasChildNodes()) {
-                listingContainer.innerHTML = `
-                    <div class="no-listings-container">
-                        <div class="no-listings-message">
-                            <i class="fas fa-folder-open icon"></i>
-                            <p>No listings yet</p>
-                            <button onclick="window.location.href='new-listing.html'" class="add-listing-btn">
-                                <i class="fas fa-plus"></i> Add Listing
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        // Call this function after loading listings
-        checkAndDisplayNoListings();
 
         // Function to load user listings and apply image rotation
         async function loadUserListings(uid) {
