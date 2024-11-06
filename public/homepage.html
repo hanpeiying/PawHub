@@ -9,58 +9,18 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 
-<style>
-.graph-section {
-    padding: 20px;
-    margin-top: 20px;
-}
-
-.chart-container {
-    background-color: #FAF3E0; /* Light beige background */
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 10px 0;
-}
-
-/* Add spacing for large screens */
-@media (min-width: 992px) {
-    .graph-section .row {
-        column-gap: 80px; /* Increase horizontal space between charts */
-    }
-}
-
-/* Add vertical spacing for small screens */
-@media (max-width: 768px) {
-    .chart-container {
-        margin-bottom: 30px; /* Extra space between charts on smaller screens */
-    }
-}
-
-
-.chart-title {
-    text-align: center;
-    color: #8B4513; /* Dark brown text color for dog-themed feel */
-    font-family: Arial, sans-serif;
-    font-size: 18px;
-    margin-bottom: 15px;
-}
-
-
-</style>
 <body>
-
 <div id="app">
     <div class="main-container">
     <div class="container-fluid">
         <!--Nav start-->
+        <div id="nav-component"></div>
+
         <div class="row">
             <div class="col-12 background" :style="{ backgroundImage: `url(${backgroundImage})` }">
                 <p class="background-text">{{ displayedText }}</p>
             </div>
         </div>
-
-        <div id="nav-component"></div>
         <!--Nav end-->
 
         <div class="welcome-back">
@@ -77,17 +37,21 @@
                 @mouseleave="handleDragEnd">
                 <div class="carousel-stage">
                     <div class="inventory-card" 
-                        :class="{ 'warning': isNearExpiry(item.expiry), 'no-warning': !isNearExpiry(item.expiry) }" 
+                        :class="isNearExpiry(item.expiry, item.quantity)"
                         v-for="(item, index) in inventoryItems" 
                         :key="item.id" 
                         :style="getCardStyle(index)">
 
                         <!-- Top Warning Banner -->
-                        <div v-if="isNearExpiry(item.expiry)" class="expiry-warning">
-                            Expiry in Less Than {{ getMonthsUntilExpiry(item.expiry) }} Months
+                        <div v-if="isNearExpiry(item.expiry, item.quantity) === 'near-expiry'" class="expiry-warning">
+                            Expiry in {{ getMonthsUntilExpiry(item.expiry) }} Months
+                        </div>
+                        <div v-if="isNearExpiry(item.expiry, item.quantity) === 'expired'" class="expiry-warning">
+                            Expiry in 1 Month
+                            <p style="font-size: 10px; color: grey; margin:0;">Share and Say No to Wastage!</p>
                         </div>
 
-                        <!-- Original Card Content -->
+                        <!-- Card Content -->
                         <div class="card-content">
                             <img :src="item.image" alt="Inventory Image" class="inventory-image">
                             <div class="inventory-info">
@@ -97,9 +61,12 @@
                             </div>
                         </div>
 
-                        <!-- Bottom Sell Button -->
-                        <div v-if="isNearExpiry(item.expiry)" class="sell-now">
+                        <!-- Bottom Warning Button -->
+                        <div v-if="isNearExpiry(item.expiry, item.quantity) === 'near-expiry'" class="sell-now">
                             <a href="new-listing.html" class="sell-button">Sell Now</a>
+                        </div>
+                        <div v-if="isNearExpiry(item.expiry, item.quantity) === 'expired'" class="sell-now">
+                            <a href="new-listing.html" class="sell-button">Giveaway</a>
                         </div>
                     </div>
                 </div>
@@ -375,11 +342,18 @@
                 handleDragEnd() {
                     this.isDragging = false;
                 },
-                isNearExpiry(expiryDate) {
+                isNearExpiry(expiryDate, quantity) {
                     const today = new Date();
                     const expiry = new Date(expiryDate);
-                    const monthsDiff = (expiry - today) / (1000 * 60 * 60 * 24 * 30.44); // Average month length
-                    return monthsDiff <= 3 && monthsDiff > 0;
+                    const monthsDiff = (expiry - today) / (1000 * 60 * 60 * 24 * 30.44);
+
+                    if (monthsDiff <= 3 && monthsDiff >= 1 && quantity >= 10) {
+                        return "near-expiry"; // Yellow shadow and background
+                    } else if (monthsDiff < 1) {
+                        return "expired"; // Red shadow and background
+                    } else {
+                        return "safe"; // Green shadow
+                    }
                 },
                 getMonthsUntilExpiry(expiryDate) {
                 const today = new Date();

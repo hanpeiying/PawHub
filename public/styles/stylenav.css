@@ -9,6 +9,7 @@ html, body {
 
 .navbar {
     background-color: #f9f1e7;
+    /* background-color: #d4c2b4; */
     font-family: 'Poppins Regular', sans-serif;
     font-size: 15px;
     padding: 10px 20px; /* Same padding as the sticky class */

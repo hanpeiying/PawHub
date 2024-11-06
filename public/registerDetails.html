@@ -29,6 +29,14 @@
 </head> 
 <body>
     <div id="app">
+        <!-- Popup Notification -->
+        <div v-if="showPopup" class="success-message">
+            Account created successfully!
+            <div class="decreasing-line-container">
+                <div class="decreasing-line" :style="{ width: `${lineWidth}%` }"></div>
+            </div>
+        </div>
+
         <div class="container-fluid h-100">
             <div class="row h-100 d-flex">
                 <div id="left-half" class="col-md-6 col-sm-12 p-0 left-half">
@@ -53,18 +61,6 @@
                             <label for="username">Username</label>
                             <input type="text" id="username" class="form-control" v-model="username" placeholder="Enter Username" />
                         </div>
-
-                        <!-- Dog Breed Dropdown -->
-                        <!-- <div class="form-group mt-3">
-                            <label for="dogBreed">Dog's Breed</label>
-                            <select id="dogBreed" class="form-control" v-model="dogBreed">
-                                <option>Corgi</option>
-                                <option>Golden Retriever</option>
-                                <option>Bulldog</option>
-                                <option>Poodle</option>
-                                <option>Beagle</option>
-                            </select>
-                        </div> -->
 
                         <!-- Age Group Dropdown -->
                         <div class="form-group mt-4">

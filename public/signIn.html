@@ -29,8 +29,6 @@
                     <div class="carousel-indicators">
                         <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
                         <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                        <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="2" aria-label="Slide 3"></button>
-                        <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="3" aria-label="Slide 4"></button>
                     </div>
 
                     <div class="carousel-inner">
@@ -48,20 +46,6 @@
                                 <h6>Let us help you track your dog food</h6>
                             </div>
                         </div>
-                        <!-- <div class="carousel-item">
-                            <img src="images/signIn/dog_diary.gif" class="d-block w-100" alt="Slide 3">
-                            <div class="carousel-caption d-md-block">
-                                <h3>Dog Diary</h3>
-                                <h6>Create and write memories</h6>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <img src="images/signIn/dog_events.gif" class="d-block w-100" alt="Slide 4">
-                            <div class="carousel-caption d-md-block">
-                                <h3>Dog Events/Places</h3>
-                                <h6>Stay updated with dog-friendly places and events</h6>
-                            </div>
-                        </div> -->
                     </div>
 
                     <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
@@ -152,7 +136,6 @@
                 signInWithEmailAndPassword(auth, this.email, this.password)
                     .then((userCredential) => {
                         const user = userCredential.user;
-                        alert("Signed in successfully!");
                         // Redirect to the next page
                         window.location.href = 'homepage.html';
                     })
@@ -169,7 +152,7 @@
                     .then((result) => {
                         const user = result.user;
                         alert("Signed in with Google!");
-                        // Additional handling, like redirecting
+                        window.location.href = 'homepage.html';
                     })
                     .catch((error) => {
                         console.error("Error: ", error);
@@ -178,22 +161,6 @@
             }
         }
     });
-
-//     async googleSignIn() {
-//     const provider = new GoogleAuthProvider();
-//     try {
-//         const result = await signInWithPopup(auth, provider);
-//         const user = result.user;
-//         alert("Signed in with Google!");
-//         // Additional handling, like redirecting
-//     } catch (error) {
-//         console.error("Error: ", error);
-//         alert("Failed to sign in with Google.");
-//     }
-// }
-//         }
-//     });
-
     vueApp.mount('#app');
 
     

@@ -2,6 +2,10 @@
     overflow-x: hidden; /* Prevents horizontal scrolling */
 }
 
+.container-fluid {
+  padding: 0;
+}
+
 .inventory-overview {
     margin-top: 10px;
     margin-left: 20px;
@@ -31,7 +35,7 @@ h2 {
   cursor: pointer;
   border-radius: 10px; /* Ensure rounded corners on entire card */
   /* box-shadow: 0 0 10px rgb(231, 231, 255); */
-    box-shadow: 0 0 10px rgb(250, 179, 108);
+    box-shadow: 0 0 10px rgb(108, 250, 129);
   overflow: hidden; /* Apply overflow hidden to respect border-radius */
 }
 
@@ -80,52 +84,74 @@ h2 {
     color: #555;
 }
 
-/* Warning top */
-.expiry-warning {
-  background-color: #fedadf;
-  color: #d32f2f;
-  padding: 10px;
-  text-align: center;
-  font-weight: bold;
-  font-size: 12px;
-  border-top-left-radius: 10px; /* Rounded corners on the top left */
-  border-top-right-radius: 10px; /* Rounded corners on the top right */
+/* Expiring Soon (Yellow) */
+.inventory-card.near-expiry {
+    box-shadow: 0 0 10px rgba(255, 235, 59, 0.6); /* Yellow shadow */
 }
 
-
-/* Warning bottom */
-.sell-now {
-  background-color: #ffebee; /* Pastel reddish pink */
-  padding: 20px;
-  text-align: center;
-  font-size: 12px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
+.near-expiry .expiry-warning {
+    background-color: #fff9c4; /* Light yellow background */
+    color: #f57f17; /* Dark yellow text */
+    padding: 10px;
 }
 
-.sell-button {
-  background-color: #d32f2f;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 5px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 12px;
-  transition: background-color 0.3s;
-  margin: 60px;
+.near-expiry .sell-now {
+    background-color: #fff9c4; /* Light yellow background */
+    padding: 20px;
+    text-align: center;
 }
 
-.sell-button:hover {
-  background-color: #b71c1c;
+.near-expiry .sell-button {
+    background-color: #F4B400; /* Normal yellow */
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.near-expiry .sell-button:hover {
+    background-color: #E5A200;  /* Darker yellow */
+}
+
+/* Expired (Red) */
+.inventory-card.expired {
+    box-shadow: 0 0 10px rgba(244, 67, 54, 0.6); /* Red shadow */
+}
+
+.expired .expiry-warning {
+    background-color: #ffebee; /* Light red background */
+    color: #d32f2f; /* Dark red text */
+    padding: 10px;
+}
+
+.expired .sell-now {
+    background-color: #ffebee; /* Light red background */
+    padding: 20px;
+    text-align: center;
+}
+
+.expired .sell-button {
+    background-color: #d32f2f; /* Red button */
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.expired .sell-button:hover {
+    background-color: #b71c1c; /* Darker red on hover */
 }
 
 /* Scroll effect */
 .carousel-container {
   position: relative;
-  /* height: 400px; */
   overflow: hidden;
   border-radius: 10px;
-  height: 400px; /* Reduce the height if needed */
+  height: 425px; /* Reduce the height if needed */
 }
 
 .carousel-stage {
@@ -294,4 +320,42 @@ h2 {
     100% {
         transform: translateY(-20px) scale(0.5);
     }
+}
+
+/* Graphs Css */
+.graph-section {
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.chart-container {
+    background-color: #FAF3E0; /* Light beige background */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 10px 0;
+}
+
+/* Add spacing for large screens */
+@media (min-width: 992px) {
+    .graph-section .row {
+        column-gap: 80px; /* Increase horizontal space between charts */
+    }
+}
+
+/* Add vertical spacing for small screens */
+@media (max-width: 768px) {
+    .chart-container {
+        margin-bottom: 30px; /* Extra space between charts on smaller screens */
+    }
+}
+
+
+.chart-title {
+    text-align: center;
+    color: #8B4513; /* Dark brown text color for dog-themed feel */
+    /* font-family: Arial, sans-serif; */
+    font-family: "Poppins Regular";
+    font-size: 20px;
+    margin-bottom: 18px;
 }
