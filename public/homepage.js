@@ -24,3 +24,4 @@ document.addEventListener("DOMContentLoaded", function () {
   // Event listener to track mouse movement on hover
   welcomeText.addEventListener("mousemove", createEmojiTrail);
 });
+

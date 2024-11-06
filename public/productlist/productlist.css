@@ -399,3 +399,19 @@ button {
 .delete-icon:hover {
     color: #c9302c; /* Darker red when hovered */
 }
+
+.chart-container {
+    background-color: #FAF3E0; /* Light beige background */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+}
+
+.chart-title {
+    text-align: center;
+    color: #8B4513; /* Dark brown text color for consistency */
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    margin-bottom: 15px;
+}

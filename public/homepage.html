@@ -129,8 +129,16 @@
                 <h3 class="chart-title">Sales Overview (Profit)</h3>
                 <canvas id="salesChart"></canvas>
             </div>
+            
+            <!-- Inventory Pie Chart -->
+            <div class="col-12 col-md-6 col-lg-5 chart-container">
+                <h3 class="chart-title">Inventory Levels</h3>
+                <canvas id="inventoryPieChart"></canvas>
+            </div>
         </div>
     </div>
+
+
 
 
 
@@ -149,7 +157,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
-
 
     let userUID;  // Declare a global variable to store the UID
     let userItemIds;
@@ -436,7 +443,7 @@ if (trafficCtx) {
         data: {
             labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
             datasets: [{
-                label: 'Number of Visits 🐾', // Add paw emoji to label
+                label: 'Number of Visits 🐾', 
                 data: trafficData,
                 backgroundColor: 'rgba(160, 82, 45, 0.2)', // Earthy brown with transparency
                 borderColor: 'rgba(139, 69, 19, 1)', // Darker brown for lines
@@ -497,6 +504,8 @@ if (trafficCtx) {
         }
     });
 }
+
+
 // Firestore real-time listener
 const trafficRef = collection(db, 'itemViews');
 onSnapshot(trafficRef, (snapshot) => {
@@ -523,8 +532,6 @@ onSnapshot(trafficRef, (snapshot) => {
         console.error('Traffic chart is not initialized.');
     }
 });
-
-
 
 
 
@@ -565,7 +572,7 @@ if (salesCtx) {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(222, 184, 135, 0.2)' // Light beige grid
+                        color: 'rgba(222, 184, 135, 0.2)'
                     },
                     ticks: {
                         color: '#654321',
@@ -588,7 +595,7 @@ if (salesCtx) {
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(85, 107, 47, 0.9)', // Dark green tooltip background
+                    backgroundColor: 'rgba(85, 107, 47, 0.9)',
                     titleFont: { size: 14, weight: 'bold' },
                     bodyFont: { size: 12 },
                     borderColor: 'rgba(85, 107, 47, 1)',
@@ -642,6 +649,76 @@ const salesRef = collection(db, 'sales');
             console.error('Sales chart is not initialized.');
         }
     });
+
+    
+
+
+    // Inventory Pie Chart setup
+    let inventoryPieChart;
+
+
+
+    // Function to create and update the Inventory Pie Chart
+    function createInventoryPieChart(names, quantities) {
+        const ctx = document.getElementById('inventoryPieChart').getContext('2d');
+        if (inventoryPieChart) {
+            // Update chart data if it already exists
+            inventoryPieChart.data.labels = names;
+            inventoryPieChart.data.datasets[0].data = quantities;
+            inventoryPieChart.update();
+        } else {
+            // Create new chart if it does not exist
+            inventoryPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: names,
+                    datasets: [{
+                        label: 'Inventory Levels',
+                        data: quantities,
+                        backgroundColor: names.map((_, i) => `hsl(${(i * 360) / names.length}, 70%, 60%)`), // Dynamic colors
+                        borderColor: '#333',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#8B4513', // Dark brown color
+                                font: { size: 14, family: 'Comic Sans MS' }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} units`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Firestore listener to get inventory data
+    onSnapshot(collection(db, 'inventory'), (snapshot) => {
+        const productNames = [];
+        const productQuantities = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            productNames.push(data.name);
+            productQuantities.push(data.quantity);
+        });
+
+        // Call function to create/update the inventory pie chart
+        createInventoryPieChart(productNames, productQuantities);
+    });
+
+
     
 </script>
 

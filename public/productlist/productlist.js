@@ -52,15 +52,15 @@ export async function addProductToFirestore(product) {
 }
 
 // Function to update the stock of an existing product in Firestore
-async function updateProductStockInFirestore(productId, newQuantity) {
-    const productRef = doc(db, 'inventory', productId);
-    try {
-        await updateDoc(productRef, { quantity: newQuantity });
-        console.log("Product stock updated in Firestore.");
-    } catch (e) {
-        console.error("Error updating product stock: ", e);
-    }
-}
+// async function updateProductStockInFirestore(productId, newQuantity) {
+//     const productRef = doc(db, 'inventory', productId);
+//     try {
+//         await updateDoc(productRef, { quantity: newQuantity });
+//         console.log("Product stock updated in Firestore.");
+//     } catch (e) {
+//         console.error("Error updating product stock: ", e);
+//     }
+// }
 
 // Function to retrieve products for a specific user from Firestore
 export async function loadUserProducts(userId) {
@@ -100,29 +100,62 @@ function filterProducts(searchValue) {
 }
 
 // Adjust stock and handle the confirmation modal when stock reaches 0
-export async function adjustStock(productId, adjustment) {
+export async function adjustStock(productId, amount) {
+    const productRef = doc(db, 'inventory', productId);
     const product = allProducts.find(p => p.id === productId);
-    if (!product) {
-        console.error("Product not found with ID:", productId);
-        return;
+
+    // Declare newQuantity outside of the conditional block
+    let newQuantity;
+
+    if (product) {
+        newQuantity = product.quantity + amount;
+
+        // Ensure new quantity is non-negative
+        if (newQuantity >= 0) {
+            try {
+                // Update Firestore with the new quantity
+                await updateDoc(productRef, { quantity: newQuantity });
+                product.quantity = newQuantity;  // Update local product data
+
+                // Log the reduction with a timestamp if the amount is negative
+                if (amount < 0) {
+                    await logConsumption(productId, -amount);
+                }
+
+                // Refresh displayed products
+                displayProducts(allProducts, currentPage);
+                console.log(`Product quantity adjusted by ${amount}. New quantity: ${newQuantity}`);
+            } catch (error) {
+                console.error("Error adjusting stock:", error);
+            }
+        } else {
+            console.error("Invalid quantity: cannot reduce below zero.");
+        }
+    } else {
+        console.error("Product not found.");
     }
 
-    const newQuantity = Math.max(0, product.quantity + adjustment);  // Ensure quantity doesn’t go below 0
-    product.quantity = newQuantity;
-
+    // Now `newQuantity` is accessible here because it was declared outside the `if` block
     if (newQuantity === 0) {
         selectedProductIndex = allProducts.findIndex(p => p.id === productId);
         const modal = document.getElementById('confirmationModal');
         modal.style.display = 'flex';  // Show modal
-    } else {
-        try {
-            const productRef = doc(db, 'inventory', productId);
-            await updateDoc(productRef, { quantity: newQuantity });
-
-            displayProducts(allProducts, currentPage);
-        } catch (error) {
-            console.error("Error updating product stock:", error);
-        }
+    }
+}
+    
+// Function to log each consumption event with a timestamp
+async function logConsumption(productId, quantityReduced) {
+    try {
+        const logRef = collection(db, 'consumptionLogs');
+        await addDoc(logRef, {
+            productId: productId,
+            userUID: userUID,
+            quantityReduced: quantityReduced,
+            timestamp: new Date().toISOString()  // Current timestamp
+        });
+        console.log(`Logged consumption of ${quantityReduced} for product ${productId}`);
+    } catch (error) {
+        console.error("Error logging consumption:", error);
     }
 }
 
@@ -233,7 +266,7 @@ function displayProducts(products, page = 1) {
         row.dataset.index = index;  // Store index as a data attribute
 
         row.innerHTML = `
-            <td><input type="checkbox"></td>
+            <td><button onclick="showProductConsumption('${product.id}')">View Consumption</button></td>
             <td>
                 <div class="product-image-container">
                     <img src="${product.image}" alt="${product.name}" onclick="enlargeImage('${product.image}')"/>
@@ -624,10 +657,112 @@ function displayProducts(products, page = 1) {
         }
     }
     window.deletePermanently = deletePermanently;
-    
+
+        // Fetch consumption logs for a specific product
+        async function fetchConsumptionData(productId) {
+            const logsRef = collection(db, 'consumptionLogs');
+            const q = query(logsRef, where('productId', '==', productId));
+            const querySnapshot = await getDocs(q);
+
+            const data = [];
+            let cumulativeConsumption = 0;
+
+            // Process each document in the consumption logs
+            querySnapshot.forEach(doc => {
+                const log = doc.data();
+                cumulativeConsumption += log.quantityReduced;
+                data.push({
+                    timestamp: new Date(log.timestamp),
+                    cumulativeConsumption: cumulativeConsumption
+                });
+            });
+
+            // Sort data by timestamp to ensure chronological order
+            data.sort((a, b) => a.timestamp - b.timestamp);
+
+            return data;
+        }
+
+        // Render the consumption data as a line chart
+        async function renderConsumptionChart(productId) {
+            const consumptionData = await fetchConsumptionData(productId);
+        
+            // Prepare data for Chart.js
+            const labels = consumptionData.map(entry => entry.timestamp.toLocaleString());
+            const consumptionValues = consumptionData.map(entry => entry.cumulativeConsumption);
+        
+            const ctx = document.getElementById('consumptionChart')?.getContext('2d');
+     
+        
+            // Create or update the chart
+            if (window.consumptionChart) {
+                // Update existing chart data if chart is already initialized
+                window.consumptionChart.data.labels = labels;
+                window.consumptionChart.data.datasets[0].data = consumptionValues;
+                window.consumptionChart.update();
+            } else {
+                // Initialize a new chart if it doesn't exist
+                window.consumptionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Cumulative Consumption',
+                            data: consumptionValues,
+                            fill: false,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    color: '#8B4513',
+                                    font: { size: 14, family: 'Comic Sans MS' }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Consumed: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'day'
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Cumulative Quantity Reduced'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Function to render chart for a specific product
+        export function showProductConsumption(productId) {
+            renderConsumptionChart(productId);
+        }
+
+
     // Call this function when you load the page
-
-
 
 // Example product to test adding a new product to Firestore
 // function createAndAddProduct() {

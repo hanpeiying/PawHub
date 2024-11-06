@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="./styles/stylenav.css">
     <link rel="stylesheet" href="./styles/styleModal.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body>
@@ -49,7 +51,7 @@
         <table class="product-list">
             <thead>
             <tr>
-                <th>S/N</th>
+                <th>Consumption Rate</th>
                 <th>Image</th>
                 <th>Name</th>
                 <th>Expiry Date
@@ -73,6 +75,14 @@
         </table>
         <div class="pagination"></div>
     </div>
+
+    <div class="chart-container">
+        <h3 class="chart-title">Consumption Rate Over Time</h3>
+        <canvas id="consumptionChart"></canvas>
+    </div>
+
+    
+
 
     <div class="deleted-inventory-container">
         <h2>Deleted Products History</h2>
@@ -118,23 +128,12 @@
     </div>
 </div>
 
-<!-- <div id="deleteConfirmation" class="modal">
-    <div class="modal-content">
-        <p class="modal-text">Confirm delete item?</p>
-        <div class="modal-buttons">
-            <button id="confirmDeleteBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> Yes, Delete</button>
-            <button id="confirmCancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
-        </div>
-    </div>
-</div> -->
-
 
 <!-- Vue Application Code should be outside the template -->
 <script type="module">
     import productModal from './productModal.js';
     import { addProductToFirestore, loadUserProducts } from './productlist/productlist.js';
     import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-    
 
     const auth = getAuth();
     const currentUser = auth.currentUser;
@@ -142,7 +141,6 @@
     const app = Vue.createApp({
         components: {
             'product-modal': productModal
-
         },
         methods: {
             async handleAddProduct(newProduct) {
@@ -174,9 +172,13 @@
 <script type="module" src="productModal.js"></script>
 
 <script type="module">
-    import { adjustStock } from './productlist/productlist.js';
-    window.adjustStock = adjustStock;  
+    import { adjustStock, showProductConsumption } from './productlist/productlist.js';
+    window.adjustStock = adjustStock;    
+    window.showProductConsumption = showProductConsumption;
+
 </script>
+
+
 
 </body>
 </html>
