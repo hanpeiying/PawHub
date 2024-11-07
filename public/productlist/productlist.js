@@ -763,24 +763,44 @@ function displayProducts(products, page = 1) {
 
 
     // Call this function when you load the page
-
-// Example product to test adding a new product to Firestore
-// function createAndAddProduct() {
-//     if (userUID) {
-//         const newProduct = {
-//             name: 'Sample Product 2',
-//             expiry: '2024-12-31',
-//             added: '2024-10-26',
-//             price: 10.99,
-//             quantity: 10,
-//             image: 'https://example.com/product.jpg',
-//         };
-
-//         // Add the new product to Firestore
-//         addProductToFirestore(newProduct);
-//     } else {
-//         console.error("User UID is not available. Ensure the user is logged in before adding a product.");
-//     }
-// }
-
+    document.querySelectorAll('.info-btn').forEach(button => {
+        const tooltip = button.querySelector('.info-tooltip');
+    
+        button.addEventListener('mouseenter', () => {
+            // Append tooltip to the body for absolute positioning
+            document.body.appendChild(tooltip);
+    
+            // Get button's position relative to the viewport and account for scrolling
+            const rect = button.getBoundingClientRect();
+            const scrollY = window.scrollY || window.pageYOffset;
+            
+            // Set initial position to the right of the button
+            let tooltipTop = rect.top + scrollY;
+            let tooltipLeft = rect.right + 10; // 10px space from the button
+    
+            // Adjust positioning if tooltip would overflow the right side of the viewport
+            const tooltipWidth = tooltip.offsetWidth;
+            const viewportWidth = window.innerWidth;
+            if (tooltipLeft + tooltipWidth > viewportWidth) {
+                tooltipLeft = rect.left - tooltipWidth - 10;
+            }
+    
+            // Set the calculated position for the tooltip
+            tooltip.style.top = `${tooltipTop}px`;
+            tooltip.style.left = `${tooltipLeft}px`;
+    
+            // Show the tooltip
+            tooltip.style.display = 'block';
+            tooltip.style.opacity = '1';
+        });
+    
+        button.addEventListener('mouseleave', () => {
+            // Hide the tooltip and re-attach it to the button to reset position
+            tooltip.style.display = 'none';
+            tooltip.style.opacity = '0';
+            button.appendChild(tooltip);
+        });
+    });
+    
+    
 
