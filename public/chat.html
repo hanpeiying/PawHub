@@ -8,6 +8,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles/chat.css">
     <link rel="stylesheet" href="styles/stylenav.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
 </head>
 <body>
     <script src="./navbar.js" type="module"></script>
@@ -15,12 +17,12 @@
     <div id="app">
         <div class="container-fluid main-content">
             <div class="row">
-
+                
+                <div id="nav-component"></div>
                 <div class="col-12 background backgroundImage">
                     <img src="images/nav/chat3.png">
                     <p class="background-text">Chat</p>
                 </div>
-                <div id="nav-component"></div>
 
                 <!-- Sidebar for Inbox -->
                 <div class="col-md-3 col-sm-12 chat-sidebar">
@@ -30,7 +32,7 @@
                             <img :src="chat.photoURL || 'https://via.placeholder.com/50'" alt="User" class="rounded-circle" width="50">
                             <div class="inbox-info">
                                 <h5>{{ chat.username }}</h5>
-                                <p>{{ chat.lastMessage }}</p>
+                                <p>{{ chat.productName }}</p>
                             </div>
                         </div>
                     </div>
@@ -41,13 +43,15 @@
                     <div v-if="selectedChat">
                         <!-- Seller and Product Details Section -->
                         <div class="chat-header">
+                            <button v-if="!showInbox && isSmallViewport" @click="backToInbox" class="btn btn-secondary btn-sm fas fa-arrow-left back-arrow"></button>
                             <img :src="sellerProfileImageURL || 'https://via.placeholder.com/120'" alt="Seller" class="rounded-circle" width="50">
                             <h4>{{ sellerUsername }}</h4>
-                            <p class="product-details" v-if="productAvailable">
-                                Inquiring about: {{ productName }}
-                                <img v-if="productImageURL" :src="productImageURL" alt="Product" width="50" class="product-image">
+                            <p class="product-details">
+                                <span v-if="productAvailable">Inquiring about: {{ productName }}</span>
+                                <span v-else style="color:red">{{productName}} sold</span>
+                                <img v-if="productImageURL && productAvailable" :src="productImageURL" alt="Product" class="product-image" width="50">
                             </p>
-                        </div>                      
+                        </div>                 
                         
                         <div class="chat-messages">
                             <div v-for="(message, index) in messages" :key="index" :class="{'message-sent': message.senderId === userId, 'message-received': message.senderId !== userId}">
@@ -91,23 +95,38 @@
                     sellerUsername: "Seller", // Placeholder username
                     productName: "",
                     productImageURL: "" ,
-                    productAvailable: true 
+                    productAvailable: true,
+                    showInbox: window.innerWidth > 768,
+                    newMessage: "",
+                    isSmallViewport: window.innerWidth <= 768
                 };
             },
             methods: {
-                async initializeChat(productId, productName, productImageURL) {
-                    const chatData = {
-                        participants: [this.userId, sellerId],
-                        lastMessage: "",
-                        timestamp: Timestamp.now(),
-                        productId: productId,
-                        productName: productName,
-                        productImageURL: productImageURL
-                    };
-                
-                    // Save this data to Firestore only if a new chat is created
-                    const chatDoc = await addDoc(collection(db, "chats"), chatData);
-                    this.selectedChat = chatDoc.id;
+                async initializeChat() {
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        this.sellerId = params.get('sellerId');
+                        this.sellerUsername = params.get('username');
+                        this.sellerProfileImageURL = params.get('profilePicUrl');
+                        this.productName = params.get('productName');
+                        this.productImageURL = params.get('productImageURL');
+        
+                        if (!this.sellerId) {
+                            throw new Error('Seller ID not found in URL parameters');
+                        }
+        
+                        // Load existing chats in background
+                        await this.loadExistingChats();
+                        
+                        // Load or create chat with seller
+                        await this.loadOrCreateChat();
+        
+                        this.isLoading = false;
+                    } catch (error) {
+                        console.error('Error initializing chat:', error);
+                        this.error = error.message;
+                        this.isLoading = false;
+                    }
                 },                
                 async loadSellerProfile(sellerId) {
                     try {
@@ -124,7 +143,6 @@
                             this.sellerProfileImageURL = "https://via.placeholder.com/120";
                         }
                     } catch (error) {
-                        console.error("Error loading seller profile:", error);
                         this.sellerUsername = "Unknown Seller";
                         this.sellerProfileImageURL = "https://via.placeholder.com/120";
                     }
@@ -141,14 +159,13 @@
                             const data = docSnap.data();
                             const participants = data.participants || [];
                             const otherUserId = participants.find(id => id !== this.userId) || null;
-                            
-                            // Fetch other user's profile data
+                
                             if (otherUserId) {
                                 const userDocRef = doc(db, "users", otherUserId);
                                 const userDoc = await getDoc(userDocRef);
                                 const userData = userDoc.exists() ? userDoc.data() : {};
                 
-                                console.log("Loaded product image URL:", data.productImageURL); // Debugging line
+                                console.log("Product Image URL from Firestore:", data.productImageURL); // Debug log
                 
                                 return {
                                     id: docSnap.id,
@@ -156,9 +173,7 @@
                                     otherUserId,
                                     username: userData.username || "Unknown User",
                                     photoURL: userData.uploadedImageUrl || "https://via.placeholder.com/50",
-                                    lastMessage: data.lastMessage || "",
-                                    productName: data.productName || "", // Load product details
-                                    productImageURL: data.productImageURL || "" // Load product image if needed
+                                    productImageURL: data.productImageURL || "" // Ensure this is set correctly
                                 };
                             } else {
                                 return {
@@ -166,66 +181,62 @@
                                     ...data,
                                     username: "Unknown User",
                                     photoURL: "https://via.placeholder.com/50",
-                                    lastMessage: data.lastMessage || "",
-                                    productName: data.productName || "", // Load product details
-                                    productImageURL: data.productImageURL || "" // Load product image if needed
+                                    productImageURL: data.productImageURL || "" // Ensure this is set correctly
                                 };
                             }
                         });
                 
                         this.chats = await Promise.all(chatPromises);
                     });
-                },
-                async checkProductAvailability(productId) {
-                    try {
-                        const productRef = doc(db, "products", productId);
-                        const productDoc = await getDoc(productRef);
-                
-                        if (productDoc.exists()) {
-                            const productData = productDoc.data();
-                            
-                            // Check if the product is marked as sold or deleted
-                            if (productData.isAvailable === false) {
-                                // Product is not available, clear product details and set flag
-                                this.productName = "";
-                                this.productImageURL = "";
-                                this.productAvailable = false; // Set flag to false
-                            } else {
-                                // Product is available, set product details
-                                this.productName = productData.name;
-                                this.productImageURL = productData.imageUrl || "";
-                                this.productAvailable = true; // Set flag to true
-                            }
-                        } else {
-                            // Product does not exist, clear product details and set flag
-                            this.productName = "";
-                            this.productImageURL = "";
-                            this.productAvailable = false;
-                        }
-                    } catch (error) {
-                        console.error("Error checking product availability:", error);
-                        this.productName = "";
-                        this.productImageURL = "";
-                        this.productAvailable = false; // Ensure flag is false on error
-                    }
-                },                                      
+                },                                                                   
                 async selectChat(chatId) {
+                    console.log('Chat clicked:', chatId); 
                     const chat = this.chats.find(chat => chat.id === chatId);
                     if (chat) {
                         this.selectedChat = chat;
-                        this.loadMessages(chatId);
-            
+                        this.productName = chat.productName;
+                        this.productImageURL = chat.productImageURL;
+                        this.showInbox = false;
+                        document.querySelector('.chat-sidebar').classList.add('hidden');
+                        document.querySelector('.chat-area').classList.add('active');
                         // Load seller profile based on otherUserId
                         if (chat.otherUserId) {
                             await this.loadSellerProfile(chat.otherUserId);
+                            await this.loadProductDetails(chat.productId);
                         }
-            
-                        // Check product availability and set product details for display
+                        // Check product availability and update product details for display
                         if (chat.productId) {
-                            await this.checkProductAvailability(chat.productId);
+                            try {
+                                const productRef = doc(db, "products", chat.productId);
+                                const productDoc = await getDoc(productRef);
+                            } catch (error) {
+                                console.error("Error checking product status:", error);
+                            }
                         }
+                        this.loadMessages(chatId);
+                    }                   
+                },
+                async loadProductDetails(productId) {
+                    if (!productId) return;
+    
+                    try {
+                        const productDoc = await getDoc(doc(db, "marketplace", productId));
+                        if (productDoc.exists()) {
+                            const productData = productDoc.data();
+                            this.productAvailable = productData.isAvailable !== false;
+                            console.log("Product availability:", this.productAvailable);
+                        }
+                    } catch (error) {
+                        console.error("Error loading product details:", error);
+                        this.productAvailable = false;
                     }
-                },                                              
+                }, 
+                backToInbox() {
+                    this.showInbox = true;
+                    this.selectedChat = null;
+                    document.querySelector('.chat-sidebar').classList.remove('hidden');
+                    document.querySelector('.chat-area').classList.remove('active');
+                },                                                            
                 async loadMessages(chatId) {
                     const messagesQuery = query(
                         collection(db, "chats", chatId, "messages"),
@@ -263,6 +274,10 @@
                         console.error("Error sending message:", error);
                     }
                 },
+                handleResize() {
+                    this.showInbox = window.innerWidth > 768 || !this.selectedChat;
+                    this.isSmallViewport = window.innerWidth <= 768;
+                },
                 formatTime(timestamp) {
                     if (!timestamp) return "";
                     const date = timestamp.toDate();
@@ -276,7 +291,9 @@
                         this.loadChats();
                     }
                 });
-            }
+                this.handleResize();
+                window.addEventListener("resize", this.handleResize);
+            },
         });
 
         vueApp.mount('#app');

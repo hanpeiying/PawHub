@@ -11,13 +11,15 @@
     <link rel="stylesheet" href="styles/pdtDetails.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAoSXajgbCwxezGaOUlDeLeBA-HLIBHi4g"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAoSXajgbCwxezGaOUlDeLeBA-HLIBHi4g&libraries=places"></script>
+
 </head>
 
 <body>
     <div id="app">
-        <Navbar></Navbar> <!-- Navbar component from Vue.js -->
+        <div id="nav-component"></div>
     </div>
-
+    <script src="./navbar.js" type="module"></script>
     <div class="container">
         <!-- Product Carousel -->
         <div class="carousel-container">
@@ -45,9 +47,8 @@
                 <h4>Details</h4>
                 <table class="details-table" id="productDetailsTable"></table>
             </div>
-        
-            <!-- Seller Section -->
-            <div class="ratings-chat-container" style="text-align: right; margin-top: 20px;"">
+            <br><br><br><br><br><br>
+            <div class="ratings-chat-container" style="text-align: right; margin-top: 20px;">
                 <div class="username" id="sellerUsername">
                     <i class="fas fa-paw"></i> Loading Seller Info...
                 </div>
@@ -60,7 +61,7 @@
                         <div id="mapContainer" style="height: 400px; width: 100%;"></div>
                     </div>
                 </div>
-                <button class="chat-btn" onclick="openChat('sellerIdHere', 'usernameHere', 'profilePicUrlHere', 'productNameHere')">
+                <button class="chat-btn">
                     <i class="fas fa-comment"></i> Chat
                 </button>
             </div>
@@ -79,11 +80,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Use Firebase app initialization -->
-
+    <script type="module">
+        import Navbar from './Navbar.js';
+        const app = Vue.createApp({
+            components: {
+                Navbar
+            }
+        });
+        app.mount('#app');
+    </script>
     <script type="module">
         import { app } from "./firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        import { getFirestore, doc, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, query, where, orderBy, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
         const auth = getAuth(app);
@@ -92,53 +101,105 @@
 
         console.log(getProductIdFromURL());
 
+        let productData;
+
         // Function to get the product ID from the URL query parameters
         function getProductIdFromURL() {
             const params = new URLSearchParams(window.location.search);
             console.log(params);
             return params.get('id'); // Get the 'id' query parameter from the URL
         }
-        function openChat(sellerId, username, profilePicUrl, productName, productImageURL) {
-            // Get the current user's auth state
-            const auth = getAuth();
+        async function openChat() {
+            const productId = getProductIdFromURL();
             const currentUser = auth.currentUser;
-            
+
             if (!currentUser) {
-                // If user is not logged in, redirect to login page
                 window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
                 return;
             }
-        
-            // Encode parameters to ensure they are safe for use in URLs
-            const params = new URLSearchParams({
-                sellerId: sellerId,
-                username: username,
-                profilePicUrl: profilePicUrl || '',
-                productName: productName,
-                productImageURL: productImageURL, // Include productImageURL in the query
-                productId: getProductIdFromURL() // Include the product ID
-            });
-            window.location.href = `chat-buyerpov.html?${params.toString()}`;
-        }        
 
+            // Fetch product details
+            const docRef = doc(db, "marketplace", productId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const productData = docSnap.data();
+                const sellerId = productData.userUID;
+                const productName = productData.title;
+                const productImageURL = productData.imageURLs[0] || '';
+
+                // Fetch seller details
+                const userDocRef = doc(db, "users", sellerId);
+                const userDoc = await getDoc(userDocRef);
+                const username = userDoc.exists() ? userDoc.data().username || "Seller" : "Seller";
+                const profilePicUrl = userDoc.exists() ? userDoc.data().profilePicUrl || '' : '';
+
+                // Check if chat exists or create a new one
+                const chatId = await initializeChat(productId, productName, productImageURL, sellerId);
+                
+                if (chatId) {
+                    const params = new URLSearchParams({
+                        sellerId: sellerId,
+                        username: username,
+                        profilePicUrl: profilePicUrl,
+                        productName: productName,
+                        productImageURL: productImageURL,
+                        productId: productId,
+                        chatId: chatId
+                    });
+                    
+                    window.location.href = `chat-buyerpov.html?${params.toString()}`;
+                } else {
+                    console.error("Failed to initialize chat, no chatId returned.");
+                }
+            } else {
+                console.error("Product details not found.");
+            }
+        }      
+        async function initializeChat(productId, productName, productImageURL, sellerId) {
+            try {
+                const chatQuery = query(
+                    collection(db, "chats"),
+                    where("participants", "array-contains", auth.currentUser.uid),
+                    where("productId", "==", productId)
+                );
+                const querySnapshot = await getDocs(chatQuery);
+        
+                if (querySnapshot.empty) {
+                    const chatData = {
+                        participants: [auth.currentUser.uid, sellerId],
+                        lastMessage: "",
+                        timestamp: new Date(),
+                        productId: productId,
+                        productName: productName,
+                        productImageURL: productImageURL
+                    };
+                    const chatRef = await addDoc(collection(db, "chats"), chatData);
+                    return chatRef.id;
+                } else {
+                    return querySnapshot.docs[0].id;
+                }
+            } catch (error) {
+                console.error("Error initializing chat:", error);
+                return null;
+            }
+        }
         // Function to load and display the product details
         async function loadProductDetails() {
             let productId = getProductIdFromURL();
-            console.log(productId);
             if (!productId) {
                 console.error('Product ID not found in URL');
                 return;
             }
-
+        
             // Get product data from Firestore
             const docRef = doc(db, "marketplace", productId);
             try {
                 const docSnap = await getDoc(docRef);
-
                 if (docSnap.exists()) {
-                    const productData = docSnap.data();
+                    productData = docSnap.data(); // Store the product data in a global variable
                     displayProductDetails(productData);
-                    loadSellerDetails(productData.userUID); // Load seller details based on user UID
+                    loadSellerDetails(productData.userUID);
                 } else {
                     console.error('No such document!');
                 }
@@ -178,25 +239,25 @@
                     </div>`;
             });
             const prevButton = document.querySelector('.carousel-control-prev');
-    const nextButton = document.querySelector('.carousel-control-next');
-    if (product.imageURLs.length <= 1) {
-        prevButton.style.display = 'none';
-        nextButton.style.display = 'none';
-    } else {
-        prevButton.style.display = 'block';
-        nextButton.style.display = 'block';
-    }
-            
-            if (product.meetupLocation) {
-                geocodeAddress(product.meetupLocation);
+            const nextButton = document.querySelector('.carousel-control-next');
+            if (product.imageURLs.length <= 1) {
+                prevButton.style.display = 'none';
+                nextButton.style.display = 'none';
             } else {
-                console.warn('No meetup location provided, falling back to default.');
-                initMapWithCoordinates(1.3039, 103.8318); // Fallback to a default location (Central)
+                prevButton.style.display = 'block';
+                nextButton.style.display = 'block';
             }
             
-            
-        
-        
+            const showMapBtn = document.getElementById('showMapBtn');
+            showMapBtn.onclick = async () => {
+                try {
+                    const currentLocation = await getCurrentLocation(); // Get the current location of the user
+                    const meetupCoordinates = await geocodeAddress(product.meetupLocation); // Geocode the meetup location
+                    initMapWithRoute(currentLocation, meetupCoordinates);
+                } catch (error) {
+                    console.error("Error opening map: ", error);
+                }
+            };
             const userDocRef = doc(db, "users", product.userUID);
             try {
                 const userDoc = await getDoc(userDocRef);
@@ -221,8 +282,14 @@
             } catch (error) {
                 console.error("Error fetching seller details:", error);
             }
-        }        
+        }       
+        async function openMap(meetupLocation) {
+            const currentLocation = await getCurrentLocation(); // Get the current location of the user
+            const coordinates = await geocodeAddress(meetupLocation); // Geocode the meetup location
 
+            // Initialize the map with current location and display route
+            initMapWithRoute(currentLocation, coordinates);
+        }
         // Function to load and display seller details
         async function loadSellerDetails(userUID) {
             const sellerUsernameElement = document.getElementById('sellerUsername');
@@ -300,62 +367,92 @@
         }
 
         function geocodeAddress(address) {
-            const apiKey = 'AIzaSyAoSXajgbCwxezGaOUlDeLeBA-HLIBHi4g'; // Replace with your actual Google Maps API key
-            const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+            return new Promise((resolve, reject) => {
+                const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=AIzaSyAoSXajgbCwxezGaOUlDeLeBA-HLIBHi4g`;
         
-            fetch(geocodeUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'OK') {
-                        const coordinates = data.results[0].geometry.location;
-                        console.log('Geocoded coordinates:', coordinates);
-                        initMapWithCoordinates(coordinates.lat, coordinates.lng);
-                    } else {
-                        console.error('Geocoding failed:', data.status);
-                        initMap('Central'); // Fallback to default location if geocoding fails
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching geocoding data:', error);
-                    initMap('Central'); // Fallback if an error occurs
-                });
-        }
-        function initMap(defaultLocation = 'Central') {
-            const locationCoordinates = {
-                'North': { lat: 1.41803, lng: 103.8198 },
-                'South': { lat: 1.2802, lng: 103.851959 },
-                'East': { lat: 1.3508, lng: 103.9443 },
-                'West': { lat: 1.3521, lng: 103.7084 },
-                'Central': { lat: 1.3039, lng: 103.8318 }
-            };
-        
-            const location = locationCoordinates[defaultLocation] || locationCoordinates['Central'];
-        
-            const map = new google.maps.Map(document.getElementById('map'), {
-                center: location,
-                zoom: 13  // Adjust the zoom level as needed
-            });
-        
-            new google.maps.Marker({
-                position: location,
-                map: map,
-                title: `Default Location`
+                fetch(geocodeUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'OK') {
+                            const location = data.results[0].geometry.location;
+                            resolve(location);
+                        } else {
+                            reject('Geocoding failed: ' + data.status);
+                        }
+                    })
+                    .catch(error => reject('Error fetching geocoding data: ' + error));
             });
         }
-        function initMapWithCoordinates(lat, lng) {
-            const location = { lat: lat, lng: lng };
+        function initMapWithRoute(currentLocation, meetupLocation) {
             const map = new google.maps.Map(document.getElementById('mapContainer'), {
-                center: location,
-                zoom: 15  // Adjust the zoom level as needed
+                center: currentLocation,
+                zoom: 14
             });
         
             new google.maps.Marker({
-                position: location,
+                position: currentLocation,
+                map: map,
+                title: 'Your Location'
+            });
+        
+            new google.maps.Marker({
+                position: meetupLocation,
                 map: map,
                 title: 'MeetUp Location'
             });
+        
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
+        
+            directionsService.route({
+                origin: currentLocation,
+                destination: meetupLocation,
+                travelMode: google.maps.TravelMode.DRIVING
+            }, (response, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
+                } else {
+                    console.error('Directions request failed due to ' + status);
+                }
+            });
         }
-
+        
+        function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        resolve({
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        });
+                    }, () => {
+                        reject("Unable to retrieve your location.");
+                    });
+                } else {
+                    reject("Geolocation is not supported by this browser.");
+                }
+            });
+        }
+        function fetchDirections(origin, destination) {
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer();
+        
+            directionsRenderer.setMap(map); // Map should be defined globally
+        
+            directionsService.route({
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING // You can change this to BICYCLING, WALKING, etc.
+            }, (response, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
+                } else {
+                    console.error('Directions request failed due to ' + status);
+                }
+            });
+        }
+        
         document.addEventListener('DOMContentLoaded', () => {
             const showMapBtn = document.getElementById('showMapBtn');
             const mapModal = document.getElementById('mapModal');
@@ -389,61 +486,6 @@
             }
         });
         
-        document.addEventListener('DOMContentLoaded', loadProductDetails);
-
-        async function recordItemView(itemId) {
-    if (!itemId) {
-        console.error('Invalid itemId provided:', itemId);
-        return;
-    }
-
-    const currentDayIndex = new Date().getDay(); // Get current day index (0 for Sunday, ..., 6 for Saturday)
-    const itemViewRef = doc(db, 'itemViews', itemId + '-' + currentDayIndex); // Unique document ID per item per day
-
-    try {
-        // Retrieve the product data to get the userUID of the owner
-        const productDocRef = doc(db, "marketplace", itemId);
-        const productDoc = await getDoc(productDocRef);
-
-        if (productDoc.exists()) {
-            const productData = productDoc.data();
-            const ownerUID = productData.userUID; // Get the owner UID
-
-            await runTransaction(db, async (transaction) => {
-                const itemViewDoc = await transaction.get(itemViewRef);
-                if (itemViewDoc.exists()) {
-                    // If the document exists, increment the view count
-                    transaction.update(itemViewRef, {
-                        views: itemViewDoc.data().views + 1
-                    });
-                } else {
-                    // If it doesn't exist, create a new document with the initial view count
-                    transaction.set(itemViewRef, {
-                        itemId: itemId,
-                        views: 1,
-                        dayIndex: currentDayIndex,
-                        userUID: ownerUID // Include the owner's UID
-                    });
-                }
-            });
-            console.log('View recorded successfully for item ID:', itemId);
-        } else {
-            console.error('Product document not found for item ID:', itemId);
-        }
-    } catch (error) {
-        console.error('Error recording view for item ID:', itemId, error);
-    }
-}
-
-// Get the item ID from the URL and call the function
-const urlParams = new URLSearchParams(window.location.search);
-const itemId = urlParams.get('id'); // Assuming the URL format is 'product-details.html?id=ITEM_ID'
-
-if (itemId) {
-    recordItemView(itemId);
-} else {
-    console.error('Item ID not found in URL');
-}
     </script>
 </body>
 

@@ -50,11 +50,12 @@ body{
 }
 
 .welcome-image {
-    width: 100%;       /* Makes the container full width */
-    height: auto;      /* Allows height to adjust based on content */
-    display: flex;     /* Flexbox for alignment */
-    justify-content: center;  /* Centers content horizontally */
-    align-items: center; 
+    width: 100%;
+    height: auto; /* Ensures the image maintains its aspect ratio */
+    max-height: 70%; /* Adjusts the height to fit within the chat messages area */
+    object-fit: cover; /* Ensures the image fills the container without distortion */
+    display: block;
+    position: relative;
 }
 
 .welcome-text {
@@ -74,6 +75,7 @@ body{
     flex-direction: column;
     background: white;
     padding: 0px;
+    position: relative;
 }
 
 .seller-profile {
@@ -244,31 +246,39 @@ body{
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
     .chat-area {
-        display: none; /* Initially hide the chat area */
-    }
-    .chat-area.active {
-        display: flex; /* Show the chat area when active */
+        display: flex; /* Ensure the chat area is displayed by default */
         flex-direction: column;
-        width: 100%; /* Ensure the chat area takes full width */
+        width: 100%; /* Make the chat area take full width */
+        height: calc(100vh - 200px);
     }
-    .chat-input {
-        padding: 5px;
-    }
-    .chat-sidebar.hidden {
-        display: none; /* Hide the inbox when a chat is selected */
-    }
-    .chat-messages {
-        padding: 10px;
-    }
-    .chat-messages-welcome {
-        display: none; /* Hide the welcome image and text */
+    
+    .chat-sidebar {
+        display: none; /* Initially hide the inbox sidebar */
     }
 
-    .chat-sidebar {
-        display: block; /* Ensure the inbox is visible */
-        width: 100%; /* Make the inbox take the full width */
+    .chat-sidebar.hidden {
+        display: none; /* Maintain hiding when a chat is selected */
+    }
+
+    .chat-area.active {
+        display: flex; /* Ensure active chat area remains visible */
+    }
+
+    .chat-input {
+        position: relative;
+        padding: 5px;
+    }
+    
+    .chat-messages {
+        padding: 10px;
+        margin-bottom: 50px;
+    }
+
+    .chat-messages-welcome {
+        display: none; /* Hide welcome text/image in small viewports */
     }
 }
+
 @font-face {
     font-family: "Poppins Regular";
     src: url("../fonts/poppins/Poppins-Regular.ttf") format("truetype");
@@ -324,4 +334,19 @@ body{
     top: 15px; /* Adjust this value as needed */
     z-index: 2; /* Ensure it is above other elements */
     padding: 0; /* Removes any padding */
+}
+.product-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.product-status.available {
+    color: #28a745;
+}
+
+.product-status.sold {
+    color: #dc3545;
+    font-weight: bold;
 }
