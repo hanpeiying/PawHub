@@ -132,46 +132,65 @@
             }
         }
         // Function to create and display product cards
-        async function createProductCard(listing,id) {
+        async function createProductCard(listing, id) {
+            // Add a check to prevent duplicate cards
+            const existingCard = productContainer.querySelector(`[data-id="${id}"]`);
+            if (existingCard) {
+                console.log(`Duplicate card prevented for ID: ${id}`);
+                return;
+            }
+        
+            console.log('card created')
             const productCard = document.createElement('div');
             productCard.className = 'col-lg-3 col-md-4 col-sm-6';
+            productCard.setAttribute('data-id', id); // Add data-id attribute for checking duplicates
+            
             const images = listing.imageURLs || [];
             const productImage = document.createElement('img');
-            productImage.src = images.length > 0 ? images[0] : 'https://via.placeholder.com/180'; // First image or placeholder
+            productImage.src = images.length > 0 ? images[0] : 'https://via.placeholder.com/180';
             productImage.className = 'product-image';
         
-            const userInfo = await getUserInfo(listing.userUID);
+            let userInfo;
+            try {
+                userInfo = await getUserInfo(listing.userUID);
+            } catch (error) {
+                console.error("Error fetching user info:", error);
+                userInfo = null;
+            }
+        
             const userDisplayName = userInfo ? (userInfo.username || 'User') : 'User';
-            console.log(userDisplayName);
             const userProfileImage = userInfo && userInfo.uploadedImageUrl ? userInfo.uploadedImageUrl : 'https://via.placeholder.com/40';
             const dogAgeGroup = userInfo ? userInfo.dogAgeGroup : 'Unknown';
             
-            // HTML structure for the product card
+            const productName = listing.title || listing.name || "No Title Available";
+            const productPrice = listing.price || "Price Not Available";
+            const productLocation = listing.location || "Location Not Available";
+        
+            // Rest of your existing createProductCard code...
             productCard.innerHTML = `
                 <div class="product-card">
                     <a href="product-details.html?id=${id}" style="color: inherit; text-decoration:none;">
-                    <div class="user-info">
-                        <img src="${userProfileImage}" alt="user profile">
-                        <div class="user-details">
-                            <p><strong>${userDisplayName}</strong></p> <!-- Placeholder for user name -->
+                        <div class="user-info">
+                            <img src="${userProfileImage}" alt="user profile">
+                            <div class="user-details">
+                                <p><strong>${userDisplayName}</strong></p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="image-container"></div> <!-- Image will be appended here -->
-                    <div class="card-body">
-                        <h5>${listing.title}</h5>
-                        <p class="price">S$${listing.price}</p>
-                        <p class="age-group">Age Group: ${dogAgeGroup}</p>
-                    </div>
-                    <div class="location-info">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <p>${listing.location}</p> <!-- Placeholder for location -->
-                    </div>
+                        <div class="image-container"></div>
+                        <div class="card-body">
+                            <h5>${productName}</h5>
+                            <p class="price">S$${productPrice}</p>
+                            <p class="age-group">Age Group: ${dogAgeGroup}</p>
+                        </div>
+                        <div class="location-info">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>${productLocation}</p>
+                        </div>
+                    </a>
                 </div>`;
         
-            // Append the image element to the product card
             productCard.querySelector('.image-container').appendChild(productImage);
             productContainer.appendChild(productCard);
-
             // Image rotation on mouseover
             let currentImageIndex = 0;
             let intervalId;
@@ -197,36 +216,56 @@
 
         // Function to load filtered or all products into the UI
         function loadProducts(products) {
-            productContainer.innerHTML = '';  // Clear existing products
+            console.log('Loading products, total found:', products.length);
+            // Clear container before loading new products
+            productContainer.innerHTML = '';
+            
             if (products.length === 0) {
                 productContainer.innerHTML = '<p>No products found.</p>';
-            } else {
-                products.forEach(product => {
-                    createProductCard(product, product.each_id);
-                });
+                console.log('No products to display.');
+                return;
             }
+        
+            // Use Promise.all with a Set to prevent duplicates
+            const processedIds = new Set();
+            Promise.all(products
+                .filter(product => {
+                    if (processedIds.has(product.each_id)) {
+                        return false;
+                    }
+                    processedIds.add(product.each_id);
+                    return true;
+                })
+                .map(product => createProductCard(product, product.each_id)))
+                .then(() => {
+                    console.log('All product cards created');
+                })
+                .catch(error => {
+                    console.error('Error creating product cards:', error);
+                });
         }
         let productsShown = 0; // Track the number of products currently shown
 
         // Function to load a batch of products into the UI
         function loadBatchOfProducts() {
-            const batch = allProducts.slice(productsShown, productsShown + productsToShow); // Get the next batch of products
+            const processedIds = new Set(
+                Array.from(productContainer.querySelectorAll('[data-id]'))
+                    .map(el => el.getAttribute('data-id'))
+            );
+        
+            const batch = allProducts
+                .slice(productsShown, productsShown + productsToShow)
+                .filter(product => !processedIds.has(product.each_id));
+        
             if (batch.length > 0) {
                 batch.forEach(product => {
-                    createProductCard(product, product.each_id);  // Display each product in the batch
+                    createProductCard(product, product.each_id);
                 });
-                productsShown += productsToShow;  // Update the number of products shown
+                productsShown += batch.length;
             }
         
-            // Show "Show Less" button if all products are shown, and hide "Show More"
-            if (productsShown >= allProducts.length) {
-                showMoreBtn.style.display = 'none';
-                showLessBtn.style.display = 'block';  // Show the "Show Less" button
-            }
-            else {
-                showMoreBtn.style.display = 'block';  // If not all products are shown, "Show More" stays visible
-                showLessBtn.style.display = 'none';   // Hide "Show Less" if not all products are shown
-    }
+            showMoreBtn.style.display = productsShown >= allProducts.length ? 'none' : 'block';
+            showLessBtn.style.display = productsShown >= allProducts.length ? 'block' : 'none';
         }
         function resetToFirstBatch() {
             productContainer.innerHTML = '';  // Clear the existing product display
@@ -252,14 +291,14 @@
                     const each_id = doc.id;  // Get the document ID
                     const userInfo = await getUserInfo(listing.userUID); // Fetch user info
                     const dogAgeGroup = userInfo ? userInfo.dogAgeGroup : 'Unknown'; // Get the age group from user data
-                    const meetupLocation = listing.meetup || 'N/A';
-                    // Add the product to the array, including ageGroup
                     allProducts.push({ ...listing, each_id, dogAgeGroup });
                 }
                 allProducts = allProducts.filter(product => product.isAvailable !== false);
-                // Initially load the first batch of products
-                productsShown = 0;  // Reset the number of products shown
-                loadBatchOfProducts();  // Load the first batch
+                // Check if there is no search term
+                if (!localStorage.getItem("searchItemName")) {
+                    productsShown = 0;  // Reset the number of products shown
+                    loadBatchOfProducts();  // Load the first batch
+                }
             }
         }
 
@@ -267,48 +306,77 @@
             document.addEventListener('DOMContentLoaded', async () => {
                 const searchInput = document.getElementById('searchInput');
                 const storedProductName = localStorage.getItem("searchItemName");
-
-                // Clear allProducts array to avoid duplicates
-                allProducts = [];
-
-                // Wait for all products to load
-                await loadAllListings();  // Ensure allProducts is populated first
-
+            
+                // Clear existing products and reset state
+                productContainer.innerHTML = '';
+                allProducts = [];  // Clear existing products
+                productsShown = 0;  // Reset products shown
+            
+                // Load all products first
+                await loadAllListings();
+            
                 if (storedProductName) {
-                    searchInput.value = storedProductName;  // Set the input value for search
-                    searchInput.placeholder = `Searching for ${storedProductName}...`;  // Set a placeholder message
-                    localStorage.removeItem("searchItemName");  // Clear the item from localStorage
-
-                    // Apply the search immediately and load only matching products
-                    const filteredProducts = allProducts.filter((product, index, self) => 
-                        product.title.toLowerCase() === storedProductName.toLowerCase() &&
-                        index === self.findIndex(p => p.title === product.title)
-                    );
-                    
-                    // Display only the matching products
-                    loadProducts(filteredProducts);
-                    
-                    // Hide "Show More" and "Show Less" buttons, as only one product should be displayed
-                    showMoreBtn.style.display = 'none';
-                    showLessBtn.style.display = 'none';
+                    // If a search was triggered from inventory
+                    searchInput.value = storedProductName; // Set the input value for search
+            
+                    const filteredProducts = allProducts.filter(product => {
+                        const productName = product.title || product.name;
+                        return productName && productName.toLowerCase().includes(storedProductName.toLowerCase());
+                    });
+            
+                    console.log("Searching for:", storedProductName);
+                    console.log("Found matches:", filteredProducts);
+            
+                    // Clear container and display only filtered results
+                    productContainer.innerHTML = '';  // Clear existing products
+                    if (filteredProducts.length === 0) {
+                        const noResultsMessage = document.createElement('div');
+                        noResultsMessage.className = 'no-results-message';
+                        noResultsMessage.textContent = `No products found matching "${storedProductName}"`;
+                        productContainer.appendChild(noResultsMessage);
+                    } else {
+                        loadProducts(filteredProducts);  // Only load the searched items
+                    }
+            
+                    // Hide pagination buttons for search results
+                    if (showMoreBtn) showMoreBtn.style.display = 'none';
+                    if (showLessBtn) showLessBtn.style.display = 'none';
+            
+                    localStorage.removeItem("searchItemName");  // Clear the stored search term
                 }
             });
 
-
-        searchInput.addEventListener('input', () => {
-            const searchText = searchInput.value.toLowerCase();
-            // Filter products based on the search input
-            const filteredProducts = allProducts.filter(product => 
-                product.title.toLowerCase().includes(searchText)
-            );
-            // Display filtered products in the container
-            productContainer.innerHTML = '';  // Clear existing products
-            loadProducts(filteredProducts);  // Load filtered products
-        
-            // Hide "Show More" button when filtering, as we're showing all matched products
-            showMoreBtn.style.display = filteredProducts.length >= productsToShow ? "block" : "none";
-            showLessBtn.style.display = 'none';  // Hide the "Show Less" button when filtering
-        });
+            searchInput.addEventListener('input', () => {
+                const searchText = searchInput.value.toLowerCase();
+            
+                // Filter products based on the search input
+                const filteredProducts = allProducts.filter(product => {
+                    const productName = product.title || product.name;  // Check for both title and name
+                    return productName && productName.toLowerCase().includes(searchText);
+                });
+            
+                // Clear existing products
+                productContainer.innerHTML = '';
+            
+                if (searchText.length > 0) {
+                    if (filteredProducts.length === 0) {
+                        const noResultsMessage = document.createElement('div');
+                        noResultsMessage.className = 'no-results-message';
+                        noResultsMessage.textContent = `No products found matching "${searchText}"`;
+                        productContainer.appendChild(noResultsMessage);
+                    } else {
+                        loadProducts(filteredProducts);  // Only load the searched items
+                    }
+                    showMoreBtn.style.display = 'none';  // Hide "Show More" button
+                    showLessBtn.style.display = 'none';  // Hide "Show Less" button
+                } else {
+                    // If the search input is cleared, load the first batch of products again
+                    productsShown = 0;  
+                    loadBatchOfProducts();
+                    showMoreBtn.style.display = allProducts.length > productsToShow ? 'block' : 'none';
+                    showLessBtn.style.display = 'none';
+                }
+            });
 
         // Event listener for "Show More" button to load more listings
         showMoreBtn.addEventListener('click', () => {
