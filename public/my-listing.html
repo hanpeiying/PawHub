@@ -197,29 +197,47 @@
             document.getElementById('productPrice').textContent = formattedPrice;
 
             // Prepare the updated data
-            const updatedData = {
-                title: updatedTitle,
-                price: updatedPrice,
-                location: updatedLocation,
-                meetupLocation: updatedMeetupLocation, // Add the meetup location
-                description: updatedDescription,
-                isAvailable: updatedAvailability === 'available'
-            };
-
             try {
-                const docRef = doc(db, "marketplace", productId);
-                await updateDoc(docRef, updatedData);
-                console.log("Listing updated successfully!");
+        // Fetch the current category of the listing
+                    const productId = getProductIdFromURL(); // Replace this with the actual item ID logic
+                    const itemCategory = await getListingCategory(productId);
 
-                // Switch back to view mode
-                window.toggleEdit(false);
-                alert("Listing updated successfully!");
-            } catch (error) {
+                    // Log or use the category as needed
+                    console.log('Fetched category:', itemCategory);
+                    console.log('Original data:', originalData);
+                    console.log('Updated availability:', updatedAvailability);
+
+                    const updatedData = {
+                        title: updatedTitle,
+                        price: updatedPrice,
+                        location: updatedLocation,
+                        description: updatedDescription,
+                        isAvailable: updatedAvailability === 'available',
+                        category: itemCategory // Include the category in your update if needed
+                    };
+
+                    // Update Firestore with the new data
+                    const docRef = doc(db, 'marketplace', productId);
+                    await updateDoc(docRef, updatedData);
+                    console.log('Listing updated successfully!');
+                    window.toggleEdit(false);
+                    alert('Listing updated successfully!');
+                    console.log(originalData.isAvailable)
+                    if (updatedAvailability === 'sold' && originalData.isAvailable) {
+                    const userUID = originalData.userUID; // Ensure the user UID is included in your product data
+                    const price = parseFloat(updatedPrice);
+                    if (userUID && price) {
+                        console.log('successfully triggered')
+                        onItemSold(productId, price, userUID, itemCategory);
+                    }
+                }
+            }
+            catch (error) {
                 console.error("Error updating listing: ", error);
                 alert("Error saving the listing.");
             }
         }
-
+        
 
 
         // Load product details and save the original data
@@ -240,8 +258,14 @@
                     document.getElementById('locationField').textContent = productData.location || 'Unknown';
                     document.getElementById('meetupLocationField').textContent = productData.meetupLocation || 'Unknown'; // Display the meetup location
                     document.getElementById('descriptionField').textContent = productData.description || 'No description available';
-                    document.getElementById('availabilityDropdown').value = productData.isAvailable ? 'available' : 'sold';
-        
+                    
+                    
+                    if (productData.isAvailable !== undefined) {
+                        document.getElementById('availabilityDropdown').value = productData.isAvailable ? 'available' : 'sold';
+                    } else {
+                        // Default value if `isAvailable` is not present
+                        document.getElementById('availabilityDropdown').value = 'available';
+                    }
                     // Display image
                     const images = productData.imageURLs || [];
                     const imageContainer = document.querySelector('.carousel-inner');

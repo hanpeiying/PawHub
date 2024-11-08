@@ -195,7 +195,7 @@ template: `
                 />
                 </div>
                 <div class="form-group">
-                    <label for="serving">Quantity</label>
+                    <label for="serving">Servings</label>
                     <input v-model="quantity" type="number" placeholder="Enter servings quantity" required />
                 </div>
                 <div class="form-group">
