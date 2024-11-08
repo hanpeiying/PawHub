@@ -93,6 +93,7 @@ td{
     /* box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); */
 }
 
+
 .table-responsive {
     overflow-x: auto;
     overflow: visible;
@@ -126,9 +127,11 @@ td{
 
 .product-list td img {
     width: 50px;
-    height: auto;
+    height: 50px; /* Set a fixed height to match the width */
+    object-fit: cover; /* Ensures the image fills the area without distortion */
     border-radius: 5px;
 }
+
 
 .edit-input {
     width: 100%; /* Makes it take the full width of the cell */
@@ -293,7 +296,18 @@ button {
     overflow: hidden;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
+
+.image-modal img {
+    width: 100%; /* Scale the image to fill the modal content width */
+    height: auto; /* Maintain aspect ratio */
+    max-width: 100%; /* Prevent the image from exceeding modal content width */
+    max-height: 70vh; /* Prevent the image from exceeding 90% of viewport height */
+    object-fit: contain; /* Ensure the image is fully visible within the modal */
+    border-radius: 8px; /* Optional: rounded corners for aesthetics */
+}
+
 
 .close-btn {
     position: absolute;
@@ -430,12 +444,15 @@ button {
     background-color: #ffeaea; /* Light hover effect */
 }
 
+
 .product-image-small {
     width: 50px;
     height: auto;
     border-radius: 4px;
     border: 1px solid #ddd;
 }
+
+
 
 .deleted-inventory-table td:first-child {
     position: relative;
