@@ -93,6 +93,11 @@ h6{
     position: relative;
     margin-left: 10px;
 }
+
+.add-btn:hover {
+    background-color: #6f9366;
+}
+
 .newListing{
     text-decoration: none;
 }
@@ -123,6 +128,11 @@ h6{
     border-radius: 5px;
     flex-shrink: 0; /* Prevent buttons from shrinking too much */
 }
+
+.filter-search .filter-btn:hover {
+    background-color: #6f9366;
+}
+
 .main-content {
     margin-left: 270px; /* Adjust this to match the width of the sidebar */
     padding: 20px;
@@ -262,6 +272,11 @@ h6{
     margin-left: auto;
     margin-right: auto;
 }
+
+.show-more:hover {
+    background-color: #6f9366;
+}
+
 .show-less {
     background-color: #9BA481;
     color: white;
@@ -274,6 +289,10 @@ h6{
     width: 150px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.show-less:hover {
+    background-color: #6f9366;
 }
 
 .filter-sidebar {

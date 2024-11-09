@@ -1,6 +1,6 @@
 /* General styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins Regular';
     background-color:#F9F1E7;
     margin:0;
     padding:0;
@@ -9,14 +9,14 @@ body {
 }
 
 h2 {
-    font-family: 'Chewy', cursive;
+    font-family: "Overlock";
     font-size: 36px;
     color: #4a90e2;
     text-align: center;
     /* background: url('path-to-paw-print-icon.png') no-repeat; */
     background-size: contain;
     background-position: left center;
-    padding-left: 50px;
+    padding-left: 48px;
 }
 
 /* For very small screens, stack elements vertically and adjust padding */
@@ -561,4 +561,15 @@ button {
     display: block;
     opacity: 1;
     
+}
+
+@font-face {
+  font-family: "Poppins Regular";
+  src: url("../fonts/poppins/Poppins-Regular.ttf") format("truetype");
+  font-style: normal;
+}
+@font-face {
+  font-family: "Overlock";
+  src: url("../fonts/OverlockSC-Regular.ttf") format("truetype");
+  font-style: normal;
 }

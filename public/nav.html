@@ -28,7 +28,7 @@
                         <a href="user.html" style="text-decoration: none;">
                             <img v-if="!profilePicUrl" class="profile-pic" alt="Default Profile Pic" src="images/nav/defaultProfile.png" style="width:43px; height:auto;">
                             <img v-else :src="profilePicUrl" class="profile-pic" alt="Profile Picture">
-                            <span class="username" style="padding-left:5px;">{{ username }}</span>
+                            <span class="username2" style="padding-left:5px;">{{ username }}</span>
                         </a>
                     </div>
                 </li>
@@ -46,7 +46,7 @@
                 <li><a href="inventory.html" @click="toggleMobileMenu">Inventory</a></li>
                 <li><a href="chat.html" @click="toggleMobileMenu">Chat</a></li>
                 <li class="mobile-profile">
-                    <a href="edit-profile.html" @click="toggleMobileMenu">
+                    <a href="user.html" @click="toggleMobileMenu">
                         <img v-if="!profilePicUrl" src="images/nav/defaultProfile.png" alt="Profile" class="mobile-profile-pic">
                         <img v-else :src="profilePicUrl" alt="Profile" class="mobile-profile-pic">
                         <span class="mobile-username">{{ username }}</span>

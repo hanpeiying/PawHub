@@ -146,7 +146,7 @@ html, body {
 }
 
 /* Username styling */
-.username {
+.username2 {
     color: #361a1a;
     font-size: 15px;
     transition: color 0.2s ease;
@@ -154,7 +154,7 @@ html, body {
 }
 
 /* Change color on hover for username */
-.profile-section:hover .username {
+.profile-section:hover .username2 {
     color: #A59C9C;
 }
 
@@ -281,7 +281,7 @@ html, body {
     border-radius: 50%;
 }
 
-.mobile-username {
+.mobile-username2 {
     font-weight: bold;
 }
 

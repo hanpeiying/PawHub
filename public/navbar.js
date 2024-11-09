@@ -50,7 +50,7 @@ fetch('./nav.html') // Fetching HTML for the component
           }
           if (
             (link.getAttribute("href") === "shop.html" &&
-              ["shop.html", "new-listing.html"].includes(currentPage)) ||
+              ["shop.html", "new-listing.html","my-listing.html", "product-details.html"].includes(currentPage)) ||
             link.getAttribute("href") === currentPage
           ) {
             link.classList.add("active");
