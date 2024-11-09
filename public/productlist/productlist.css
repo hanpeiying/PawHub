@@ -131,11 +131,6 @@ td{
     border-radius: 5px;
 }
 
-#viewbtn{
-
-    
-}
-
 .edit-input {
     width: 100%; /* Makes it take the full width of the cell */
     max-width: 40px; /* Limit the maximum width for a cleaner look */

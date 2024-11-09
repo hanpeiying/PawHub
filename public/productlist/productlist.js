@@ -123,7 +123,7 @@ function filterProducts(searchValue) {
 
                         // Log the reduction with a timestamp if the amount is negative
                         if (amount < 0) {
-                            await logConsumption(productId, -amount);
+                            await logConsumption(productId, newQuantity);
                         }
 
                         // Refresh displayed products
@@ -149,16 +149,16 @@ function filterProducts(searchValue) {
 
 
             // Function to log each consumption event with a timestamp
-            async function logConsumption(productId, quantityReduced) {
+            async function logConsumption(productId, quantityAtTimestamp) {
                 try {
                     const productRef = doc(db, 'inventory', productId);
                     const logRef = collection(productRef, 'consumptionLogs'); // Create a subcollection under the product document
 
                     await addDoc(logRef, {
-                        quantityReduced: quantityReduced,
+                        quantityAtTimestamp: quantityAtTimestamp,
                         timestamp: new Date().toISOString()  // Current timestamp
                     });
-                    console.log(`Logged consumption of ${quantityReduced} for product ${productId}`);
+                    console.log(`Logged consumption of ${quantityAtTimestamp} for product ${productId}`);
                 } catch (error) {
                     console.error("Error logging consumption:", error);
                 }
@@ -180,9 +180,6 @@ function filterProducts(searchValue) {
 
                 const data = [];
 
-                let currentQuantity = productSnap.data().quantity; // Get the final quantity from the main product document
-                console.log(currentQuantity);
-
                 // Add initial quantity as the starting point
                 data.push({
                     timestamp: new Date(initialTimestamp),
@@ -195,10 +192,10 @@ function filterProducts(searchValue) {
 
                     data.push({
                         timestamp: new Date(log.timestamp),
-                        quantityAtTimestamp: currentQuantity
+                        quantityAtTimestamp: log.quantityAtTimestamp
                     });
                     // Update the quantity based on the reduction for the next entry
-                    // currentQuantity -= log.quantityReduced;
+                    // currentQuantity -= log.quantityAtTimestamp;
                 });
 
                 // Sort data by timestamp to ensure chronological order
@@ -274,13 +271,23 @@ function filterProducts(searchValue) {
                     },
                     scales: {
                         x: {
-                            type: 'time', // Requires date adapter
+                            type: 'time',
                             time: {
-                                unit: 'day'
+                                unit: 'hour', // Adjust this based on your data intervals
+                                displayFormats: {
+                                    hour: 'MMM d, h a', // Format for display
+                                }
                             },
                             title: {
                                 display: true,
                                 text: 'Date'
+                            },
+                            min: labels[0], // Start with the first timestamp
+                            max: labels[labels.length - 1], // End with the last timestamp
+                            ticks: {
+                                autoSkip: true,
+                                maxRotation: 45, // Rotate labels to make them readable
+                                minRotation: 45
                             }
                         },
                         y: {
