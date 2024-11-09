@@ -99,67 +99,250 @@ function filterProducts(searchValue) {
     return filtered; // Always return an array
 }
 
-// Adjust stock and handle the confirmation modal when stock reaches 0
-export async function adjustStock(productId, amount) {
-    const productRef = doc(db, 'inventory', productId);
-    const product = allProducts.find(p => p.id === productId);
 
-    // Declare newQuantity outside of the conditional block
-    let newQuantity;
+        // Adjust stock and handle the confirmation modal when stock reaches 0
+        export async function adjustStock(productId, amount) {
+            const productRef = doc(db, 'inventory', productId);
+            const product = allProducts.find(p => p.id === productId);
 
-    if (product) {
-        newQuantity = product.quantity + amount;
+            // Declare newQuantity outside of the conditional block
+            let newQuantity;
 
-        // Ensure new quantity is non-negative
-        if (newQuantity >= 0) {
-            try {
-                // Update Firestore with the new quantity
-                await updateDoc(productRef, { quantity: newQuantity });
-                product.quantity = newQuantity;  // Update local product data
+            if (product) {
+                newQuantity = product.quantity + amount;
 
-                // Log the reduction with a timestamp if the amount is negative
-                if (amount < 0) {
-                    await logConsumption(productId, -amount);
+                // Ensure new quantity is non-negative
+                if (newQuantity >= 0) {
+                    try {
+                        // Update Firestore with the new quantity
+                        await updateDoc(productRef, { quantity: newQuantity });
+                        product.quantity = newQuantity;  // Update local product data
+
+                        // Log the reduction with a timestamp if the amount is negative
+                        if (amount < 0) {
+                            await logConsumption(productId, -amount);
+                        }
+
+                        // Refresh displayed products
+                        displayProducts(allProducts, currentPage);
+                        console.log(`Product quantity adjusted by ${amount}. New quantity: ${newQuantity}`);
+                    } catch (error) {
+                        console.error("Error adjusting stock:", error);
+                    }
+                } else {
+                    console.error("Invalid quantity: cannot reduce below zero.");
+                }
+            } else {
+                console.error("Product not found.");
+            }
+
+            // Now `newQuantity` is accessible here because it was declared outside the `if` block
+            if (newQuantity === 0) {
+                selectedProductIndex = allProducts.findIndex(p => p.id === productId);
+                const modal = document.getElementById('confirmationModal');
+                modal.style.display = 'flex';  // Show modal
+            }
+        }
+
+
+            // Function to log each consumption event with a timestamp
+            async function logConsumption(productId, quantityReduced) {
+                try {
+                    const productRef = doc(db, 'inventory', productId);
+                    const logRef = collection(productRef, 'consumptionLogs'); // Create a subcollection under the product document
+
+                    await addDoc(logRef, {
+                        quantityReduced: quantityReduced,
+                        timestamp: new Date().toISOString()  // Current timestamp
+                    });
+                    console.log(`Logged consumption of ${quantityReduced} for product ${productId}`);
+                } catch (error) {
+                    console.error("Error logging consumption:", error);
+                }
+            }
+
+            // Fetch consumption logs for a specific product
+            async function fetchConsumptionData(productId) {
+                const productRef = doc(db, 'inventory', productId);
+                const productSnap = await getDoc(productRef);
+                if (!productSnap.exists()) {
+                    console.error("Product not found.");
+                    return [];
                 }
 
-                // Refresh displayed products
-                displayProducts(allProducts, currentPage);
-                console.log(`Product quantity adjusted by ${amount}. New quantity: ${newQuantity}`);
-            } catch (error) {
-                console.error("Error adjusting stock:", error);
+                const initialQuantity = productSnap.data().serving; // Starting quantity of the product
+                const initialTimestamp = productSnap.data().added; // Use 'added' field as the initial timestamp
+                const logsRef = collection(productRef, 'consumptionLogs');
+                const querySnapshot = await getDocs(logsRef);
+
+                const data = [];
+
+                let currentQuantity = productSnap.data().quantity; // Get the final quantity from the main product document
+                console.log(currentQuantity);
+
+                // Add initial quantity as the starting point
+                data.push({
+                    timestamp: new Date(initialTimestamp),
+                    quantityAtTimestamp: initialQuantity
+                });
+
+                // Process each document in the consumption logs
+                querySnapshot.forEach(doc => {
+                    const log = doc.data();
+
+                    data.push({
+                        timestamp: new Date(log.timestamp),
+                        quantityAtTimestamp: currentQuantity
+                    });
+                    // Update the quantity based on the reduction for the next entry
+                    // currentQuantity -= log.quantityReduced;
+                });
+
+                // Sort data by timestamp to ensure chronological order
+                data.sort((a, b) => a.timestamp - b.timestamp);
+                console.log(data);
+                return data;
             }
-        } else {
-            console.error("Invalid quantity: cannot reduce below zero.");
+
+        import 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns';
+
+            
+        export async function renderConsumptionChart(productId) {
+            const consumptionData = await fetchConsumptionData(productId);
+            if (!consumptionData || consumptionData.length === 0) {
+                console.error(`No consumption data available for product ID: ${productId}`);
+                alert("No consumption data available for this product.");
+                return;
+            }
+
+            // Prepare data for Chart.js
+            const labels = consumptionData.map(entry => new Date(entry.timestamp));
+            const quantitiesAtTimestamps = consumptionData.map(entry => entry.quantityAtTimestamp);
+
+            const ctx = document.getElementById('consumptionChart')?.getContext('2d');
+            console.log("Labels (timestamps):", labels);
+            console.log("Quantities at Timestamps:", quantitiesAtTimestamps);
+
+
+            if (!ctx) {
+                console.error('Canvas context (ctx) is not available. Ensure the canvas element is in the DOM and fully loaded.');
+                return;
+            }
+
+            if (window.consumptionChart instanceof Chart) {
+                window.consumptionChart.destroy();
+            }
+
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+            window.consumptionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quantity',
+                        data: quantitiesAtTimestamps,
+                        fill: false,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.4)', // Point color for visibility
+                        borderWidth: 3, // Line thickness
+                        pointRadius: 3, // Point size for better visibility
+                        pointStyle:' circle',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#8B4513',
+                                font: { size: 14, family: 'Comic Sans MS' }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Quantity: ${context.raw}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time', // Requires date adapter
+                            time: {
+                                unit: 'hour'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            suggestedMin: 0,
+                            title: {
+                                display: true,
+                                text: 'Quantity'
+                            }
+                        }
+                    }
+                }
+            });
         }
-    } else {
-        console.error("Product not found.");
-    }
 
-    // Now `newQuantity` is accessible here because it was declared outside the `if` block
-    if (newQuantity === 0) {
-        selectedProductIndex = allProducts.findIndex(p => p.id === productId);
-        const modal = document.getElementById('confirmationModal');
-        modal.style.display = 'flex';  // Show modal
-    }
-}
-    
-// Function to log each consumption event with a timestamp
-async function logConsumption(productId, quantityReduced) {
-    try {
-        const logRef = collection(db, 'consumptionLogs');
-        await addDoc(logRef, {
-            productId: productId,
-            userUID: userUID,
-            quantityReduced: quantityReduced,
-            timestamp: new Date().toISOString()  // Current timestamp
-        });
-        console.log(`Logged consumption of ${quantityReduced} for product ${productId}`);
-    } catch (error) {
-        console.error("Error logging consumption:", error);
-    }
-}
+        export async function updateChart(productId) {
+            const productRef = doc(db, 'inventory', productId);
+            const productSnap = await getDoc(productRef);
 
-// window.adjustStock = adjustStock;
+            if (!productSnap.exists()) {
+                console.error("Product not found.");
+                return;
+            }
+
+            const productName = productSnap.data().name;
+            document.getElementById('chartTitle').textContent = `Consumption Rate Over Time for ${productName}`;
+
+            renderConsumptionChart(productId);
+        }
+
+        async function loadProductsWithConsumptionLogs() {
+            const productsWithLogs = [];
+            const inventoryRef = collection(db, 'inventory');
+
+            // Query all inventory items
+            const querySnapshot = await getDocs(inventoryRef);
+            for (const docSnap of querySnapshot.docs) {
+                const productDocRef = doc(db, 'inventory', docSnap.id); // Reference to the product document
+                const consumptionLogsRef = collection(productDocRef, 'consumptionLogs'); // Reference to subcollection
+                const logsSnapshot = await getDocs(consumptionLogsRef);
+
+                // Only add products that have consumption logs
+                if (!logsSnapshot.empty) {
+                    productsWithLogs.push({ id: docSnap.id, name: docSnap.data().name });
+                }
+            }
+
+            // Populate the dropdown
+            const productSelect = document.getElementById('productSelect');
+            productSelect.innerHTML = ''; // Clear existing options
+            productsWithLogs.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = product.name;
+                productSelect.appendChild(option);
+            });
+
+            // Set the initial chart view with the first product
+            if (productsWithLogs.length > 0) {
+                updateChart(productsWithLogs[0].id);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadProductsWithConsumptionLogs);
+
+
 
 // Event listener for DOMContentLoaded to initialize UI components
 document.addEventListener('DOMContentLoaded', () => {
@@ -266,7 +449,7 @@ function displayProducts(products, page = 1) {
         row.dataset.index = index;  // Store index as a data attribute
 
         row.innerHTML = `
-            <td><button onclick="showProductConsumption('${product.id}')">View Consumption</button></td>
+            <td><button onclick="renderConsumptionChart('${product.id}')">View</button></td>        
             <td>
                 <div class="product-image-container">
                     <img src="${product.image}" alt="${product.name}" onclick="enlargeImage('${product.image}')"/>
@@ -364,10 +547,11 @@ function displayProducts(products, page = 1) {
         const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
         const paginationContainer = document.querySelector('.pagination');
         paginationContainer.innerHTML = '';
-    
+        
         // Create "prev" button
         const prevButton = document.createElement('button');
         prevButton.textContent = '<';
+        prevButton.classList.add('page-btn'); // Use the same style as page buttons
         prevButton.disabled = currentPage === 1;
         prevButton.addEventListener('click', () => {
             if (currentPage > 1) {
@@ -375,7 +559,7 @@ function displayProducts(products, page = 1) {
             }
         });
         paginationContainer.appendChild(prevButton);
-    
+        
         // Create page buttons
         for (let i = 1; i <= totalPages; i++) {
             const pageButton = document.createElement('button');
@@ -387,10 +571,11 @@ function displayProducts(products, page = 1) {
             pageButton.addEventListener('click', () => displayProducts(filteredProducts, i));
             paginationContainer.appendChild(pageButton);
         }
-    
+        
         // Create "next" button
         const nextButton = document.createElement('button');
         nextButton.textContent = '>';
+        nextButton.classList.add('page-btn'); // Use the same style as page buttons
         nextButton.disabled = currentPage === totalPages;
         nextButton.addEventListener('click', () => {
             if (currentPage < totalPages) {
@@ -484,7 +669,7 @@ function displayProducts(products, page = 1) {
 
     document.addEventListener('DOMContentLoaded', () => {
         const deleteBtn = document.getElementById('deleteProductBtn'); // Updated to match HTML ID
-        const replenishBtn = document.getElementById('replenishProductBtn');
+        // const replenishBtn = document.getElementById('replenishProductBtn');
         const searchBtn = document.getElementById('searchProductBtn');
         const cancelBtn = document.getElementById('cancelBtn');
     
@@ -658,149 +843,46 @@ function displayProducts(products, page = 1) {
     }
     window.deletePermanently = deletePermanently;
 
-        // Fetch consumption logs for a specific product
-        async function fetchConsumptionData(productId) {
-            const logsRef = collection(db, 'consumptionLogs');
-            const q = query(logsRef, where('productId', '==', productId));
-            const querySnapshot = await getDocs(q);
 
-            const data = [];
-            let cumulativeConsumption = 0;
-
-            // Process each document in the consumption logs
-            querySnapshot.forEach(doc => {
-                const log = doc.data();
-                cumulativeConsumption += log.quantityReduced;
-                data.push({
-                    timestamp: new Date(log.timestamp),
-                    cumulativeConsumption: cumulativeConsumption
-                });
+        // Call this function when you load the page
+        document.querySelectorAll('.info-btn').forEach(button => {
+            const tooltip = button.querySelector('.info-tooltip');
+        
+            button.addEventListener('mouseenter', () => {
+                // Append tooltip to the body for absolute positioning
+                document.body.appendChild(tooltip);
+        
+                // Get button's position relative to the viewport and account for scrolling
+                const rect = button.getBoundingClientRect();
+                const scrollY = window.scrollY || window.pageYOffset;
+                
+                // Set initial position to the right of the button
+                let tooltipTop = rect.top + scrollY;
+                let tooltipLeft = rect.right + 10; // 10px space from the button
+        
+                // Adjust positioning if tooltip would overflow the right side of the viewport
+                const tooltipWidth = tooltip.offsetWidth;
+                const viewportWidth = window.innerWidth;
+                if (tooltipLeft + tooltipWidth > viewportWidth) {
+                    tooltipLeft = rect.left - tooltipWidth - 10;
+                }
+        
+                // Set the calculated position for the tooltip
+                tooltip.style.top = `${tooltipTop}px`;
+                tooltip.style.left = `${tooltipLeft}px`;
+        
+                // Show the tooltip
+                tooltip.style.display = 'block';
+                tooltip.style.opacity = '1';
             });
-
-            // Sort data by timestamp to ensure chronological order
-            data.sort((a, b) => a.timestamp - b.timestamp);
-
-            return data;
-        }
-
-        // Render the consumption data as a line chart
-        async function renderConsumptionChart(productId) {
-            const consumptionData = await fetchConsumptionData(productId);
         
-            // Prepare data for Chart.js
-            const labels = consumptionData.map(entry => entry.timestamp.toLocaleString());
-            const consumptionValues = consumptionData.map(entry => entry.cumulativeConsumption);
-        
-            const ctx = document.getElementById('consumptionChart')?.getContext('2d');
-     
-        
-            // Create or update the chart
-            if (window.consumptionChart) {
-                // Update existing chart data if chart is already initialized
-                window.consumptionChart.data.labels = labels;
-                window.consumptionChart.data.datasets[0].data = consumptionValues;
-                window.consumptionChart.update();
-            } else {
-                // Initialize a new chart if it doesn't exist
-                window.consumptionChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Cumulative Consumption',
-                            data: consumptionValues,
-                            fill: false,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: {
-                                    color: '#8B4513',
-                                    font: { size: 14, family: 'Comic Sans MS' }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `Consumed: ${context.raw}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: {
-                                    unit: 'day'
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Date'
-                                }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Cumulative Quantity Reduced'
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        // Function to render chart for a specific product
-        export function showProductConsumption(productId) {
-            renderConsumptionChart(productId);
-        }
-
-
-    // Call this function when you load the page
-    document.querySelectorAll('.info-btn').forEach(button => {
-        const tooltip = button.querySelector('.info-tooltip');
-    
-        button.addEventListener('mouseenter', () => {
-            // Append tooltip to the body for absolute positioning
-            document.body.appendChild(tooltip);
-    
-            // Get button's position relative to the viewport and account for scrolling
-            const rect = button.getBoundingClientRect();
-            const scrollY = window.scrollY || window.pageYOffset;
-            
-            // Set initial position to the right of the button
-            let tooltipTop = rect.top + scrollY;
-            let tooltipLeft = rect.right + 10; // 10px space from the button
-    
-            // Adjust positioning if tooltip would overflow the right side of the viewport
-            const tooltipWidth = tooltip.offsetWidth;
-            const viewportWidth = window.innerWidth;
-            if (tooltipLeft + tooltipWidth > viewportWidth) {
-                tooltipLeft = rect.left - tooltipWidth - 10;
-            }
-    
-            // Set the calculated position for the tooltip
-            tooltip.style.top = `${tooltipTop}px`;
-            tooltip.style.left = `${tooltipLeft}px`;
-    
-            // Show the tooltip
-            tooltip.style.display = 'block';
-            tooltip.style.opacity = '1';
+            button.addEventListener('mouseleave', () => {
+                // Hide the tooltip and re-attach it to the button to reset position
+                tooltip.style.display = 'none';
+                tooltip.style.opacity = '0';
+                button.appendChild(tooltip);
+            });
         });
-    
-        button.addEventListener('mouseleave', () => {
-            // Hide the tooltip and re-attach it to the button to reset position
-            tooltip.style.display = 'none';
-            tooltip.style.opacity = '0';
-            button.appendChild(tooltip);
-        });
-    });
     
     
 

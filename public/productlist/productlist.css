@@ -78,6 +78,7 @@ td{
     padding:0;
     height:50px;
     text-align: center;
+    align-items: center;
 }
 
 
@@ -127,7 +128,6 @@ td{
 
 .product-list td img {
     width: 50px;
-    height: 50px; /* Set a fixed height to match the width */
     object-fit: cover; /* Ensures the image fills the area without distortion */
     border-radius: 5px;
 }
@@ -171,8 +171,9 @@ td{
 .pagination {
     display: flex;
     justify-content: center;
+    align-items: center;
     margin-top: 20px;
-  
+    gap: 5px;
 }
 
 .page-btn {
@@ -180,9 +181,13 @@ td{
     border: none;
     color: white;
     padding: 8px 12px;
-    margin: 0 5px;
     cursor: pointer;
     border-radius: 5px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 35px;
 }
 
 .page-btn.active {
@@ -192,6 +197,12 @@ td{
 .page-btn:hover {
     background-color: #2c73b9;
 }
+
+.page-btn:disabled {
+    background-color: #d0d0d0;
+    cursor: not-allowed;
+}
+
 
 .search-bar input {
     padding: 8px;
