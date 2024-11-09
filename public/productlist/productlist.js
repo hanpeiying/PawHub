@@ -79,6 +79,7 @@ export async function loadUserProducts(userId) {
     }
 }
 
+
 // function filterProducts(searchValue) {
 //     const filtered = allProducts.filter(product => 
 //         product.name.toLowerCase().includes(searchValue)
@@ -98,6 +99,8 @@ function filterProducts(searchValue) {
     
     return filtered; // Always return an array
 }
+
+
 
 
         // Adjust stock and handle the confirmation modal when stock reaches 0
@@ -273,7 +276,7 @@ function filterProducts(searchValue) {
                         x: {
                             type: 'time', // Requires date adapter
                             time: {
-                                unit: 'hour'
+                                unit: 'day'
                             },
                             title: {
                                 display: true,
@@ -349,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sortExpiryBtn = document.getElementById('sortExpiryBtn');
     const sortAddedBtn = document.getElementById('sortAddedBtn');
     const searchInput = document.getElementById('searchInput');
+    // const viewBtn = document.getElementById('view-btn');
     let sortExpiryAscending = true;
     let sortAddedAscending = true;
 
@@ -375,6 +379,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const filteredProducts = filterProducts(searchValue);
         displayProducts(filteredProducts, currentPage);
     });
+
+    // Event delegation for handling clicks on dynamically added "View" buttons
+    document.getElementById('productTableBody').addEventListener('click', (event) => {
+        if (event.target.classList.contains('view-btn')) {
+            // Scroll to the chart section
+            document.getElementById('chartSection').scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+    });
+
 });
 
 window.enableEditing=function(productId) {
@@ -449,7 +465,7 @@ function displayProducts(products, page = 1) {
         row.dataset.index = index;  // Store index as a data attribute
 
         row.innerHTML = `
-            <td><button onclick="renderConsumptionChart('${product.id}')">View</button></td>        
+            <td><button class="view-btn" onclick="renderConsumptionChart('${product.id}')">View</button></td>        
             <td>
                 <div class="product-image-container">
                     <img src="${product.image}" alt="${product.name}" onclick="enlargeImage('${product.image}')"/>
@@ -471,12 +487,15 @@ function displayProducts(products, page = 1) {
         row.addEventListener('dragover', handleDragOver);
         row.addEventListener('drop', handleDrop);
         row.addEventListener('dragend', handleDragEnd);
-        
+
         tableBody.appendChild(row);
+
+        
     });
 
     updatePaginationButtons();
     }
+
 
     let dragStartIndex;
 
