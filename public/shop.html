@@ -82,7 +82,7 @@
             </div>
             <p>Price range: $<span id="minPriceValue">0</span> - $<span id="maxPriceValue">100</span></p>
         </div>
-        <button class="apply-filter-btn" id="applyFilterBtn">Apply Filter</button>
+        <button class="apply-filter-btn" id="applyFilterBtn" disabled>Apply Filter</button>
     </div>
     
     <script type="module">
@@ -102,16 +102,14 @@
         let lastVisible = null;
         let productsToShow = 4;
         const showLessBtn = document.getElementById('showLessBtn'); // Get the Show Less button
-        
+
+        let loggedInUserId = null;
+
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // User is signed in, get the UID
-                const uid = user.uid;
-                console.log("Logged-in user UID:", uid);
-
-                // You can now pass `uid` to functions or use it to filter listings for this specific user
+                loggedInUserId = user.uid; // Store the logged-in user's ID
+                console.log("Logged-in user UID:", loggedInUserId);
             } else {
-                // No user is signed in
                 console.log("No user is logged in");
             }
         });
@@ -169,7 +167,6 @@
             // Rest of your existing createProductCard code...
             productCard.innerHTML = `
                 <div class="product-card">
-                    <a href="product-details.html?id=${id}" style="color: inherit; text-decoration:none;">
                         <div class="user-info">
                             <img src="${userProfileImage}" alt="user profile">
                             <div class="user-details">
@@ -186,11 +183,20 @@
                             <i class="fas fa-map-marker-alt"></i>
                             <p>${productLocation}</p>
                         </div>
-                    </a>
                 </div>`;
         
             productCard.querySelector('.image-container').appendChild(productImage);
             productContainer.appendChild(productCard);
+
+            productCard.addEventListener('click', () => {
+                if (listing.userUID === loggedInUserId) {
+                    // Redirect to my-listing.html if the seller is the logged-in user
+                    window.location.href = `my-listing.html?id=${id}`;
+                } else {
+                    // Redirect to product-details.html otherwise
+                    window.location.href = `product-details.html?id=${id}`;
+                }
+            });
             // Image rotation on mouseover
             let currentImageIndex = 0;
             let intervalId;
@@ -538,6 +544,43 @@
         filterClose.addEventListener('click', () => {
             filterSidebar.classList.remove('active');
         });
+        // Function to check if any filter is selected
+        function updateApplyFilterButtonState() {
+            const dogFoodChecked = document.getElementById('dogFoodFilter').checked;
+            const dogAccessoriesChecked = document.getElementById('dogAccessoriesFilter').checked;
+            const dogToysChecked = document.getElementById('dogToysFilter').checked;
+            
+            const locationCentralChecked = document.getElementById('locationCentral').checked;
+            const locationNorthChecked = document.getElementById('locationNorth').checked;
+            const locationSouthChecked = document.getElementById('locationSouth').checked;
+            const locationEastChecked = document.getElementById('locationEast').checked;
+            const locationWestChecked = document.getElementById('locationWest').checked;
+            
+            const ageGroupPuppyChecked = document.getElementById('ageGroupPuppy').checked;
+            const ageGroupJuniorChecked = document.getElementById('ageGroupJunior').checked;
+            const ageGroupAdultChecked = document.getElementById('ageGroupAdult').checked;
+            const ageGroupMatureChecked = document.getElementById('ageGroupMature').checked;
+
+            // Enable the Apply Filter button if any filter is checked
+            const applyFilterBtn = document.getElementById('applyFilterBtn');
+            if (dogFoodChecked || dogAccessoriesChecked || dogToysChecked ||
+                locationCentralChecked || locationNorthChecked || locationSouthChecked ||
+                locationEastChecked || locationWestChecked ||
+                ageGroupPuppyChecked || ageGroupJuniorChecked ||
+                ageGroupAdultChecked || ageGroupMatureChecked) {
+                applyFilterBtn.disabled = false;
+            } else {
+                applyFilterBtn.disabled = true;
+            }
+        }
+
+        // Add event listeners to filter checkboxes to update the Apply Filter button state
+        document.querySelectorAll('.filter-section input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateApplyFilterButtonState);
+        });
+
+        // Call this function on page load to set the initial state of the button
+        document.addEventListener('DOMContentLoaded', updateApplyFilterButtonState);
 
 
     </script>
