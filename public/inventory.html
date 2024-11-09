@@ -49,18 +49,25 @@
                     <input id="searchInput" type="text" class="form-control" placeholder="Search for pet treats ...">
                 </div>
             </div>
-            <div class="col-12 col-md-6 text-md-right mt-2 mt-md-0">
+            <div class="col-12 col-md-6 text-md-right mt-2 mt-md-0 product-modal">
                 <product-modal @add-product="handleAddProduct"></product-modal>
             </div>
+            <div class="d-block d-md-none">
+                <button class="info-btn">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="info-tooltip">
+                        To delete any item from your inventory, reduce its quantity to zero.
+                    </div>
+                </button>
+                </div>
         </div>
     </div>
 </div>
 <div class="container my-2 pt-0 product-list-container">
 
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
             <h2 class="text-center" style="color: #361a1a; margin-bottom:30px;">Your Inventory table</h2>
             <table class="table table-sm text-center product-list">
-            
             
                 <thead class="thead-light">
                 <tr>
@@ -93,6 +100,10 @@
                 <!-- Products will be dynamically loaded here -->
                 </tbody>
             </table>
+        </div>
+
+        <div class="card-container d-block d-md-none">
+            <!-- Cards will be dynamically generated here by JavaScript -->
         </div>
 
         <div class="pagination"></div>

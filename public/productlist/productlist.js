@@ -455,53 +455,75 @@ async function saveQuantity(productId) {
 let filteredProducts = [];
 
 function displayProducts(products, page = 1) {
-    currentPage = page;  // Update the current page
-    filteredProducts = products;  // Update the global filteredProducts variable
+    currentPage = page;
+    filteredProducts = products;
 
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const paginatedProducts = filteredProducts.slice(start, end);
 
+    // Clear existing rows in the table view
     const tableBody = document.getElementById('productTableBody');
-    tableBody.innerHTML = ""; // Clear existing rows
+    tableBody.innerHTML = "";
 
-    paginatedProducts.forEach((product,index) => {
+    // Populate the table view
+    paginatedProducts.forEach((product, index) => {
         let stockClass = product.quantity <= 5 ? 'low-stock' : 'sufficient-stock';
         const row = document.createElement('tr');
-        row.draggable = true;  // Make the row draggable
-        row.dataset.index = index;  // Store index as a data attribute
-
         row.innerHTML = `
-            <td><button class="view-btn" onclick="renderConsumptionChart('${product.id}')">View</button></td>        
+            <td><button class="view-btn" onclick="renderConsumptionChart('${product.id}')">View</button></td>
             <td>
                 <div class="product-image-container">
                     <img src="${product.image}" alt="${product.name}" onclick="enlargeImage('${product.image}')"/>
                 </div>
             </td>
             <td>${product.name}</td>
-            <td>${isValidDate(product.expiry) ? formatDate(product.expiry) : 'Invalid Date'}</td>
+            <td>${formatDate(product.expiry)}</td>
             <td>${formatDate(product.added)}</td>
             <td>${product.price}</td>
             <td id="quantity-${product.id}" class="${stockClass}" onclick="enableEditing('${product.id}')">${product.quantity}</td>
             <td>
-                <button class="minus-btn" onclick="adjustStock('${product.id}', -1)" data-tooltip="Deduct serving">-</button> 
-                <button class="add-btn" onclick="adjustStock('${product.id}', +1)" data-tooltip="Add serving">+</button>                
+                <button class="minus-btn" onclick="adjustStock('${product.id}', -1)">-</button>
+                <button class="adding-btn" onclick="adjustStock('${product.id}', +1)">+</button>
             </td>
         `;
-
-        // Add drag event listeners
-        row.addEventListener('dragstart', handleDragStart);
-        row.addEventListener('dragover', handleDragOver);
-        row.addEventListener('drop', handleDrop);
-        row.addEventListener('dragend', handleDragEnd);
-
         tableBody.appendChild(row);
+    });
 
-        
+    // Populate the card view for small screens
+    const cardContainer = document.querySelector('.card-container');
+    cardContainer.innerHTML = ""; // Clear existing cards
+
+    paginatedProducts.forEach((product) => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.innerHTML = `
+            <div class="card-body">
+                <img src="${product.image}" alt="${product.name}" class="card-img-top">
+                <div class="title-container">
+                    <h5 class="card-title">${product.name}</h5>
+                    <button class="btn-view" onclick="renderConsumptionChart('{{ product.id }}')">View</button>
+                </div>
+                <p class="card-text">
+                    Expiry Date: ${formatDate(product.expiry)}<br>
+                    Date Added: ${formatDate(product.added)}<br>
+                    Price: ${product.price}<br>
+                <div class="title-container">    
+                    Servings: ${product.quantity}
+                </p>
+                <div class="button-container">
+                    <button class="minus-btn" onclick="adjustStock('${product.id}', -1)">-</button>
+                    <button class="adding-btn ml-2" onclick="adjustStock('${product.id}', +1)">+</button>
+                </div>
+                </div>
+            </div>
+        `;
+        cardContainer.appendChild(card);
     });
 
     updatePaginationButtons();
-    }
+}
+
 
 
     let dragStartIndex;
