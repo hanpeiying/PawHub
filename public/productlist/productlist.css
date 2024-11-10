@@ -659,3 +659,7 @@ button {
     background-color: #d9534f;
 }
 
+.view-btn{
+    background-color: turquoise;
+    border: none;
+}
