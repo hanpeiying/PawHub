@@ -144,9 +144,15 @@ html, body {
     margin-bottom: 10px;
     font-weight: bold;
 }
+.details-section {
+    margin-bottom: 20px;
+    padding: 0;
+}
 .details-section h4 {
-    margin: 0;
-    margin-bottom: 10px;
+    margin: 0;  /* Remove default margin */
+    margin-bottom: 10px; /* Add space below the header */
+    font-size: 20px; /* Adjust the font size */
+    font-weight: bold;
 }
 
 .details-section p {
@@ -242,12 +248,21 @@ html, body {
 }
 
 .details-table {
-    width: 100%;
+    width: 100%;  /* Ensure it takes up full width */
+    border-collapse: collapse;  /* Remove space between table cells */
 }
 
 .details-table td {
-    padding: 5px 0;
+    padding: 12px 20px;  /* Adds more space inside each cell */
     font-size: 16px;
+    line-height: 1.5;  /* Improve line height for better readability */
+    text-align: left;  /* Align text to the left */
+}
+.details-table th {
+    font-weight: bold;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: left;
 }
 .map-link {
     display: inline-flex;

@@ -61,7 +61,7 @@
                     <h4>Details</h4>
                     <table class="details-table" id="productDetailsTable"></table>
                 </div>
-                <br><br><br><br>
+                <br><br>
                 <div class="ratings-chat-container" style="text-align: right; margin-top: 20px;">
                     <div class="username" id="sellerUsername">
                         <i class="fas fa-paw"></i> Loading Seller Info...
@@ -222,14 +222,14 @@
             document.getElementById('productPrice').textContent = `S$${product.price}`;
             document.getElementById('productDetailsTable').innerHTML = `
                 <tr>
-                    <td>MeetUp Location</td>
+                    <th style="white-space: nowrap;">MeetUp Location</th>
                     <td>${product.location || 'Unknown'}</td>
                 </tr>
                 <tr>
                     <td></td>
                     <td>${product.meetupLocation || 'Unknown'}</td>
                 <tr>
-                    <td>Description</td>
+                    <th>Description</th>
                     <td>${product.description || 'No description available'}</td>
                 </tr>`;
         
