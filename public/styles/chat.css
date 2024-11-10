@@ -88,7 +88,7 @@ body{
     flex-direction: column;
     align-items: center;
     font-size: 16px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 .product-details p {
@@ -96,8 +96,8 @@ body{
 }
 
 .product-image {
-    width: 150px; /* Adjust size as needed */
-    height: 150px;
+    width: 100px; /* Adjust size as needed */
+    height: 100px;
     border-radius: 10px; /* Adds rounded corners */
     margin-top: 5px;
     object-fit: cover;
@@ -105,7 +105,7 @@ body{
 
 .chat-header {
     background-color: #f8f8f8;
-    padding: 15px; /* Consolidated padding */
+    padding: 10px; /* Consolidated padding */
     border-bottom: 1px solid #ddd;
     text-align: center;
     display: flex;
