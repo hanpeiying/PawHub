@@ -87,28 +87,28 @@
     </div>
 
     <div class="graph-section">
+        <h2>Your Dashboard</h2>
         <div class="row justify-content-center">
-            <div class="col-12 col-md-6 col-lg-5 chart-container">
-                <h3 class="chart-title">Weekly Traffic Overview</h3>
-                <canvas id="trafficChart"></canvas>
-            </div>
-            <div class="col-12 col-md-6 col-lg-5 chart-container">
-                <h3 class="chart-title">Sales Overview (Profit)</h3>
-                <canvas id="salesChart"></canvas>
+            <!-- Column for Weekly Traffic Overview and Sales Overview -->
+            <div class="col-12 col-md-6 col-lg-5">
+                <div class="chart-container mb-4">
+                    <h3 class="chart-title">Weekly Traffic Overview</h3>
+                    <canvas id="trafficChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 class="chart-title">Sales Overview (Profit)</h3>
+                    <canvas id="salesChart"></canvas>
+                </div>
             </div>
             
-            <!-- Inventory Pie Chart -->
-            <div class="col-12 col-md-6 col-lg-5 chart-container">
+            <!-- Inventory Pie Chart on the right -->
+            <div class="col-12 col-md-6 col-lg-4 chart-container">
                 <h3 class="chart-title">Inventory Levels</h3>
-                
                 <canvas id="inventoryPieChart"></canvas>
             </div>
         </div>
-    </div>
-
-
-
-
+    </div>      
+    
 
 <!-- Scripts -->
 <script src="./navbar.js" type="module"></script>
@@ -520,7 +520,7 @@ if (salesCtx) {
         data: {
             labels: ['Dog Food 🦴', 'Dog Accessories 🐶', 'Dog Toys 🐕'],
             datasets: [{
-                label: 'Profits Earned',
+                label: 'Profits Earned ($)',
                 data: [profitData.dogFood, profitData.dogAccessories, profitData.dogToys],
                 backgroundColor: [
                     'rgba(139, 69, 19, 0.6)', // Brown for Dog Food

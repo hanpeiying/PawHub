@@ -400,47 +400,40 @@
             applyFilters();  // Apply the filters when the button is clicked
             filterSidebar.classList.remove('active');  // Hide the sidebar after applying filters
         });
-        // Function to apply the selected filters
-        // Function to apply the selected filters
 
-        // function getProductIdFromURL() {
-        //     const params = new URLSearchParams(window.location.search);
-        //     console.log(params)
-        //     return params.get('id'); // Get the 'id' query parameter from the URL
-        // }
         function applyFilters() {
             // Clear the container before applying filters
             productContainer.innerHTML = '';
-        
+
             // Get the selected item filters
             const dogFoodChecked = document.getElementById('dogFoodFilter').checked;
             const dogAccessoriesChecked = document.getElementById('dogAccessoriesFilter').checked;
             const dogToysChecked = document.getElementById('dogToysFilter').checked;
-        
+
             // Get the selected location filters
             const locationCentralChecked = document.getElementById('locationCentral').checked;
             const locationNorthChecked = document.getElementById('locationNorth').checked;
             const locationSouthChecked = document.getElementById('locationSouth').checked;
             const locationEastChecked = document.getElementById('locationEast').checked;
             const locationWestChecked = document.getElementById('locationWest').checked;
-        
+
             // Get the selected age group filters
             const ageGroupPuppyChecked = document.getElementById('ageGroupPuppy').checked;
             const ageGroupJuniorChecked = document.getElementById('ageGroupJunior').checked;
             const ageGroupAdultChecked = document.getElementById('ageGroupAdult').checked;
             const ageGroupMatureChecked = document.getElementById('ageGroupMature').checked;
-        
+
             // Get the selected price range
             const priceMin = parseInt(document.getElementById('priceMin').value, 10);
             const priceMax = parseInt(document.getElementById('priceMax').value, 10);
-        
+
             const filteredProducts = allProducts.filter(product => {
                 // Item filter
                 const matchesItem = (!dogFoodChecked && !dogAccessoriesChecked && !dogToysChecked) ||
                     (dogFoodChecked && product.category === 'dogFood') ||
                     (dogAccessoriesChecked && product.category === 'dogAccessories') ||
                     (dogToysChecked && product.category === 'dogToys');
-        
+
                 // Location filter
                 function locationMatches(productLocation, filterLocation) {
                     if (Array.isArray(productLocation)) {
@@ -450,44 +443,37 @@
                     }
                     return false;
                 }
-        
+
                 const matchesLocation = (!locationCentralChecked && !locationNorthChecked && !locationSouthChecked && !locationEastChecked && !locationWestChecked) ||
                     (locationCentralChecked && locationMatches(product.location, 'Central')) ||
                     (locationNorthChecked && locationMatches(product.location, 'North')) ||
                     (locationSouthChecked && locationMatches(product.location, 'South')) ||
                     (locationEastChecked && locationMatches(product.location, 'East')) ||
                     (locationWestChecked && locationMatches(product.location, 'West'));
-        
+
                 // Price filter
                 const productPrice = parseFloat(product.price);
                 const matchesPrice = !isNaN(productPrice) && productPrice >= priceMin && productPrice <= priceMax;
-        
+
                 // Age Group filter
                 const matchesAgeGroup = (!ageGroupPuppyChecked && !ageGroupJuniorChecked && !ageGroupAdultChecked && !ageGroupMatureChecked) ||
-                (ageGroupPuppyChecked && product.dogAgeGroup?.toLowerCase() === 'puppy') ||
-                (ageGroupJuniorChecked && product.dogAgeGroup?.toLowerCase() === 'junior') ||
-                (ageGroupAdultChecked && product.dogAgeGroup?.toLowerCase() === 'adult') ||
-                (ageGroupMatureChecked && product.dogAgeGroup?.toLowerCase() === 'mature');
-            
-        
+                    (ageGroupPuppyChecked && product.dogAgeGroup?.toLowerCase() === 'puppy') ||
+                    (ageGroupJuniorChecked && product.dogAgeGroup?.toLowerCase() === 'junior') ||
+                    (ageGroupAdultChecked && product.dogAgeGroup?.toLowerCase() === 'adult') ||
+                    (ageGroupMatureChecked && product.dogAgeGroup?.toLowerCase() === 'mature');
+
                 // Return true only if all filters match
                 return matchesItem && matchesLocation && matchesPrice && matchesAgeGroup;
             });
-        
-            // Log the filtered products to help debug
+
             console.log('Filtered Products:', filteredProducts);
-        
-            // Clear existing products before displaying new ones
-            productContainer.innerHTML = ''; 
-        
-            // Load filtered products into the UI
-            loadProducts(filteredProducts);
-        
-            showMoreBtn.style.display = 'none'; 
-            showLessBtn.style.display = 'none'; 
+
+            loadProducts(filteredProducts); // Load the filtered products into the UI
+
+            showMoreBtn.style.display = 'none';
+            showLessBtn.style.display = 'none';
         }
-        
-    
+
         // Get the price range elements
         const priceMinInput = document.getElementById('priceMin');
         const priceMaxInput = document.getElementById('priceMax');
@@ -498,22 +484,26 @@
         function updatePriceRange() {
             const minPrice = priceMinInput.value;
             const maxPrice = priceMaxInput.value;
-    
-            // Ensure min price is not greater than max price
+
+            // Prevent min price from being greater than max price
             if (parseInt(minPrice) > parseInt(maxPrice)) {
                 priceMinInput.value = maxPrice;
             }
-    
+
             minPriceValue.innerText = priceMinInput.value;
             maxPriceValue.innerText = priceMaxInput.value;
-    
-            // Apply filters instantly after adjusting the price range
-            applyFilters();
+
+            // Only apply filters after the user has finished adjusting the price range
+            debouncedApplyFilters();
         }
-    
-        // Event listeners to detect changes in slider values and update the price range instantly
+
+        // Event listeners for price range sliders
         priceMinInput.addEventListener('input', updatePriceRange);
         priceMaxInput.addEventListener('input', updatePriceRange);
+        // Event listeners to detect changes in slider values
+        document.getElementById('priceMin').addEventListener('input', updateApplyFilterButtonState);
+        document.getElementById('priceMax').addEventListener('input', updateApplyFilterButtonState);
+
     
         function debounce(func, delay) {
             let debounceTimer;
@@ -550,30 +540,39 @@
             const dogFoodChecked = document.getElementById('dogFoodFilter').checked;
             const dogAccessoriesChecked = document.getElementById('dogAccessoriesFilter').checked;
             const dogToysChecked = document.getElementById('dogToysFilter').checked;
-            
+        
             const locationCentralChecked = document.getElementById('locationCentral').checked;
             const locationNorthChecked = document.getElementById('locationNorth').checked;
             const locationSouthChecked = document.getElementById('locationSouth').checked;
             const locationEastChecked = document.getElementById('locationEast').checked;
             const locationWestChecked = document.getElementById('locationWest').checked;
-            
+        
             const ageGroupPuppyChecked = document.getElementById('ageGroupPuppy').checked;
             const ageGroupJuniorChecked = document.getElementById('ageGroupJunior').checked;
             const ageGroupAdultChecked = document.getElementById('ageGroupAdult').checked;
             const ageGroupMatureChecked = document.getElementById('ageGroupMature').checked;
-
-            // Enable the Apply Filter button if any filter is checked
+        
+            // Get the price range values
+            const priceMin = parseInt(document.getElementById('priceMin').value, 10);
+            const priceMax = parseInt(document.getElementById('priceMax').value, 10);
+            const defaultPriceMin = 0;  // Minimum value for the slider
+            const defaultPriceMax = 100;  // Maximum value for the slider
+        
+            // Enable the Apply Filter button if any filter is checked or price range is selected
             const applyFilterBtn = document.getElementById('applyFilterBtn');
-            if (dogFoodChecked || dogAccessoriesChecked || dogToysChecked ||
+            if (
+                dogFoodChecked || dogAccessoriesChecked || dogToysChecked ||
                 locationCentralChecked || locationNorthChecked || locationSouthChecked ||
                 locationEastChecked || locationWestChecked ||
                 ageGroupPuppyChecked || ageGroupJuniorChecked ||
-                ageGroupAdultChecked || ageGroupMatureChecked) {
+                ageGroupAdultChecked || ageGroupMatureChecked ||
+                priceMin !== defaultPriceMin || priceMax !== defaultPriceMax // Update to check for actual price range values
+            ) {
                 applyFilterBtn.disabled = false;
             } else {
                 applyFilterBtn.disabled = true;
             }
-        }
+        }        
 
         // Add event listeners to filter checkboxes to update the Apply Filter button state
         document.querySelectorAll('.filter-section input[type="checkbox"]').forEach(checkbox => {

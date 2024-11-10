@@ -24,6 +24,7 @@ h2 {
     margin-bottom: 10px; /* Reduce margin below the heading */
     font-family: 'Hangyaboly';
     color: #361a1a;
+    text-align: center;
 }
 
 .inventory-card {
@@ -334,13 +335,26 @@ h2 {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 10px 0;
 }
 
 /* Add spacing for large screens */
 @media (min-width: 992px) {
-    .graph-section .row {
-        column-gap: 80px; /* Increase horizontal space between charts */
+    .row {
+        display: flex;
+        flex-wrap: nowrap;
+    }
+    .col-lg-8 {
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Vertical spacing between the two charts */
+    }
+}
+@media (max-width: 991px) {
+    .chart-container {
+        margin-bottom: 30px; /* Space between charts */
+    }
+    .col-lg-8, .col-lg-4 {
+        max-width: 100%; /* Stacks charts vertically on smaller screens */
     }
 }
 
@@ -349,8 +363,10 @@ h2 {
     .chart-container {
         margin-bottom: 30px; /* Extra space between charts on smaller screens */
     }
+    .col-md-6, .col-md-4 {
+        max-width: 100%; /* Make all charts stack vertically */
+    }
 }
-
 
 .chart-title {
     text-align: center;
@@ -360,3 +376,4 @@ h2 {
     font-size: 20px;
     margin-bottom: 18px;
 }
+

@@ -10,9 +10,6 @@
     <link rel="stylesheet" href="styles/stylenav.css">
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-
-    
-
     <style>
         html, body {
             height: 100%;
@@ -44,6 +41,11 @@
         .form-control, .form-select {
             margin-bottom: 20px;
             border-radius: 10px;
+        }
+        .upload-text {
+            color: #666;
+            margin-bottom: 10px;
+            text-align: center;
         }
 
         #sellNow {
@@ -235,10 +237,12 @@
 
             <!-- Select Photos Section -->
             <div class="file-input-container">
-                <label for="photos">+</label>
+                <label for="photos">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                </label>
                 <input type="file" id="photos" accept="image/*" multiple>
             </div>
-
+            <div class="upload-text">Upload Max 5 photos</div>
             <!-- Photo Preview -->
             <div id="photoPreview"></div>
 
@@ -326,101 +330,92 @@
     
         const photosInput = document.getElementById('photos');
         const photoPreview = document.getElementById('photoPreview');
-    
-        // Preview the selected images
-       // Preview the selected images
-       // Array to store selected files with unique IDs
 
-// Handle file input and display previews with delete functionality
-
-// Remove image based on unique ID, ensuring selectedFiles array remains accurate
-const removeImage = (id) => {
-    // Remove from selectedFiles array based on unique ID
-    const index = selectedFiles.findIndex((item) => item.id === id);
-    if (index > -1) {
-        selectedFiles.splice(index, 1); // Remove the specific file from selectedFiles
-    }
-    renderPreviews(); // Re-render the previews
-
-    // Update the image preview in the UI if needed (not shown in this code)
-};
-
-const renderPreviews = () => {
-    photoPreview.innerHTML = ''; // Clear existing previews
-    selectedFiles.forEach((item) => {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const imgContainer = document.createElement('div');
-            imgContainer.className = 'image-preview-container';
-
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'photo-preview-img';
-
-            const deleteBtn = document.createElement('div');
-            deleteBtn.className = 'delete-icon';
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteBtn.onclick = () => removeImage(item.id); // Remove by unique ID
-
-            imgContainer.appendChild(img);
-            imgContainer.appendChild(deleteBtn);
-            photoPreview.appendChild(imgContainer);
+        // Remove image based on unique ID, ensuring selectedFiles array remains accurate
+        const removeImage = (id) => {
+            // Remove from selectedFiles array based on unique ID
+            const index = selectedFiles.findIndex((item) => item.id === id);
+            if (index > -1) {
+                selectedFiles.splice(index, 1); // Remove the specific file from selectedFiles
+            }
+            renderPreviews(); // Re-render the previews
         };
-        reader.readAsDataURL(item.file);
-    });
-};
 
-const handleFileInput = (input) => {
+        const renderPreviews = () => {
+            photoPreview.innerHTML = ''; // Clear existing previews
+            selectedFiles.forEach((item) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'image-preview-container';
 
-    selectedFiles = [];
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'photo-preview-img';
 
-    const files = input.files;
-    Array.from(files).forEach((file, index) => {
-        const uniqueId = Date.now() + index; // Unique ID for each file
-        selectedFiles.push({ file, id: uniqueId }); // Store each file with its unique ID
-         // Render previews whenever files are added
-    });
-    renderPreviews();
-};
+                    const deleteBtn = document.createElement('div');
+                    deleteBtn.className = 'delete-icon';
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteBtn.onclick = () => removeImage(item.id); // Remove by unique ID
 
-// Listen for file input changes
+                    imgContainer.appendChild(img);
+                    imgContainer.appendChild(deleteBtn);
+                    photoPreview.appendChild(imgContainer);
+                };
+                reader.readAsDataURL(item.file);
+            });
+        };
 
-    // photosInput.removeEventListener('change', handleFileInput); // Prevent duplicate listeners
-    photosInput.addEventListener('change', () => handleFileInput(photosInput));
-    window.addEventListener('resize', renderPreviews);
+        const handleFileInput = (input) => {
+            if (input.files.length + selectedFiles.length > 5) {
+                alert("You can only upload a maximum of 5 photos.");
+                return; // Prevent adding more than 5 photos
+            }
+
+            // Add the newly selected files to the existing selected files
+            Array.from(input.files).forEach((file, index) => {
+                const uniqueId = Date.now() + index; // Unique ID for each file
+                selectedFiles.push({ file, id: uniqueId }); // Store each file with its unique ID
+            });
+
+            renderPreviews(); // Render previews whenever files are added
+        };
+
+        // Listen for file input changes
+        photosInput.addEventListener('change', () => handleFileInput(photosInput));
+        window.addEventListener('resize', renderPreviews);
 
 
-// Function to upload photos to Firebase Storage and return URLs
+        // Function to upload photos to Firebase Storage and return URLs
+        async function uploadPhotos() {
+            const uploadPromises = selectedFiles.map(({ file, id }, index) => {
+                const storageRef = ref(storage, `listings/${userUID}/${file.name}_${index}`);
+                const uploadTask = uploadBytesResumable(storageRef, file); // Use 'file' directly
 
-async function uploadPhotos() {
-    const uploadPromises = selectedFiles.map(({ file, id }, index) => {
-        const storageRef = ref(storage, `listings/${userUID}/${file.name}_${index}`);
-        const uploadTask = uploadBytesResumable(storageRef, file); // Use 'file' directly
-
-        return new Promise((resolve, reject) => {
-            uploadTask.on('state_changed', (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log(`Upload is ${progress}% done for ${file.name}`);
-            }, (error) => {
-                console.error(`Error uploading ${file.name}: `, error);
-                reject(error);
-            }, () => {
-                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                    console.log(`File uploaded: ${file.name} URL: ${downloadURL}`);
-                    resolve(downloadURL); // Resolve with the download URL
-                }).catch((error) => {
-                    console.error(`Error getting URL for ${file.name}: `, error);
-                    reject(error);
+                return new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed', (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log(`Upload is ${progress}% done for ${file.name}`);
+                    }, (error) => {
+                        console.error(`Error uploading ${file.name}: `, error);
+                        reject(error);
+                    }, () => {
+                        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                            console.log(`File uploaded: ${file.name} URL: ${downloadURL}`);
+                            resolve(downloadURL); // Resolve with the download URL
+                        }).catch((error) => {
+                            console.error(`Error getting URL for ${file.name}: `, error);
+                            reject(error);
+                        });
+                    });
                 });
             });
-        });
-    });
 
-    // Wait for all uploads to finish and return an array of download URLs
-    return await Promise.all(uploadPromises);
-}
+            // Wait for all uploads to finish and return an array of download URLs
+            return await Promise.all(uploadPromises);
+        }
 
-    // Wait for all uploads to finish and return an array of download URLs
+        // Wait for all uploads to finish and return an array of download URLs
         // Function to add listing to Firestore
         async function addListing(listingTitle, description, category, price, locations, meetupLocation, imageURLs) {
             try {

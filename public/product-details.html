@@ -18,7 +18,6 @@
 <body>
 <!--for nav bar-->
     <div id="app">
-
         <!-- Navigation Component -->
         <div id="nav-component"></div>
 
@@ -30,59 +29,59 @@
                 </div>
             </div>
         </div>
-
-
     </div>
     <!-- Scripts -->
     <script src="./navbar.js" type="module"></script>
 <!--for nav bar-->
-
-    <div class="container">
-        <!-- Product Carousel -->
-        <div class="carousel-container">
-            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner"></div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Product Info -->
-        <div class="product-info">
-            <h1 id="productTitle">Loading...</h1>
-            <div class="product-price" id="productPrice"></div>
-        
-            <div class="separator-line"></div>
-        
-            <div class="details-section">
-                <h4>Details</h4>
-                <table class="details-table" id="productDetailsTable"></table>
-            </div>
-            <br><br><br><br><br><br>
-            <div class="ratings-chat-container" style="text-align: right; margin-top: 20px;">
-                <div class="username" id="sellerUsername">
-                    <i class="fas fa-paw"></i> Loading Seller Info...
+    <div class="page-wrapper">
+        <div class="container">
+            <!-- Product Carousel -->
+            <div class="carousel-container">
+                <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner"></div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
                 </div>
-                <a id="showMapBtn" href="#" class="map-link">
-                    <i class="fas fa-map-marker-alt"></i>  View MeetUp Location
-                </a>
-                <div id="mapModal" class="modal">
-                    <div class="modal-content">
-                        <span id="closeMapBtn" class="close">&times;</span>
-                        <div id="mapContainer" style="height: 400px; width: 100%;"></div>
+            </div>
+    
+            <!-- Product Info -->
+            <div class="product-info">
+                <h1 id="productTitle">Loading...</h1>
+                <div class="product-price" id="productPrice"></div>
+            
+                <div class="separator-line"></div>
+            
+                <div class="details-section">
+                    <h4>Details</h4>
+                    <table class="details-table" id="productDetailsTable"></table>
+                </div>
+                <br><br><br><br>
+                <div class="ratings-chat-container" style="text-align: right; margin-top: 20px;">
+                    <div class="username" id="sellerUsername">
+                        <i class="fas fa-paw"></i> Loading Seller Info...
                     </div>
+                    <a id="showMapBtn" href="#" class="map-link">
+                        <i class="fas fa-map-marker-alt"></i>  View MeetUp Location
+                    </a>
+                    <div id="mapModal" class="modal">
+                        <div class="modal-content">
+                            <span id="closeMapBtn" class="close">&times;</span>
+                            <div id="mapContainer" style="height: 400px; width: 100%;"></div>
+                        </div>
+                    </div>
+                    <button class="chat-btn">
+                        <i class="fas fa-comment"></i> Chat
+                    </button>
                 </div>
-                <button class="chat-btn">
-                    <i class="fas fa-comment"></i> Chat
-                </button>
-            </div>
-        </div>        
+            </div>        
+        </div>
+        <div style="margin-bottom: 100px;"></div>
     </div>
 
     <div id="imageModal" class="image-modal">
