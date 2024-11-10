@@ -22,6 +22,7 @@ onAuthStateChanged(auth, (user) => {
         // Load user-specific products after confirming user is logged in
         loadUserProducts(userUID);
         loadDeletedProducts(userUID);
+        loadProductsWithConsumptionLogs(); 
     } else {
         console.log("No user is logged in");
         alert("You need to be logged in to list an item.");
@@ -304,52 +305,52 @@ function filterProducts(searchValue) {
         }
 
         export async function updateChart(productId) {
-            const productRef = doc(db, 'inventory', productId);
-            const productSnap = await getDoc(productRef);
-
-            if (!productSnap.exists()) {
-                console.error("Product not found.");
-                return;
-            }
-
-            const productName = productSnap.data().name;
-            document.getElementById('chartTitle').textContent = `Consumption Rate Over Time for ${productName}`;
-
-            renderConsumptionChart(productId);
-        }
-
-        async function loadProductsWithConsumptionLogs() {
-            const productsWithLogs = [];
-            const inventoryRef = collection(db, 'inventory');
-
-            // Query all inventory items
-            const querySnapshot = await getDocs(inventoryRef);
-            for (const docSnap of querySnapshot.docs) {
-                const productDocRef = doc(db, 'inventory', docSnap.id); // Reference to the product document
-                const consumptionLogsRef = collection(productDocRef, 'consumptionLogs'); // Reference to subcollection
-                const logsSnapshot = await getDocs(consumptionLogsRef);
-
-                // Only add products that have consumption logs
-                if (!logsSnapshot.empty) {
-                    productsWithLogs.push({ id: docSnap.id, name: docSnap.data().name });
+            try {
+                const productRef = doc(db, 'inventory', productId);
+                const productSnap = await getDoc(productRef);
+        
+                if (productSnap.exists()) {
+                    const productName = productSnap.data().name;
+                    document.getElementById('chartTitle').textContent = `Consumption Rate Over Time for ${productName}`;
+                    renderConsumptionChart(productId);
                 }
-            }
-
-            // Populate the dropdown
-            const productSelect = document.getElementById('productSelect');
-            productSelect.innerHTML = ''; // Clear existing options
-            productsWithLogs.forEach(product => {
-                const option = document.createElement('option');
-                option.value = product.id;
-                option.textContent = product.name;
-                productSelect.appendChild(option);
-            });
-
-            // Set the initial chart view with the first product
-            if (productsWithLogs.length > 0) {
-                updateChart(productsWithLogs[0].id);
+            } catch (error) {
+                console.error("Error updating chart for selected product:", error);
             }
         }
+        
+
+        // Function to load all products for the dropdown menu
+async function loadProductsWithConsumptionLogs() {
+    const products = [];  // Collect all inventory items for the dropdown
+    const q = query(collection(db, 'inventory'), where("userUID", "==", userUID)); // Only get user-specific items
+
+    try {
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            products.push({ id: doc.id, name: doc.data().name });
+        });
+
+        const productSelect = document.getElementById('productSelect');
+        productSelect.innerHTML = ''; // Clear existing options
+
+        // Populate dropdown
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = product.name;
+            productSelect.appendChild(option);
+        });
+
+        // Auto-select the first product and load its chart data
+        if (products.length > 0) {
+            updateChart(products[0].id); // Initial chart view for the first product
+        }
+    } catch (error) {
+        console.error("Error loading products for dropdown:", error);
+    }
+}
+
         document.addEventListener('DOMContentLoaded', loadProductsWithConsumptionLogs);
 
 
@@ -471,7 +472,7 @@ function displayProducts(products, page = 1) {
         let stockClass = product.quantity <= 5 ? 'low-stock' : 'sufficient-stock';
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><button class="view-btn" onclick="renderConsumptionChart('${product.id}')">View</button></td>
+            <td><button class="view-btn" onclick="selectAndDisplayProduct('${product.id}')">View</button></td>
             <td>
                 <div class="product-image-container">
                     <img src="${product.image}" alt="${product.name}" onclick="enlargeImage('${product.image}')"/>
@@ -502,7 +503,7 @@ function displayProducts(products, page = 1) {
                 <img src="${product.image}" alt="${product.name}" class="card-img-top">
                 <div class="title-container">
                     <h5 class="card-title">${product.name}</h5>
-                    <button class="btn-view" onclick="renderConsumptionChart('{{ product.id }}')">View</button>
+                    <td><button class="view-btn" onclick="selectAndDisplayProduct('${product.id}')">View</button></td>
                 </div>
                 <p class="card-text">
                     Expiry Date: ${formatDate(product.expiry)}<br>
@@ -523,6 +524,12 @@ function displayProducts(products, page = 1) {
 
     updatePaginationButtons();
 }
+window.selectAndDisplayProduct = function(productId) {
+    const productSelect = document.getElementById('productSelect');
+    productSelect.value = productId; // Set the dropdown to the selected product
+    updateChart(productId);          // Call chart update for the selected product
+};
+
 
 
 

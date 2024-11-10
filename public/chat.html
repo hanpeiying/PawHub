@@ -24,7 +24,7 @@
                     <p class="background-text">Chat</p>
                 </div>
 
-                <div style="height:20px; background-color:#9BA481;"></div>
+                <!-- <div style="height:20px; background-color:#9BA481;"></div> -->
 
                 <!-- Sidebar for Inbox -->
                 <div class="col-md-3 col-sm-12 chat-sidebar">
@@ -44,16 +44,21 @@
                 <div class="col-md-9 col-sm-12 chat-area">
                     <div v-if="selectedChat">
                         <!-- Seller and Product Details Section -->
-                        <div class="chat-header">
+                        <div class="chat-header d-flex align-items-center justify-content-between">
                             <button v-if="!showInbox && isSmallViewport" @click="backToInbox" class="btn btn-secondary btn-sm fas fa-arrow-left back-arrow"></button>
-                            <img :src="sellerProfileImageURL || 'https://via.placeholder.com/120'" alt="Seller" class="rounded-circle" width="50">
-                            <h4>{{ sellerUsername }}</h4>
+                                <div class="user-info d-flex align-items-center">
+                                    <img :src="sellerProfileImageURL || 'https://via.placeholder.com/120'" alt="Seller" class="rounded-circle seller-profile" width="50">
+                                    <h4 class="seller-username ms-3">{{ sellerUsername }}</h4>
+                                </div>
+                                <button class="delete-chat-btn" @click="deleteChat()">Delete Chat</button>
+                        
+                            
                             <p class="product-details">
                                 <span v-if="productAvailable">Inquiring about: {{ productName }}</span>
-                                <span v-else style="color:red">{{productName}} sold</span>
+                                <span v-else style="color:red">{{ productName }} sold</span>
                                 <img v-if="productImageURL && productAvailable" :src="productImageURL" alt="Product" class="product-image" width="50">
-                            </p>
-                        </div>                 
+                            </p>                            
+                        </div>                     
                         
                         <div class="chat-messages">
                             <div v-for="(message, index) in messages" :key="index" :class="{'message-sent': message.senderId === userId, 'message-received': message.senderId !== userId}">
@@ -81,7 +86,7 @@
     <script type="module">
         import { app as firebaseApp } from "./firebase.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, query, where, onSnapshot, orderBy, Timestamp, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, query, where, onSnapshot, orderBy, Timestamp, setDoc, getDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
         const auth = getAuth(firebaseApp);
         const db = getFirestore(firebaseApp);
@@ -276,6 +281,32 @@
                         console.error("Error sending message:", error);
                     }
                 },
+                async deleteChat() {
+                    if (confirm('Are you sure you want to delete this chat?')) {
+                        try {
+                            // Delete the chat document from Firestore
+                            await deleteDoc(doc(db, "chats", this.selectedChat.id));
+
+                            // Delete all messages in the chat's "messages" subcollection
+                            const messagesQuery = query(collection(db, "chats", this.selectedChat.id, "messages"));
+                            const messagesSnapshot = await getDocs(messagesQuery);
+
+                            // Delete all message documents asynchronously and wait for all deletions to complete
+                            const deletePromises = messagesSnapshot.docs.map((doc) => deleteDoc(doc.ref));
+                            await Promise.all(deletePromises);
+
+                            // Update the UI
+                            this.chats = this.chats.filter(chat => chat.id !== this.selectedChat.id);
+                            this.selectedChat = null;
+                            this.showInbox = true; // Show inbox after deletion
+                            alert("Chat deleted successfully.");
+                        } catch (error) {
+                            console.error("Error deleting chat:", error);
+                            alert("Failed to delete chat.");
+                        }
+                    }
+                },
+
                 handleResize() {
                     this.showInbox = window.innerWidth > 768 || !this.selectedChat;
                     this.isSmallViewport = window.innerWidth <= 768;
@@ -285,6 +316,8 @@
                     const date = timestamp.toDate();
                     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 },
+                
+
             },
             mounted() {
                 auth.onAuthStateChanged(user => {

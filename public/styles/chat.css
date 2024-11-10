@@ -325,3 +325,21 @@ body{
     z-index: 2; /* Ensure it is above other elements */
     padding: 0; /* Removes any padding */
 }
+
+.delete-chat-btn {
+    background-color: #d9534f; /* Red color for delete */
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.delete-chat-btn:hover {
+    background-color: #c9302c; /* Darker red on hover */
+}
