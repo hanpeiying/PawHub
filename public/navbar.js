@@ -63,7 +63,7 @@ fetch('./nav.html') // Fetching HTML for the component
             userUID = user.uid;
             this.fetchUserData();
           } else {
-            window.location.href = "homepageBeforeLogin.html";
+            window.location.href = "index.html";
           }
         });
       },

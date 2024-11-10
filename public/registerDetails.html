@@ -141,7 +141,7 @@
                 // Save dog details and then redirect to the homepage
                 this.saveDogDetails().then(() => {
                     // After saving successfully, redirect to the homepage
-                    window.location.href = "homepageBeforeLogin.html";
+                    window.location.href = "index.html";
                 }).catch((error) => {
                     console.error("Error during form submission:", error);
                     alert("There was an issue saving the details. Please try again.");
