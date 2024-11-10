@@ -1,0 +1,249 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: "Poppins Regular", Arial, sans-serif;
+    background-color: #f9f1e7;
+     cursor: none;
+}
+
+/* Navbar Styling */
+.logo {
+    width: 150px;
+}
+
+a.login-button {
+    background-color: #9BA481;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-decoration: none;
+}
+
+a.login-button:hover {
+    background-color: #6f9366;
+}
+
+/* Hero Section Styling */
+.hero-section {
+    height: 50vh;
+    background-color: #f9f1e7;
+    text-align: center;
+    padding: 20px; 
+}
+#wave-text span {
+    display: inline-block;
+    animation: wave 1.5s ease-in-out infinite;
+    font-family: "Overlock";
+    color: #361a1a;
+    font-size: 48px;
+}
+
+.description {
+    font-size: 1em;
+    color: #7d7d7d;
+    margin-bottom: 30px;
+    max-width: 600px; /* Limits width on smaller screens */
+    margin: 0 auto; 
+    text-align: center;
+}
+
+/* Book button */
+a.book-button {
+    background-color: #9BA481;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-decoration: none;
+}
+
+
+/* Position the paw icons */
+.paw-icon {
+    position: absolute;
+    width: 80px; /* Adjust size as needed */
+    animation: pawAnimation 2s infinite ease-in-out;
+}
+
+/* Left paw positioned to the top-left of the hero section */
+.left-paw {
+    top: 20%;
+    left: 5%;
+}
+
+/* Right paw positioned to the top-right of the hero section */
+.right-paw {
+    top: 50%;
+    right: 5%;
+}
+
+a.book-button:hover {
+    background-color: #6f9366;
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        height: auto; /* Adjusts height to fit content */
+        padding: 40px 20px;
+    }
+
+    #wave-text span {
+        font-size: 32px; /* Reduces font size for small screens */
+    }
+
+    .description {
+        font-size: 0.9em; /* Slightly smaller description text */
+        max-width: 90%; /* Further limits width for readability */
+    }
+
+    a.book-button {
+        font-size: 18px; /* Adjusts button font size */
+        padding: 8px 16px; /* Reduces padding for smaller screens */
+    }
+
+    .paw-icon {
+        width: 40px; /* Smaller paw icons for mobile */
+        position: static; /* Ensures icons stay within the viewport */
+        margin: 10px auto; /* Centers icons under the text */
+        display: block;
+    }
+}
+
+
+
+/* Background Section Styling */
+.background-section {
+    margin-top: 20px;
+    background-color: #628474;
+}
+
+/* Card container styling */
+.container.my-5 {
+    margin-top: 100px; /* Pushes the cards down to clear the beige part */
+}
+
+/* Card styling */
+.card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    padding-top: 20px;
+    height: 100%; /* Ensures the card takes full height */
+}
+
+.card-icon {
+    width: 100%; /* Ensures the icon container fills the card width */
+    overflow: hidden; /* Prevents overflow if the image aspect ratio differs */
+}
+
+.card-icon img {
+    width: 100%; /* Makes the image responsive to the card's width */
+    height: auto; /* Maintains the image's aspect ratio */
+    display: block; /* Removes any small gaps below the image */
+    border-radius: 10px 10px 0 0; /* Rounds the top corners of the image to match the card */
+    margin-bottom: 0;
+}
+
+/* Card title and text */
+.card-title {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    font-size: 1.2em; /* Slightly larger font */
+}
+
+.card-text {
+    color: #7d7d7d;
+}
+
+
+/* Paw animation for rotation and scaling */
+@keyframes pawAnimation {
+    0%, 100% {
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        transform: rotate(-10deg) scale(1.1);
+    }
+    50% {
+        transform: rotate(0deg) scale(1.2);
+    }
+    75% {
+        transform: rotate(10deg) scale(1.1);
+    }
+}
+
+
+/* Create the wave effect */
+@keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+/* Add delay for each letter to create the wave effect */
+#wave-text span:nth-child(1) { animation-delay: 0.1s; }
+#wave-text span:nth-child(2) { animation-delay: 0.2s; }
+#wave-text span:nth-child(3) { animation-delay: 0.3s; }
+#wave-text span:nth-child(4) { animation-delay: 0.4s; }
+#wave-text span:nth-child(5) { animation-delay: 0.5s; }
+#wave-text span:nth-child(6) { animation-delay: 0.6s; }
+#wave-text span:nth-child(7) { animation-delay: 0.7s; }
+#wave-text span:nth-child(8) { animation-delay: 0.8s; }
+#wave-text span:nth-child(9) { animation-delay: 0.9s; }
+#wave-text span:nth-child(10) { animation-delay: 1s; }
+#wave-text span:nth-child(11) { animation-delay: 1.1s; }
+#wave-text span:nth-child(12) { animation-delay: 1.2s; }
+#wave-text span:nth-child(13) { animation-delay: 1.3s; }
+#wave-text span:nth-child(14) { animation-delay: 1.4s; }
+#wave-text span:nth-child(15) { animation-delay: 1.5s; }
+#wave-text span:nth-child(16) { animation-delay: 1.6s; }
+#wave-text span:nth-child(17) { animation-delay: 1.7s; }
+#wave-text span:nth-child(18) { animation-delay: 1.8s; }
+#wave-text span:nth-child(19) { animation-delay: 1.9s; }
+#wave-text span:nth-child(20) { animation-delay: 2s; }
+#wave-text span:nth-child(21) { animation-delay: 2.1s; }
+#wave-text span:nth-child(22) { animation-delay: 2.2s; }
+
+
+@font-face {
+  font-family: "Overlock";
+  src: url("../fonts/OverlockSC-Regular.ttf") format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Poppins Regular";
+  src: url("../fonts/poppins/Poppins-Regular.ttf") format("truetype");
+  font-style: normal;
+}
+
+/* Dog emoji cursor styling */
+button, button:hover, a, a:hover, .book-button, .book-button:hover {
+    cursor: none; /* Ensures only the dog emoji appears on buttons and links, even when hovering */
+}
+
+
+/* Dog emoji cursor styling */
+.dog-cursor {
+    position: absolute;
+    font-size: 24px; /* Adjust size as needed */
+    pointer-events: none; /* Makes it non-clickable */
+    transform: translate(-50%, -50%); /* Centers the emoji on the cursor */
+    z-index: 1000; /* Ensures it’s above all other elements */
+}
