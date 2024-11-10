@@ -165,7 +165,7 @@ function filterProducts(searchValue) {
 
                     await addDoc(logRef, {
                         quantityAtTimestamp: quantityAtTimestamp,
-                        timestamp: new Date().toISOString()  // Current timestamp
+                        timestamp: new Date().toISOString(),  // Current timestamp
                     });
                     console.log(`Logged consumption of ${quantityAtTimestamp} for product ${productId}`);
                 } catch (error) {
@@ -179,32 +179,26 @@ function filterProducts(searchValue) {
                 const productSnap = await getDoc(productRef);
                 if (!productSnap.exists()) {
                     console.error("Product not found.");
-                    return [];
+                    return {data:[],initialTimestamp:null};
                 }
 
                 const initialQuantity = productSnap.data().serving; // Starting quantity of the product
                 const initialTimestamp = productSnap.data().added; // Use 'added' field as the initial timestamp
                 const logsRef = collection(productRef, 'consumptionLogs');
                 const querySnapshot = await getDocs(logsRef);
+            
 
                 const data = [];
-
-                // Add initial quantity as the starting point
-                data.push({
-                    timestamp: new Date(initialTimestamp),
-                    quantityAtTimestamp: initialQuantity
-                });
 
                 // Process each document in the consumption logs
                 querySnapshot.forEach(doc => {
                     const log = doc.data();
-
                     data.push({
                         timestamp: new Date(log.timestamp),
-                        quantityAtTimestamp: log.quantityAtTimestamp
+                        quantityAtTimestamp: log.quantityAtTimestamp,
+                        initialTimestamp: initialTimestamp
                     });
-                    // Update the quantity based on the reduction for the next entry
-                    // currentQuantity -= log.quantityAtTimestamp;
+       
                 });
 
                 // Sort data by timestamp to ensure chronological order
@@ -227,6 +221,10 @@ function filterProducts(searchValue) {
             // Prepare data for Chart.js
             const labels = consumptionData.map(entry => new Date(entry.timestamp));
             const quantitiesAtTimestamps = consumptionData.map(entry => entry.quantityAtTimestamp);
+            const initialTimestamp = consumptionData[0].initialTimestamp; // Use the initial timestamp from data
+            console.log("consumption data",consumptionData);
+
+
 
             const ctx = document.getElementById('consumptionChart')?.getContext('2d');
             console.log("Labels (timestamps):", labels);
@@ -243,6 +241,7 @@ function filterProducts(searchValue) {
             }
 
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
 
             window.consumptionChart = new Chart(ctx, {
                 type: 'line',
@@ -291,8 +290,8 @@ function filterProducts(searchValue) {
                                 display: true,
                                 text: 'Date'
                             },
-                            min: labels[0], // Start with the first timestamp
-                            max: labels[labels.length - 1], // End with the last timestamp
+                            min: initialTimestamp, // Start with the first timestamp
+                            // max: labels[labels.length - 1], // End with the last timestamp
                             ticks: {
                                 autoSkip: true,
                                 maxRotation: 45, // Rotate labels to make them readable
