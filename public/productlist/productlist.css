@@ -258,6 +258,7 @@ button {
     align-items: center;
 }
 
+
 .adding-btn {
     background-color: #4a90e2;
 }
@@ -660,6 +661,11 @@ button {
 }
 
 .view-btn{
-    background-color: turquoise;
     border: none;
+    background: none;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    background-color: #4a90e2;
+    color:white;
 }
