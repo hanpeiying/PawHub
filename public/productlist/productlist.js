@@ -190,6 +190,11 @@ function filterProducts(searchValue) {
 
                 const data = [];
 
+                data.push({
+                    timestamp: new Date(initialTimestamp),
+                    quantityAtTimestamp: initialQuantity
+                });
+
                 // Process each document in the consumption logs
                 querySnapshot.forEach(doc => {
                     const log = doc.data();
