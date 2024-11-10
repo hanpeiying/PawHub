@@ -1,7 +1,7 @@
 html, body {
     height: 100%;
     margin: 0;
-    padding-bottom: 30px;
+    padding-bottom: 20px;
     font-family: 'Poppins Regular', sans-serif;
 }
 
@@ -35,11 +35,10 @@ html, body {
         align-items: center;
         padding: 20px;
         max-width: 100%;
-        margin: 20px;
         justify-content: center;
         position: relative;
+        margin: 0 auto; /* Ensure the container is centered */
     }
-
     .product-info {
         text-align: center;
         padding-bottom: 100px;
@@ -55,7 +54,9 @@ html, body {
         width: 100%; /* Ensure the ratings/chat container stretches full width */
     }
     .page-wrapper {
-        margin-bottom: 60px !important; /* Adjusted for mobile */
+        padding: 0 20px;  /* Adjust padding for smaller screens */
+        max-width: 100%;
+        margin: 0 auto;  /* Ensure it's centered */
     }
 }
 .separator-line {
@@ -72,9 +73,9 @@ html, body {
     background-color: white;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 90%;
+    width: 100%; /* Adjust this to 100% */
     gap: 20px;
-    min-height: 600px; /* Ensure the card has a minimum height */
+    min-height: 600px;
     position: relative;
 }
 .page-wrapper {
@@ -82,9 +83,9 @@ html, body {
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 40px; /* Add consistent padding on both sides */
+    padding: 0 20px; /* Reduced from 40px to 20px */
     box-sizing: border-box;
-    padding-bottom: 100px; /* Add bottom padding instead of margin */
+    padding-bottom: 100px;
     min-height: 100%;
 }
 .container-fluid {
@@ -126,7 +127,8 @@ html, body {
     flex: 2.5;
     display: flex;
     flex-direction: column;
-    margin-left: 20px;
+    margin-left: 20px; /* Adjust if necessary */
+    margin-right: 20px; /* Add this to balance margins */
     padding-bottom: 50px;
     max-width: 60%; /* Ensure the product info section doesn't take up too much space */
 }
@@ -287,10 +289,10 @@ html, body {
         flex-direction: column;
         align-items: center;
         padding: 20px;
-        max-width: 100%;
-        margin: 20px;
+        width: calc(100% - 40px); /* Account for smaller padding */
+        margin: 20px auto; /* Changed to auto for horizontal centering */
         justify-content: center;
-        position: relative; /* Ensures absolutely positioned elements stay within the container */
+        position: relative;
     }
 
     .actions-container {
@@ -325,6 +327,18 @@ html, body {
 }
 
 @media (max-width: 576px) {
+    .container {
+        padding: 15px;
+        width: calc(100% - 30px); /* Account for even smaller padding */
+        margin: 15px auto;
+    }
+    .page-wrapper {
+        padding: 0 15px;
+    }
+    .product-info {
+        padding: 0;
+        padding-bottom: 100px;
+    }
     .product-info h1 {
         font-size: 24px;
     }
@@ -340,10 +354,6 @@ html, body {
 
     .details-table td {
         font-size: 13px;
-    }
-    .product-info {
-        padding: 0 10px;
-        padding-bottom: 100px;
     }
     .actions-container{
         position: absolute;

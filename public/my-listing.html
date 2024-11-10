@@ -33,70 +33,69 @@
     <!-- Scripts -->
     <script src="./navbar.js" type="module"></script>
 <!--for nav bar-->
-
-    <div class="container">
-        <!-- Product Carousel -->
-        <div class="carousel-container">
-            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner"></div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
+    <div class="page-wrapper">
+        <div class="container">
+            <!-- Product Carousel -->
+            <div class="carousel-container">
+                <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner"></div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="product-info">
+                <h1 id="productTitle" class="editable" contenteditable="false">Loading...</h1>
+                <div class="product-price editable" id="productPrice" contenteditable="false"></div>
+    
+                <div class="separator-line"></div>
+        
+            <div class="details-section">
+                <h4>Details</h4>
+                <table class="details-table">
+                    <tr>
+                        <th style="white-space: nowrap;">MeetUp Location</th>
+                        <td><span id="locationField" class="editable">Unknown</span></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><span id="meetupLocationField" class="editable">Unknown</span></td>
+                    </tr>
+                    <tr>
+                        <th>Description</th>
+                        <td><span id="descriptionField" class="editable">No description available</span></td>
+                    </tr>
+                    <tr id="availabilityDropdownRow" style="display: none;">
+                        <td>Status</td>
+                        <td>
+                            <select id="availabilityDropdown">
+                                <option value="available" selected>Available</option>
+                                <option value="sold">Sold</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Edit and Save buttons -->
+            <div class="actions-container" style="text-align: right; margin-top: 20px;">
+                <button class="edit-btn" id="editBtn" onclick="window.toggleEdit(true)">
+                    <i class="fas fa-edit"></i> Edit
                 </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
+                <button class="save-btn" id="saveBtn" style="display: none;" onclick="window.saveListing()">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="delete-btn" onclick="deleteListing()">
+                    <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
         </div>
-    
-        <div class="product-info">
-            <h1 id="productTitle" class="editable" contenteditable="false">Loading...</h1>
-            <div class="product-price editable" id="productPrice" contenteditable="false"></div>
-
-            <div class="separator-line"></div>
-    
-        <div class="details-section">
-            <h4>Details</h4>
-            <table class="details-table">
-                <tr>
-                    <td>MeetUp Location</td>
-                    <td><span id="locationField" class="editable">Unknown</span></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td><span id="meetupLocationField" class="editable">Unknown</span></td>
-                </tr>
-                <tr>
-                    <td>Description</td>
-                    <td><span id="descriptionField" class="editable">No description available</span></td>
-                </tr>
-                <tr id="availabilityDropdownRow" style="display: none;">
-                    <td>Status</td>
-                    <td>
-                        <select id="availabilityDropdown">
-                            <option value="available" selected>Available</option>
-                            <option value="sold">Sold</option>
-                        </select>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        
-        <!-- Edit and Save buttons -->
-        <div class="actions-container" style="text-align: right; margin-top: 20px;">
-            <button class="edit-btn" id="editBtn" onclick="window.toggleEdit(true)">
-                <i class="fas fa-edit"></i> Edit
-            </button>
-            <button class="save-btn" id="saveBtn" style="display: none;" onclick="window.saveListing()">
-                <i class="fas fa-save"></i> Save
-            </button>
-            <button class="delete-btn" onclick="deleteListing()">
-                <i class="fas fa-trash"></i> Delete
-            </button>
-        </div>
-        
-        
     </div>
     
     <div id="imageModal" class="image-modal">
