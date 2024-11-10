@@ -111,12 +111,17 @@ td{
 }
 
 .product-list th, .product-list td {
+    /* display: flex; */
+    justify-content: center; /* Center horizontally */
+    align-items: center;     /* Center vertically */
     padding: 10px;
-    /* border: 1px solid #ddd; */
-    text-align: center; /* Center content horizontally */
-    vertical-align: middle; /* Center content vertically */
     border: 1px solid #FFE5B4;
+    height: 50px; /* Set a fixed height */
+    line-height: 50px; /* Matches the height for single-line centering */
+    text-align: center;
+    vertical-align: middle;
 }
+
 
 
 .product-list th {
@@ -659,3 +664,55 @@ button {
 .card-container .minus-btn {
     background-color: #d9534f;
 }
+.view-btn, .expiry-btn {
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.view-btn {
+    /* background-color: #4a90e2; */
+    color: black;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+.expiry-btn {
+    background: transparent;
+    color: #333;
+    display: inline-flex;
+    
+    align-items: center;
+}
+
+.expiry-btn:hover {
+    color: #4a90e2;
+}
+
+.expiry-btn .icon {
+    transition: transform 0.3s ease;
+}
+
+.expiry-btn:hover .icon {
+    transform: rotate(180deg);
+}
+
+.view-btn:hover {
+    background-color: #8a9a5b 
+}
+/* .view-btn {
+    border-radius: 8px;
+    color: black;
+    padding: 5px 8px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+
+.view-btn {
+    border-radius: 5px solid black;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+} */
+
