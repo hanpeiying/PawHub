@@ -56,3 +56,4 @@ For dog owners:
 - [x] Deployment and hosting via Firebase, automated by Github actions
 - [x] OAuth for user authentication
 - [x] Google Maps API for route to meetups
+- [X] SwaggerTime API to set the homepage navbar background based on the time of day 
