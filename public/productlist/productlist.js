@@ -1,7 +1,7 @@
 // Firebase setup
 import { app } from "../firebase.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { getFirestore, addDoc, collection, doc, updateDoc, query, where, getDocs, getDoc, deleteDoc} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { getFirestore, addDoc, collection, doc, updateDoc, query, where, getDocs, getDoc, deleteDoc, onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
 const auth = getAuth(app);
@@ -108,25 +108,32 @@ function filterProducts(searchValue) {
         export async function adjustStock(productId, amount) {
             const productRef = doc(db, 'inventory', productId);
             const product = allProducts.find(p => p.id === productId);
-
-            // Declare newQuantity outside of the conditional block
-            let newQuantity;
-
+        
             if (product) {
-                newQuantity = product.quantity + amount;
-
-                // Ensure new quantity is non-negative
+                let newQuantity = product.quantity + amount;
+        
+                // If quantity is zero and the amount is negative, show the confirmation modal without updating
+                if (product.quantity === 0 && amount < 0) {
+                    selectedProductIndex = allProducts.findIndex(p => p.id === productId);
+                    const modal = document.getElementById('confirmationModal');
+                    modal.style.display = 'flex'; // Show modal
+                    console.log("Prompt shown: Quantity is zero.");
+                    return; // Stop further execution
+                }
+        
+                // Ensure the new quantity is non-negative before updating Firestore
                 if (newQuantity >= 0) {
                     try {
                         // Update Firestore with the new quantity
                         await updateDoc(productRef, { quantity: newQuantity });
-                        product.quantity = newQuantity;  // Update local product data
-
+                        product.quantity = newQuantity; // Update local product data
+        
                         // Log the reduction with a timestamp if the amount is negative
                         if (amount < 0) {
                             await logConsumption(productId, newQuantity);
                         }
-
+                        selectAndDisplayProduct(productId);
+        
                         // Refresh displayed products
                         displayProducts(allProducts, currentPage);
                         console.log(`Product quantity adjusted by ${amount}. New quantity: ${newQuantity}`);
@@ -134,19 +141,20 @@ function filterProducts(searchValue) {
                         console.error("Error adjusting stock:", error);
                     }
                 } else {
-                    console.error("Invalid quantity: cannot reduce below zero.");
+                    console.log("Quantity cannot be reduced below zero.");
+                }
+                if (newQuantity === 0) {
+                    selectedProductIndex = allProducts.findIndex(p => p.id === productId);
+                    const modal = document.getElementById('confirmationModal');
+                    modal.style.display = 'flex';  // Show modal
                 }
             } else {
                 console.error("Product not found.");
             }
 
-            // Now `newQuantity` is accessible here because it was declared outside the `if` block
-            if (newQuantity === 0) {
-                selectedProductIndex = allProducts.findIndex(p => p.id === productId);
-                const modal = document.getElementById('confirmationModal');
-                modal.style.display = 'flex';  // Show modal
-            }
         }
+        
+        
 
 
             // Function to log each consumption event with a timestamp
@@ -325,8 +333,8 @@ async function loadProductsWithConsumptionLogs() {
     const products = [];  // Collect all inventory items for the dropdown
     const q = query(collection(db, 'inventory'), where("userUID", "==", userUID)); // Only get user-specific items
 
-    try {
-        const querySnapshot = await getDocs(q);
+    onSnapshot(q, (querySnapshot) => {
+        const products = [];
         querySnapshot.forEach((doc) => {
             products.push({ id: doc.id, name: doc.data().name });
         });
@@ -346,9 +354,7 @@ async function loadProductsWithConsumptionLogs() {
         if (products.length > 0) {
             updateChart(products[0].id); // Initial chart view for the first product
         }
-    } catch (error) {
-        console.error("Error loading products for dropdown:", error);
-    }
+    });
 }
 
         document.addEventListener('DOMContentLoaded', loadProductsWithConsumptionLogs);
@@ -503,7 +509,7 @@ function displayProducts(products, page = 1) {
                 <img src="${product.image}" alt="${product.name}" class="card-img-top">
                 <div class="title-container">
                     <h5 class="card-title">${product.name}</h5>
-                    <td><button class="view-btn" onclick="selectAndDisplayProduct('${product.id}')">View</button></td>
+                    <button class="view-btn" onclick="selectAndDisplayProduct('${product.id}')">View</button>
                 </div>
                 <p class="card-text">
                     Expiry Date: ${formatDate(product.expiry)}<br>

@@ -573,7 +573,7 @@ button {
 /* Card layout styling for small screens */
 /* Card layout styling for small screens */
 .card-container .card {
-    background-color: #F9F1E7;
+    background-color: white;
     border: 1px solid #FFE5B4;
     border-radius: 10px;
     margin-bottom: 15px;
