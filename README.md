@@ -13,6 +13,10 @@ Dog owners often face challenges managing pet supplies and communicating with ot
 Our application focuses on addressing these needs by offering a user-friendly marketplace, an efficient inventory management system, and seamless route planning with Google Maps.
 
 # [Usage]
+1. git clone https://github.com/hanpeiying/PawHub.git
+2. go to 'public' directory
+Deployment link:
+https://pawhub-858e8.web.app/ 
 
 # Features
 For dog owners:
