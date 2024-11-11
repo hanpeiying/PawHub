@@ -354,22 +354,22 @@ function filterProducts(searchValue) {
             });
         });
 
-        export async function updateChart(productId) {
-            const timeframeSelect = document.getElementById('timeframeSelect');
-            const selectedTimeframe = timeframeSelect.value;
-            try {
-                const productRef = doc(db, 'inventory', productId);
-                const productSnap = await getDoc(productRef);
+        // export async function updateChart(productId) {
+        //     const timeframeSelect = document.getElementById('timeframeSelect');
+        //     const selectedTimeframe = timeframeSelect.value;
+        //     try {
+        //         const productRef = doc(db, 'inventory', productId);
+        //         const productSnap = await getDoc(productRef);
         
-                if (productSnap.exists()) {
-                    const productName = productSnap.data().name;
-                    document.getElementById('chartTitle').textContent = `Consumption Rate Over Time for ${productName}`;
-                    renderConsumptionChart(productId,selectedTimeframe);
-                }
-            } catch (error) {
-                console.error("Error updating chart for selected product:", error);
-            }
-        }
+        //         if (productSnap.exists()) {
+        //             const productName = productSnap.data().name;
+        //             document.getElementById('chartTitle').textContent = `Consumption Rate Over Time for ${productName}`;
+        //             renderConsumptionChart(productId,selectedTimeframe);
+        //         }
+        //     } catch (error) {
+        //         console.error("Error updating chart for selected product:", error);
+        //     }
+        // }
         
 
         // Function to load all products for the dropdown menu
