@@ -294,7 +294,7 @@
             <!-- Price Section -->
             <div class="input-group mb-3">
                 <span class="input-group-text align-text-symbol">S$</span>
-                <input type="number" id="price" class="form-control" placeholder="Price of your listing" required>
+                <input type="number" step="0.01" id="price" class="form-control" placeholder="Price of your listing" required>
             </div>
 
             <!-- Sell Now Button -->
@@ -469,21 +469,86 @@
                 return false;  // Prevent form submission if not valid
             }
         }
+        // Event listener for form submission + Function to get query parametersfrom inventory overview in homepage.html
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                name: params.get('name') || '',
+                expiry: params.get('expiry') || '',
+                price: params.get('price') || '',
+                quantity: params.get('quantity') || '',
+                image: params.get('image') || '',  // Get image URL from query parameter
+                status: params.get('status') || ''
+            };
+        }
+
+        const queryParams = getQueryParams();
+        const isRedirectedListing = Boolean(queryParams.name || queryParams.image);
+
+        // Set default values in the form based on query parameters
+        window.addEventListener('DOMContentLoaded', () => {
+            const listingTitleInput = document.getElementById('listingTitle');
+            const descriptionInput = document.getElementById('description');
+            const priceInput = document.getElementById('price');
+            const photoPreview = document.getElementById('photoPreview');
+
+            // Pre-fill the Listing Title with item name if redirected
+            if (queryParams.name) {
+                listingTitleInput.value = queryParams.name;
+            }
+
+            // Set description based on item status only if redirected
+            if (queryParams.status && descriptionInput) {
+                if (queryParams.status === 'expired') {
+                    descriptionInput.value = `Giving this away!\nExpires in less than 1 month: ${queryParams.expiry}\n,Servings available: ${queryParams.quantity}`;
+                } else {
+                    descriptionInput.value = `Expires on: ${queryParams.expiry}\n,Servings available: ${queryParams.quantity}`;
+                }
+            } else {
+                // Clear the description for a normal listing
+                descriptionInput.value = '';
+            }
+
+            // Set the price to 0 if it's a Giveaway
+            if (queryParams.price === '0') {
+                priceInput.value = 0;
+            }
+
+
+            // Display the image if available
+            if (queryParams.image) {
+                const img = document.createElement('img');
+                img.src = queryParams.image;
+                img.className = 'photo-preview-img';
+                photoPreview.appendChild(img);
+            }
+        });
+
         // Event listener for form submission
         const form = document.getElementById('dogForm');
         form.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Prevent form from refreshing the page
+            e.preventDefault();
+
+            // Preserve the existing validation logic for location
             if (!isMeetupLocationValid()) {
-                e.preventDefault(); // Prevent form submission if meetup location is not valid
                 alert("Please enter a valid meetup location.");
                 return;
             }
-    
+
             if (!userUID) {
                 alert("You need to be logged in to list an item.");
                 return;
             }
-    
+
+            if (!validateMeetupLocation()) {
+                e.preventDefault(); // Prevent form submission if location is invalid
+                alert("Please enter a valid meetup location.");  // Notify user that location is invalid
+                return;
+            }
+
+            const sellNowButton = document.getElementById('sellNow');
+            sellNowButton.disabled = true;
+
             const category = document.getElementById('category').value;
             const listingTitle = document.getElementById('listingTitle').value;
             const description = document.getElementById('description').value;
@@ -492,24 +557,41 @@
             const meetupLocation = document.getElementById('meetup').value;
             const selectedLocations = Array.from(locationSelect.selectedOptions).map(option => option.value);
 
-            if (!validateMeetupLocation()) {
-                e.preventDefault();  // Prevent form submission if location is invalid
-                alert("Please enter a valid meetup location.");  // Notify user that location is invalid
+            let imageURLs = [];
+
+            // Handle image based on whether this is a redirected listing
+            if (isRedirectedListing && queryParams.image) {
+                // Use the image URL from query parameters if redirected
+                imageURLs.push(queryParams.image);
+            } else {
+                // Otherwise, upload photos from the file input
+                const files = photosInput.files;
+                if (files.length > 0) {
+                    console.log(`Uploading ${files.length} files...`);
+                    imageURLs = await uploadPhotos();
+                    console.log('All uploaded URLs:', imageURLs);
+                } else {
+                    alert("Please upload at least one image.");
+                    sellNowButton.disabled = false;
+                    return;
+                }
             }
 
-            const files = photosInput.files;
-            console.log(`Uploading ${files.length} files...`);
-            const imageURLs = await uploadPhotos(files);
-            console.log('All uploaded URLs:', imageURLs);
-    
-            addListing(listingTitle, description, category, price, selectedLocations, meetupLocation, imageURLs);
-    
+            await addListing(listingTitle, description, category, price, selectedLocations, meetupLocation, imageURLs);
+
             form.reset();
             selectedFiles = [];
-        }); 
+            sellNowButton.disabled = false; // Re-enable the button for future submissions
+        });
+
+        // Ensure Google Places Autocomplete initialization
         document.addEventListener('DOMContentLoaded', function () {
             initializeAutocomplete();
         });
+
+
+
+
     </script>
     
 </body>
