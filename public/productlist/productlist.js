@@ -179,19 +179,19 @@ function filterProducts(searchValue) {
                 const productSnap = await getDoc(productRef);
                 if (!productSnap.exists()) {
                     console.error("Product not found.");
-                    return {data:[],addedDate:null};
+                    return {data:[],initialTimestamp:null};
                 }
 
                 const initialQuantity = productSnap.data().serving; // Starting quantity of the product
                 const initialTimestamp = productSnap.data().added; // Use 'added' field as the initial timestamp
                 const logsRef = collection(productRef, 'consumptionLogs');
                 const querySnapshot = await getDocs(logsRef);
-                const addedDate = new Date(productSnap.data().added); // Set the added date as the x-axis start
+            
 
-                const data = [{ timestamp: addedDate, quantityAtTimestamp: initialQuantity }];
+                const data = [];
 
                 data.push({
-                    timestamp: addedDate,
+                    timestamp: new Date(initialTimestamp),
                     quantityAtTimestamp: initialQuantity
                 });
 
@@ -201,23 +201,22 @@ function filterProducts(searchValue) {
                     data.push({
                         timestamp: new Date(log.timestamp),
                         quantityAtTimestamp: log.quantityAtTimestamp,
-                        });
+                        initialTimestamp: initialTimestamp
+                    });
        
                 });
 
                 // Sort data by timestamp to ensure chronological order
                 data.sort((a, b) => a.timestamp - b.timestamp);
                 console.log(data);
-                return {data,addedDate};
+                return data;
             }
 
         import 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns';
 
             
-        export async function renderConsumptionChart(productId,timeframe = 'day') {
-            const { data: consumptionData, addedDate: initialTimestamp } = await fetchConsumptionData(productId);
-
-            // const consumptionData = await fetchConsumptionData(productId);
+        export async function renderConsumptionChart(productId) {
+            const consumptionData = await fetchConsumptionData(productId);
             if (!consumptionData || consumptionData.length === 0) {
                 console.error(`No consumption data available for product ID: ${productId}`);
                 alert("No consumption data available for this product.");
@@ -227,7 +226,7 @@ function filterProducts(searchValue) {
             // Prepare data for Chart.js
             const labels = consumptionData.map(entry => new Date(entry.timestamp));
             const quantitiesAtTimestamps = consumptionData.map(entry => entry.quantityAtTimestamp);
-            // const initialTimestamp = consumptionData[0].initialTimestamp; // Use the initial timestamp from data
+            const initialTimestamp = consumptionData[0].initialTimestamp; // Use the initial timestamp from data
             console.log("consumption data",consumptionData);
 
 
@@ -287,7 +286,7 @@ function filterProducts(searchValue) {
                         x: {
                             type: 'time',
                             time: {
-                                unit: timeframe, // Adjust this based on your data intervals
+                                unit: 'hour', // Adjust this based on your data intervals
                                 displayFormats: {
                                     hour: 'MMM d, h a', // Format for display
                                 }
@@ -317,59 +316,20 @@ function filterProducts(searchValue) {
             });
         }
 
-
-        // Function to update the chart based on the selected product and timeframe
-        function updateChart(productId) {
-            const timeframeSelect = document.getElementById('timeframeSelect');
-            const selectedTimeframe = timeframeSelect.value;
-            renderConsumptionChart(productId, selectedTimeframe);
-        }
-                // Function to handle timeframe changes
-        function toggleTimeframe(productId) {
-            const timeframeSelect = document.getElementById('timeframeSelect');
-            timeframeSelect.addEventListener('change', (event) => {
-                const selectedTimeframe = event.target.value;
-                renderConsumptionChart(productId, selectedTimeframe); // Re-render chart with new timeframe
-            });
-        }
-
-        // Call this function after the DOM is fully loaded and a product is selected
-        document.addEventListener('DOMContentLoaded', () => {
-            const productSelect = document.getElementById('productSelect');
-            const initialProductId = productSelect.value; // Get the initially selected product
-
-            if (initialProductId) {
-                // Initialize the chart with the initially selected product
-                renderConsumptionChart(initialProductId);
-
-                // Set up the timeframe toggle for the initial product
-                toggleTimeframe(initialProductId);
-            }
-
-            // Update chart when a new product is selected
-            productSelect.addEventListener('change', (event) => {
-                const selectedProductId = event.target.value;
-                renderConsumptionChart(selectedProductId);
-                toggleTimeframe(selectedProductId); // Reset timeframe listener for the new product
-            });
-        });
-
-        // export async function updateChart(productId) {
-        //     const timeframeSelect = document.getElementById('timeframeSelect');
-        //     const selectedTimeframe = timeframeSelect.value;
-        //     try {
-        //         const productRef = doc(db, 'inventory', productId);
-        //         const productSnap = await getDoc(productRef);
+        export async function updateChart(productId) {
+            try {
+                const productRef = doc(db, 'inventory', productId);
+                const productSnap = await getDoc(productRef);
         
-        //         if (productSnap.exists()) {
-        //             const productName = productSnap.data().name;
-        //             document.getElementById('chartTitle').textContent = `Consumption Rate Over Time for ${productName}`;
-        //             renderConsumptionChart(productId,selectedTimeframe);
-        //         }
-        //     } catch (error) {
-        //         console.error("Error updating chart for selected product:", error);
-        //     }
-        // }
+                if (productSnap.exists()) {
+                    const productName = productSnap.data().name;
+                    document.getElementById('chartTitle').textContent = `Consumption Rate Over Time for ${productName}`;
+                    renderConsumptionChart(productId);
+                }
+            } catch (error) {
+                console.error("Error updating chart for selected product:", error);
+            }
+        }
         
 
         // Function to load all products for the dropdown menu
@@ -401,31 +361,7 @@ async function loadProductsWithConsumptionLogs() {
     });
 }
 
-        
-        // Call this function after the DOM is fully loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            const productSelect = document.getElementById('productSelect');
-            const initialProductId = productSelect.value;
-
-            document.addEventListener('DOMContentLoaded', loadProductsWithConsumptionLogs);
-        
-            if (initialProductId) {
-                // Initialize the chart with the initially selected product and timeframe
-                const initialTimeframe = document.getElementById('timeframeSelect').value;
-                renderConsumptionChart(initialProductId, initialTimeframe);
-
-                // Set up the timeframe toggle to listen for changes
-                toggleTimeframe();
-            }
-
-            // Update chart when a new product is selected
-            productSelect.addEventListener('change', (event) => {
-                const selectedProductId = event.target.value;
-                updateChart(selectedProductId); // Re-render chart with selected product and current timeframe
-            });
-        });
-
-
+        document.addEventListener('DOMContentLoaded', loadProductsWithConsumptionLogs);
 
 
 

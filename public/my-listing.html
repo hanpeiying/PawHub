@@ -277,6 +277,8 @@
                 category: itemCategory,
                 meetupLocation: meetupLocationInputElement ? updatedMeetupLocation : originalMeetupLocation
             };
+
+
             
             const docRef = doc(db, 'marketplace', productId);
             await updateDoc(docRef, updatedData);
@@ -284,6 +286,16 @@
             window.toggleEdit(false);
             alert('Listing updated successfully!');
             document.getElementById('meetupLocationField').textContent = updatedMeetupLocation || originalMeetupLocation;
+
+            if (updatedAvailability === 'sold' && originalData.isAvailable) {
+                    const userUID = originalData.userUID; // Ensure the user UID is included in your product data
+                    const price = parseFloat(updatedPrice);
+                    if (userUID && price) {
+                        console.log('successfully triggered')
+                        onItemSold(productId, price, userUID, itemCategory);
+                    }
+                }
+            
         } catch (error) {
             console.error("Error updating listing: ", error);
             alert("Error saving the listing.");
@@ -585,7 +597,7 @@
         markItemAsSold(itemId, price, userUID, category);
     }
 
-    form.addEventListener('submit', async (e) => {
+    addEventListener('submit', async (e) => {
         if (!isMeetupLocationValid()) {
             e.preventDefault();  // Prevent form submission if meetup location is not valid
             alert("Please enter a valid meetup location.");

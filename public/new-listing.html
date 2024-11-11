@@ -245,6 +245,7 @@
             </div>
             <div class="upload-text">Upload Max 5 photos</div>
             <!-- Photo Preview -->
+            <input type="hidden" id="listingImageURL">
             <div id="photoPreview"></div>
 
             <!-- Category Section -->
@@ -284,7 +285,7 @@
             <div class="mb-3">
                 <label for="meetup" class="form-label">Meet Up Location</label>
                 <input type="text" id="meetup" class="form-control" required>
-            </div>            
+            </div>
 
             <div class="mb-3">
                 <label for="description" class="form-label">Description (Optional)</label>
@@ -309,8 +310,8 @@
         // Firebase setup
         import {app} from "./firebase.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        import { getFirestore, addDoc, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+        import { getFirestore, addDoc, collection, getDocs, updateDoc, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
     
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -332,7 +333,6 @@
         const photosInput = document.getElementById('photos');
         const photoPreview = document.getElementById('photoPreview');
 
-        // Remove image based on unique ID, ensuring selectedFiles array remains accurate
         const removeImage = (id) => {
             const index = selectedFiles.findIndex((item) => item.id === id);
             if (index > -1) {
@@ -342,27 +342,38 @@
         };
 
         const renderPreviews = () => {
-            photoPreview.innerHTML = ''; 
+            const photoPreview = document.getElementById("photoPreview");
+            photoPreview.innerHTML = "";
+
+            // Render each new file
             selectedFiles.forEach((item) => {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const imgContainer = document.createElement('div');
-                    imgContainer.className = 'image-preview-container';
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'image-preview-container';
 
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'photo-preview-img';
+                const img = document.createElement('img');
+                img.className = 'photo-preview-img';
 
-                    const deleteBtn = document.createElement('div');
-                    deleteBtn.className = 'delete-icon';
-                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-                    deleteBtn.onclick = () => removeImage(item.id); 
+                if (item.file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(item.file);
+                } else {
+                    img.src = item.url; // Load existing URL if no new file
+                }
 
-                    imgContainer.appendChild(img);
-                    imgContainer.appendChild(deleteBtn);
-                    photoPreview.appendChild(imgContainer);
+                const deleteBtn = document.createElement('div');
+                deleteBtn.className = 'delete-icon';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.onclick = () => {
+                    selectedFiles = selectedFiles.filter(f => f.id !== item.id && f.url !== item.url);
+                    imgContainer.remove();
                 };
-                reader.readAsDataURL(item.file);
+
+                imgContainer.appendChild(img);
+                imgContainer.appendChild(deleteBtn);
+                photoPreview.appendChild(imgContainer);
             });
         };
 
@@ -371,12 +382,13 @@
                 alert("You can only upload a maximum of 5 photos.");
                 return; 
             }
+
             Array.from(input.files).forEach((file, index) => {
                 const uniqueId = Date.now() + index; 
                 selectedFiles.push({ file, id: uniqueId }); 
             });
 
-            renderPreviews(); 
+            renderPreviews();
         };
 
         // Listen for file input changes
@@ -386,7 +398,9 @@
 
         // Function to upload photos to Firebase Storage and return URLs
         async function uploadPhotos() {
-            const uploadPromises = selectedFiles.map(({ file, id }, index) => {
+            const uploadPromises = selectedFiles
+        .filter(item => item.file) // Filter out any item that doesn't have a file property
+        .map(({ file}, index) => {
                 const storageRef = ref(storage, `listings/${userUID}/${file.name}_${index}`);
                 const uploadTask = uploadBytesResumable(storageRef, file); // Use 'file' directly
 
@@ -411,6 +425,25 @@
 
             return await Promise.all(uploadPromises);
         }
+        async function archiveDeletedProduct(productId) {
+            try {
+                const productRef = doc(db, 'inventory', productId);
+                const productSnapshot = await getDoc(productRef);
+                
+                if (productSnapshot.exists()) {
+                    const productData = productSnapshot.data();
+                    await addDoc(collection(db, 'deleted_inventory'), {
+                        ...productData, // Include all original product data
+                        deletedAt: new Date().toISOString(), // Mark the deletion time
+                    });
+                    console.log("Product archived to deleted_inventory:", productData.name);
+                } else {
+                    console.log("Product does not exist in inventory.");
+                }
+            } catch (error) {
+                console.error("Error archiving deleted product:", error);
+            }
+        }
 
         // Function to add listing to Firestore
         async function addListing(listingTitle, description, category, price, locations, meetupLocation, imageURLs) {
@@ -430,14 +463,13 @@
                 alert('Listing added successfully!');
                 
                 
-                window.location.href = 'shop.html';
+                window.location.href = 'shop.html'; 
             } catch (error) {
                 console.error('Error while saving listing: ' + error.message);
                 alert('Error while saving listing: ' + error.message);
             }
             
         }
-        // Function to initialize Google Places Autocomplete
         function initializeAutocomplete() {
             const meetupInput = document.getElementById('meetup');
             const autocomplete = new google.maps.places.Autocomplete(meetupInput);
@@ -469,139 +501,195 @@
                 return false;  // Prevent form submission if not valid
             }
         }
-        // Event listener for form submission + Function to get query parametersfrom inventory overview in homepage.html
-        function getQueryParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                name: params.get('name') || '',
-                expiry: params.get('expiry') || '',
-                price: params.get('price') || '',
-                quantity: params.get('quantity') || '',
-                image: params.get('image') || '',  // Get image URL from query parameter
-                status: params.get('status') || ''
-            };
-        }
-
-        const queryParams = getQueryParams();
-        const isRedirectedListing = Boolean(queryParams.name || queryParams.image);
-
-        // Set default values in the form based on query parameters
-        window.addEventListener('DOMContentLoaded', () => {
-            const listingTitleInput = document.getElementById('listingTitle');
-            const descriptionInput = document.getElementById('description');
-            const priceInput = document.getElementById('price');
-            const photoPreview = document.getElementById('photoPreview');
-
-            // Pre-fill the Listing Title with item name if redirected
-            if (queryParams.name) {
-                listingTitleInput.value = queryParams.name;
-            }
-
-            // Set description based on item status only if redirected
-            if (queryParams.status && descriptionInput) {
-                if (queryParams.status === 'expired') {
-                    descriptionInput.value = `Giving this away!\nExpires in less than 1 month: ${queryParams.expiry}\n,Servings available: ${queryParams.quantity}`;
-                } else {
-                    descriptionInput.value = `Expires on: ${queryParams.expiry}\n,Servings available: ${queryParams.quantity}`;
-                }
-            } else {
-                // Clear the description for a normal listing
-                descriptionInput.value = '';
-            }
-
-            // Set the price to 0 if it's a Giveaway
-            if (queryParams.price === '0') {
-                priceInput.value = 0;
-            }
-
-
-            // Display the image if available
-            if (queryParams.image) {
-                const img = document.createElement('img');
-                img.src = queryParams.image;
-                img.className = 'photo-preview-img';
-                photoPreview.appendChild(img);
-            }
-        });
-
         // Event listener for form submission
         const form = document.getElementById('dogForm');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
 
-            const category = document.getElementById('category').value;
-            if (!category || category === "") {
-                alert("Please select a category for your item.");
-                return; // Prevent form submission if no category is selected
+
+    async function fetchItemData(itemId, file) {
+        try {
+            // Reference to the item in Firestore
+
+            const itemRef = doc(db, "inventory", itemId);
+            const itemDoc = await getDoc(itemRef);
+
+            if (itemDoc.exists()) {
+                const itemData = itemDoc.data();
+
+                // Populate form fields with fetched data
+                if (itemData.name) {
+                    document.getElementById("listingTitle").value = itemData.name;
+                }
+                
+                if (itemData.image) {
+                    const photoPreview = document.getElementById("photoPreview");
+                    const imgContainer = document.createElement("div");
+                    imgContainer.className = "image-preview-container";
+
+                    const img = document.createElement("img");
+                    img.src = itemData.image;
+                    img.className = "photo-preview-img";
+                    imgContainer.appendChild(img);
+
+                    // Add delete icon to remove the current image
+                    const deleteBtn = document.createElement("div");
+                    deleteBtn.className = "delete-icon";
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteBtn.onclick = () => {
+                        imgContainer.remove();
+                        document.getElementById("listingImageURL").value = ""; // Clear the current image URL
+                    };
+                    imgContainer.appendChild(deleteBtn);
+
+                    photoPreview.appendChild(imgContainer);
+                    selectedFiles.push({ url: itemData.image });
+                    document.getElementById("listingImageURL").value = itemData.image;
+
+                }
+
+                // Set the price to 0 and category to "Dog Food" for Giveaway
+                const action = getUrlParameter("action");
+                if (action === "giveaway") {
+                    document.getElementById("price").value = 0;
+
+                }
+                else if (action === "sell") {
+                    const price = document.getElementById('price')
+                }
+   
+                document.getElementById("category").value = "dogFood"; // Ensure "dogFood" is the value of Dog Food option in the dropdown
+
+                if (itemData.expiry && itemData.quantity) {
+                    const expiryDate = new Date(itemData.expiry).toLocaleDateString();
+                    const description = `This product expires on ${expiryDate}, there are ${itemData.quantity} servings left to this product.`;
+                    document.getElementById("description").value = description;
+                }
+            } else {
+                console.error("No such document!");
             }
+        } catch (error) {
+            console.error("Error fetching item data:", error);
+        }
+    }
 
-            // Preserve the existing validation logic for location
-            if (!isMeetupLocationValid()) {
+    async function deleteItemFromInventory(itemId) {
+        try {
+            await deleteDoc(doc(db, "inventory", itemId));
+            console.log("Item deleted from inventory.");
+        } catch (error) {
+            console.error("Error deleting item from inventory:", error);
+        }
+    }
+
+    // Handle the "Sell Now" button click
+    document.getElementById("sellNow").addEventListener("click", async (event) => {
+        event.preventDefault(); 
+
+        if (!isMeetupLocationValid()) {
+                e.preventDefault(); 
                 alert("Please enter a valid meetup location.");
                 return;
             }
-
-            if (!userUID) {
+        if (selectedFiles.length === 0) {
+            alert("Please upload at least one photo.");
+            return; 
+        }
+       
+        if (!userUID) {
                 alert("You need to be logged in to list an item.");
                 return;
             }
+        const itemId = getUrlParameter("id");
 
-            if (!validateMeetupLocation()) {
-                e.preventDefault(); // Prevent form submission if location is invalid
-                alert("Please enter a valid meetup location.");  // Notify user that location is invalid
-                return;
+        if (itemId) {
+            
+            const confirmDeletion = confirm("This item will be removed from your inventory and listed in the shop. Proceed?");
+            if (confirmDeletion) {
+                // Delete the item from Firestore inventory
+                await archiveDeletedProduct(itemId);
+                await deleteItemFromInventory(itemId);
+                const category = document.getElementById('category').value;
+                const listingTitle = document.getElementById('listingTitle').value;
+                const description = document.getElementById('description').value;
+                const price = document.getElementById('price').value;
+                const locationSelect = document.getElementById('location');
+                const meetupLocation = document.getElementById('meetup').value;
+                const selectedLocations = Array.from(locationSelect.selectedOptions).map(option => option.value);
+
+                if (!category || category === "") {
+                    alert("Please select a category for your item.");
+                    return; 
             }
 
-            if (selectedFiles.length === 0) {
-                alert("Please upload at least one photo.");
-                return; // Prevent form submission if no photos are uploaded
+                if (!validateMeetupLocation()) {
+                e.preventDefault();  
+                alert("Please enter a valid meetup location.");  
             }
 
-            const sellNowButton = document.getElementById('sellNow');
-            sellNowButton.disabled = true;
+                let imageURLs = selectedFiles
+                .filter(item => item.url) // Include existing images
+                .map(item => item.url);
+                const files = photosInput.files;
+                const newImageURLs = await uploadPhotos(files); 
+                imageURLs = imageURLs.concat(newImageURLs);
 
+                
+                await addListing(listingTitle, description, category, price, selectedLocations, meetupLocation, imageURLs);
+                window.location.href = 'shop.html';
+        
+               
+            }
+        } else if (!itemId) {
+            const category = document.getElementById('category').value;
             const listingTitle = document.getElementById('listingTitle').value;
             const description = document.getElementById('description').value;
             const price = document.getElementById('price').value;
             const locationSelect = document.getElementById('location');
             const meetupLocation = document.getElementById('meetup').value;
             const selectedLocations = Array.from(locationSelect.selectedOptions).map(option => option.value);
-
-            let imageURLs = [];
-
-            // Handle image based on whether this is a redirected listing
-            if (isRedirectedListing && queryParams.image) {
-                // Use the image URL from query parameters if redirected
-                imageURLs.push(queryParams.image);
-            } else {
-                // Otherwise, upload photos from the file input
-                const files = photosInput.files;
-                if (files.length > 0) {
-                    console.log(`Uploading ${files.length} files...`);
-                    imageURLs = await uploadPhotos();
-                    console.log('All uploaded URLs:', imageURLs);
-                } else {
-                    alert("Please upload at least one image.");
-                    sellNowButton.disabled = false;
-                    return;
-                }
+            
+            if (!category || category === "") {
+                alert("Please select a category for your item.");
+                return; 
             }
-
+            // Upload the photos and get their download URLs
+            const files = photosInput.files;
+            console.log(`Uploading ${files.length} files...`);
+            const imageURLs = await uploadPhotos(files); 
+            console.log('All uploaded URLs:', imageURLs);
+    
+            
             await addListing(listingTitle, description, category, price, selectedLocations, meetupLocation, imageURLs);
-
+    
+            
             form.reset();
             selectedFiles = [];
-            sellNowButton.disabled = false; // Re-enable the button for future submissions
-        });
+            
+        }
+        else {
+            alert("Cannot add to shop.");
+        }
 
-        // Ensure Google Places Autocomplete initialization
-        document.addEventListener('DOMContentLoaded', function () {
+    });
+    // Run on page load to fetch item data
+    document.addEventListener("DOMContentLoaded", () => {
+        const itemId = getUrlParameter("id");
+        if (itemId) {
+            fetchItemData(itemId);
+            
+        }
+    });
+    document.addEventListener('DOMContentLoaded', function () {
             initializeAutocomplete();
         });
 
 
 
-
+       
     </script>
     
 </body>

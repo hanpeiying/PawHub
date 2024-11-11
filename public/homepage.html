@@ -37,8 +37,8 @@
                 @mouseleave="handleDragEnd">
                 <div class="carousel-stage">
                     <div class="inventory-card" 
-                        :class="isNearExpiry(item.expiry, item.quantity)"
-                        v-for="(item, index) in filteredInventoryItems" 
+                        :class="['inventory-card', isNearExpiry(item.expiry, item.quantity), { 'expired': item.quantity === 0 }]"
+                        v-for="(item, index) in inventoryItems" 
                         :key="item.id" 
                         :style="getCardStyle(index)">
 
@@ -62,15 +62,23 @@
                         </div>
 
                         <!-- Bottom Warning Button -->
-                        <div v-if="isNearExpiry(item.expiry, item.quantity) === 'near-expiry'" class="sell-now">
-                            <a :href="`new-listing.html?name=${encodeURIComponent(item.name)}&expiry=${encodeURIComponent(item.expiry)}&quantity=${item.quantity}&image=${encodeURIComponent(item.image)}&status=near-expiry`" class="sell-button">Sell Now</a>
-                        </div>
-                        <div v-if="isNearExpiry(item.expiry, item.quantity) === 'expired'" class="sell-now">
-                            <a :href="`new-listing.html?name=${encodeURIComponent(item.name)}&expiry=${encodeURIComponent(item.expiry)}&quantity=${item.quantity}&image=${encodeURIComponent(item.image)}&price=0&status=expired`" class="sell-button">Giveaway</a>
+                       <!-- Sell Now Button (requires manual price entry) -->
+                        <div v-if="isNearExpiry(item.expiry, item.quantity) === 'near-expiry' && item.quantity > 0" class="sell-now">
+                            <a :href="`new-listing.html?id=${item.id}&action=sell`" class="sell-button">Sell Now</a>
                         </div>
 
+                        <!-- Giveaway Button (auto-sets price to 0) -->
+                        <div v-if="isNearExpiry(item.expiry, item.quantity) === 'expired' && item.quantity > 0" class="sell-now">
+                            <a :href="`new-listing.html?id=${item.id}&action=giveaway`" class="sell-button">Giveaway</a>
+                        </div>
+
+                        <div v-else-if="item.quantity === 0" class="out-of-stock">
+                            <p class="out-of-stock-message">Out of Stock</p>
+                        </div>
+
+                        </div>
                     </div>
-                </div>
+                
                 <button class="nav-button prev" @click="prevSlide">←</button>
                 <button class="nav-button next" @click="nextSlide">→</button>
             </div>
@@ -161,11 +169,6 @@
                 }),
             this.startTypingEffect();
             this.getTimeAndSetBackground();
-        },
-        computed: {
-            filteredInventoryItems() {
-            return this.inventoryItems.filter(item => item.quantity > 0);
-            },
         },
         methods: {
             async getTimeAndSetBackground() {
@@ -259,19 +262,21 @@
                     }
                 },
                 nextSlide() {
-                    if (!this.isScrolling && this.filteredInventoryItems.length > 1) {
+                    if (!this.isScrolling) {
                         this.isScrolling = true;
-                        this.currentIndex = 
-                            (this.currentIndex + 1) % this.filteredInventoryItems.length;
-                        setTimeout(() => { this.isScrolling = false; }, 500);
+                        this.currentIndex = this.currentIndex === this.inventoryItems.length - 1 ? 0 : this.currentIndex + 1;
+                        setTimeout(() => {
+                        this.isScrolling = false;
+                        }, 500); // Adjust this delay to control slide transition speed
                     }
                 },
                 prevSlide() {
-                    if (!this.isScrolling && this.filteredInventoryItems.length > 1) {
+                    if (!this.isScrolling) {
                         this.isScrolling = true;
-                        this.currentIndex = 
-                            (this.currentIndex - 1 + this.filteredInventoryItems.length) % this.filteredInventoryItems.length;
-                        setTimeout(() => { this.isScrolling = false; }, 500);
+                        this.currentIndex = this.currentIndex === 0 ? this.inventoryItems.length - 1 : this.currentIndex - 1;
+                        setTimeout(() => {
+                        this.isScrolling = false;
+                        }, 500); // Adjust this delay to control slide transition speed
                     }
                 },
                 getCardStyle(index) {
@@ -279,32 +284,28 @@
                     const spacing = 60;
                     const rotation = 45;
                     
-                    if (this.filteredInventoryItems.length < 3) {
+                    if (diff === 0) {
                         return {
-                            transform: 'translate(-50%, -50%) scale(1)',
-                            zIndex: 2
+                        transform: 'translate(-50%, -50%) scale(1) rotateY(0deg)',
+                        zIndex: 2
                         };
-                    } else if (diff === 0) {
+                    } else if (diff === 1 || (diff === -this.inventoryItems.length + 1)) {
                         return {
-                            transform: 'translate(-50%, -50%) scale(1) rotateY(0deg)',
-                            zIndex: 2
+                        transform: `translate(${spacing}%, -50%) scale(0.8) rotateY(${rotation}deg)`,
+                        zIndex: 1
                         };
-                    } else if (diff === 1 || (diff === -this.filteredInventoryItems.length + 1)) {
+                    } else if (diff === -1 || (diff === this.inventoryItems.length - 1)) {
                         return {
-                            transform: `translate(${spacing}%, -50%) scale(0.8) rotateY(${rotation}deg)`,
-                            zIndex: 1
-                        };
-                    } else if (diff === -1 || (diff === this.filteredInventoryItems.length - 1)) {
-                        return {
-                            transform: `translate(-${spacing + 100}%, -50%) scale(0.8) rotateY(-${rotation}deg)`,
-                            zIndex: 1
+                        transform: `translate(-${spacing + 100}%, -50%) scale(0.8) rotateY(-${rotation}deg)`,
+                        zIndex: 1
                         };
                     } else {
                         return {
-                            transform: 'translate(-50%, -50%) scale(0) rotateY(0deg)',
-                            zIndex: 0
+                        transform: 'translate(-50%, -50%) scale(0) rotateY(0deg)',
+                        zIndex: 0
                         };
-                    }
+                        
+                        }
                 },
                 onScroll(event) {
                     // Clear any existing timeout
@@ -352,9 +353,6 @@
                     this.isDragging = false;
                 },
                 isNearExpiry(expiryDate, quantity) {
-                    if (quantity <= 0) {
-                        return "hidden"; // Add corresponding CSS to hide these items
-                    }
                     const today = new Date();
                     const expiry = new Date(expiryDate);
                     const monthsDiff = (expiry - today) / (1000 * 60 * 60 * 24 * 30.44);
