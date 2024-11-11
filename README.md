@@ -3,9 +3,9 @@ Objective: PawHub empowers dog owners with a sustainable, community-driven platf
 
 # Who
 PawHub is designed for dog owners who want to:
-- Track inventory for essentials like dog food, including quantity, price, and expiry dates
-- Buy and sell pet items like toys, food or accessories within a community
-- Communicate with buyers or sellers for a seamless trading experience
+1. Track inventory for food, including quantity, price, and expiry dates
+2. Buy and sell pet items like toys, food or accessories within a community
+3. Communicate with buyers or sellers for a seamless trading experience
 
 # Key Challenges
 
