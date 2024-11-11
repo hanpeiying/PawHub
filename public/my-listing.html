@@ -227,69 +227,68 @@
     }
     }
 
-        window.saveListing = async function() {
-            const meetupLocationInputElement = document.getElementById('meetupLocationInput');
-            const updatedMeetupLocation = meetupLocationInputElement ? meetupLocationInputElement.value : '';
-            console.log("Saving meetup location:", updatedMeetupLocation);
-
-            if (meetupLocationInputElement && meetupLocationInputElement.dataset.valid !== 'true') {
+    window.saveListing = async function() {
+        const meetupLocationInputElement = document.getElementById('meetupLocationInput');
+        const updatedMeetupLocation = meetupLocationInputElement ? meetupLocationInputElement.value : '';
+        const originalMeetupLocation = originalData.meetupLocation || 'Unknown';
+        
+        // Only validate if the location has actually been changed
+        if (meetupLocationInputElement && updatedMeetupLocation !== originalMeetupLocation) {
+            if (meetupLocationInputElement.dataset.valid !== 'true') {
                 alert("Please enter a valid meetup location.");
-                return;  // Prevent form submission if meetup location is invalid
-            }
-
-            const updatedTitle = document.getElementById('productTitle').innerText;
-            let updatedPrice = document.getElementById('productPrice').innerText;
-            const updatedLocation = document.getElementById('locationDropdown') ? document.getElementById('locationDropdown').value : document.getElementById('locationField').innerText;
-            const updatedDescription = document.getElementById('descriptionField').innerText;
-            const updatedAvailability = document.getElementById('availabilityDropdown').value;
-
-            const priceInput = document.getElementById('priceInput');
-            if (priceInput) {
-                updatedPrice = priceInput.value.trim();  // Get value from the input field if in edit mode
-            } else {
-                updatedPrice = updatedPrice.replace('S$', '').trim();
-            }
-
-            const formattedPrice = `S$${updatedPrice}`;
-            document.getElementById('productPrice').textContent = formattedPrice;
-
-            // Prepare the updated data
-            try {
-                const productId = getProductIdFromURL(); // Replace this with the actual item ID logic
-                const itemCategory = await getListingCategory(productId);
-                const updatedData = {
-                    title: updatedTitle,
-                    price: updatedPrice,
-                    location: updatedLocation,
-                    description: updatedDescription,
-                    isAvailable: updatedAvailability === 'available',
-                    category: itemCategory,
-                    meetupLocation: updatedMeetupLocation // Save the updated meetupLocation
-                };
-
-                // Update Firestore with the new data
-                const docRef = doc(db, 'marketplace', productId);
-                await updateDoc(docRef, updatedData);
-                console.log('Listing updated successfully!');
-                window.toggleEdit(false);
-                alert('Listing updated successfully!');
-                document.getElementById('meetupLocationField').textContent = updatedMeetupLocation;
-
-                if (updatedAvailability === 'sold' && originalData.isAvailable) {
-                    const userUID = originalData.userUID; // Ensure the user UID is included in your product data
-                    const price = parseFloat(updatedPrice);
-                    if (userUID && price) {
-                        console.log('successfully triggered')
-                        onItemSold(productId, price, userUID, itemCategory);
-                    }
-                }
-            }
-            catch (error) {
-                console.error("Error updating listing: ", error);
-                alert("Error saving the listing.");
+                return;
             }
         }
-
+        
+        const updatedTitle = document.getElementById('productTitle').innerText;
+        let updatedPrice = document.getElementById('productPrice').innerText;
+        const updatedLocation = document.getElementById('locationDropdown') ? 
+            document.getElementById('locationDropdown').value : 
+            document.getElementById('locationField').innerText;
+        const updatedDescription = document.getElementById('descriptionField').innerText;
+        const updatedAvailability = document.getElementById('availabilityDropdown').value;
+        
+        const priceInput = document.getElementById('priceInput');
+        if (priceInput) {
+            updatedPrice = priceInput.value.trim();
+        } else {
+            updatedPrice = updatedPrice.replace('S$', '').trim();
+        }
+    
+        // Only validate price if it's been modified
+        const originalPrice = originalData.price || '0';
+        if (updatedPrice !== originalPrice && (!updatedPrice || updatedPrice === '0')) {
+            alert("Please enter a valid price.");
+            return;
+        }
+        
+        const formattedPrice = `S$${updatedPrice}`;
+        document.getElementById('productPrice').textContent = formattedPrice;
+        
+        try {
+            const productId = getProductIdFromURL(); 
+            const itemCategory = await getListingCategory(productId);
+            const updatedData = {
+                title: updatedTitle,
+                price: updatedPrice,
+                location: updatedLocation,
+                description: updatedDescription,
+                isAvailable: updatedAvailability === 'available',
+                category: itemCategory,
+                meetupLocation: meetupLocationInputElement ? updatedMeetupLocation : originalMeetupLocation
+            };
+            
+            const docRef = doc(db, 'marketplace', productId);
+            await updateDoc(docRef, updatedData);
+            console.log('Listing updated successfully!');
+            window.toggleEdit(false);
+            alert('Listing updated successfully!');
+            document.getElementById('meetupLocationField').textContent = updatedMeetupLocation || originalMeetupLocation;
+        } catch (error) {
+            console.error("Error updating listing: ", error);
+            alert("Error saving the listing.");
+        }
+    };
         // Load product details and save the original data
         async function loadProductDetails() {
             try {

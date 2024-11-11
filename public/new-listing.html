@@ -529,6 +529,12 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const category = document.getElementById('category').value;
+            if (!category || category === "") {
+                alert("Please select a category for your item.");
+                return; // Prevent form submission if no category is selected
+            }
+
             // Preserve the existing validation logic for location
             if (!isMeetupLocationValid()) {
                 alert("Please enter a valid meetup location.");
@@ -546,10 +552,14 @@
                 return;
             }
 
+            if (selectedFiles.length === 0) {
+                alert("Please upload at least one photo.");
+                return; // Prevent form submission if no photos are uploaded
+            }
+
             const sellNowButton = document.getElementById('sellNow');
             sellNowButton.disabled = true;
 
-            const category = document.getElementById('category').value;
             const listingTitle = document.getElementById('listingTitle').value;
             const description = document.getElementById('description').value;
             const price = document.getElementById('price').value;
