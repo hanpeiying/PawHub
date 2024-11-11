@@ -18,6 +18,9 @@ Our application focuses on addressing these needs by offering a user-friendly ma
 Deployment link:
 https://pawhub-858e8.web.app/ 
 
+Email: rachel@gmail.com
+Password: rachel
+
 # Features
 For dog owners:
 **Users**
