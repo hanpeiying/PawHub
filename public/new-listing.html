@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="styles/stylenav.css">
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAoSXajgbCwxezGaOUlDeLeBA-HLIBHi4g&libraries=places"></script>
     <style>
         html, body {
             height: 100%;
@@ -283,7 +284,7 @@
             <div class="mb-3">
                 <label for="meetup" class="form-label">Meet Up Location</label>
                 <input type="text" id="meetup" class="form-control" required>
-            </div>
+            </div>            
 
             <div class="mb-3">
                 <label for="description" class="form-label">Description (Optional)</label>
@@ -333,16 +334,15 @@
 
         // Remove image based on unique ID, ensuring selectedFiles array remains accurate
         const removeImage = (id) => {
-            // Remove from selectedFiles array based on unique ID
             const index = selectedFiles.findIndex((item) => item.id === id);
             if (index > -1) {
-                selectedFiles.splice(index, 1); // Remove the specific file from selectedFiles
+                selectedFiles.splice(index, 1); 
             }
-            renderPreviews(); // Re-render the previews
+            renderPreviews(); 
         };
 
         const renderPreviews = () => {
-            photoPreview.innerHTML = ''; // Clear existing previews
+            photoPreview.innerHTML = ''; 
             selectedFiles.forEach((item) => {
                 const reader = new FileReader();
                 reader.onload = function (e) {
@@ -356,7 +356,7 @@
                     const deleteBtn = document.createElement('div');
                     deleteBtn.className = 'delete-icon';
                     deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-                    deleteBtn.onclick = () => removeImage(item.id); // Remove by unique ID
+                    deleteBtn.onclick = () => removeImage(item.id); 
 
                     imgContainer.appendChild(img);
                     imgContainer.appendChild(deleteBtn);
@@ -369,16 +369,14 @@
         const handleFileInput = (input) => {
             if (input.files.length + selectedFiles.length > 5) {
                 alert("You can only upload a maximum of 5 photos.");
-                return; // Prevent adding more than 5 photos
+                return; 
             }
-
-            // Add the newly selected files to the existing selected files
             Array.from(input.files).forEach((file, index) => {
-                const uniqueId = Date.now() + index; // Unique ID for each file
-                selectedFiles.push({ file, id: uniqueId }); // Store each file with its unique ID
+                const uniqueId = Date.now() + index; 
+                selectedFiles.push({ file, id: uniqueId }); 
             });
 
-            renderPreviews(); // Render previews whenever files are added
+            renderPreviews(); 
         };
 
         // Listen for file input changes
@@ -411,11 +409,9 @@
                 });
             });
 
-            // Wait for all uploads to finish and return an array of download URLs
             return await Promise.all(uploadPromises);
         }
 
-        // Wait for all uploads to finish and return an array of download URLs
         // Function to add listing to Firestore
         async function addListing(listingTitle, description, category, price, locations, meetupLocation, imageURLs) {
             try {
@@ -434,25 +430,60 @@
                 alert('Listing added successfully!');
                 
                 
-                window.location.href = 'shop.html'; // Redirect back to shop page
+                window.location.href = 'shop.html';
             } catch (error) {
                 console.error('Error while saving listing: ' + error.message);
                 alert('Error while saving listing: ' + error.message);
             }
             
         }
-    
+        // Function to initialize Google Places Autocomplete
+        function initializeAutocomplete() {
+            const meetupInput = document.getElementById('meetup');
+            const autocomplete = new google.maps.places.Autocomplete(meetupInput);
+        
+            autocomplete.setTypes(['geocode']);
+        
+            autocomplete.addListener('place_changed', function () {
+                const place = autocomplete.getPlace();
+                if (place.geometry) {
+                    console.log('Valid place selected:', place.formatted_address);
+                    meetupInput.dataset.valid = 'true'; // Mark as valid
+                } else {
+                    console.error('Place not valid!');
+                    meetupInput.dataset.valid = 'false'; // Mark as invalid
+                }
+            });
+        }
+        function isMeetupLocationValid() {
+            const meetupInput = document.getElementById('meetup');
+            return meetupInput.dataset.valid === 'true'; // Return true if valid, false otherwise
+        }        
+        function validateMeetupLocation() {
+            const meetupInput = document.getElementById('meetup');
+        
+            // Check if the meetup input has been validated as correct
+            if (meetupInput.dataset.valid === 'true') {
+                return true;  // Allow form submission if valid
+            } else {
+                return false;  // Prevent form submission if not valid
+            }
+        }
         // Event listener for form submission
         const form = document.getElementById('dogForm');
         form.addEventListener('submit', async (e) => {
             e.preventDefault(); // Prevent form from refreshing the page
+            if (!isMeetupLocationValid()) {
+                e.preventDefault(); // Prevent form submission if meetup location is not valid
+                alert("Please enter a valid meetup location.");
+                return;
+            }
     
             if (!userUID) {
                 alert("You need to be logged in to list an item.");
                 return;
             }
     
-            // Get form values
             const category = document.getElementById('category').value;
             const listingTitle = document.getElementById('listingTitle').value;
             const description = document.getElementById('description').value;
@@ -460,35 +491,25 @@
             const locationSelect = document.getElementById('location');
             const meetupLocation = document.getElementById('meetup').value;
             const selectedLocations = Array.from(locationSelect.selectedOptions).map(option => option.value);
-    
-            // Upload the photos and get their download URLs
+
+            if (!validateMeetupLocation()) {
+                e.preventDefault();  // Prevent form submission if location is invalid
+                alert("Please enter a valid meetup location.");  // Notify user that location is invalid
+            }
+
             const files = photosInput.files;
             console.log(`Uploading ${files.length} files...`);
-            const imageURLs = await uploadPhotos(files); // This will return an array of URLs
+            const imageURLs = await uploadPhotos(files);
             console.log('All uploaded URLs:', imageURLs);
     
-            // Add dog listing to Firestore with the uploaded image URLs
             addListing(listingTitle, description, category, price, selectedLocations, meetupLocation, imageURLs);
     
-            // Clear form
             form.reset();
             selectedFiles = [];
+        }); 
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeAutocomplete();
         });
-
-        // async function addIsAvailableToDocuments() {
-        //     const marketplaceRef = collection(db, 'marketplace');
-        //     const querySnapshot = await getDocs(marketplaceRef);
-
-        //     querySnapshot.forEach(async (docSnapshot) => {
-        //         const data = docSnapshot.data();
-        //         if (!('isAvailable' in data)) {
-        //             const docRef = doc(db, 'marketplace', docSnapshot.id);
-        //             await updateDoc(docRef, { isAvailable: true }); // Add default value
-        //             console.log(`Updated document ${docSnapshot.id} with isAvailable: true`);
-        //         }
-        //     });
-        // }
-        
     </script>
     
 </body>
