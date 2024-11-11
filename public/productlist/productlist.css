@@ -625,7 +625,7 @@ button {
 /* Style the View button */
 .card-container .view-btn {
     font-size: 12px;
-    padding: 5px 10px;
+    padding: 3px 3px;
     background-color: #4a90e2;
     color: white;
     border-radius: 5px;
@@ -666,7 +666,7 @@ button {
 }
 .view-btn, .expiry-btn {
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 4px 10px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
