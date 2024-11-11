@@ -108,15 +108,22 @@
 
         <div class="pagination"></div>
 
-        <div class="chart-container" id="chartSection">
-    <label for="productSelect">Select Product:</label>
-    <select id="productSelect" onchange="updateChart(this.value)">
-        <!-- Dynamically populated options -->
-    </select>
-    <h3 class="chart-title" id="chartTitle">Consumption Rate Over Time</h3>
-    <canvas id="consumptionChart"></canvas>
-</div>
-
+            <div class="chart-container" id="chartSection">
+                <label for="productSelect">Select Product:</label>
+                <select id="productSelect" onchange="updateChart(this.value)">
+                    <!-- Dynamically populated options -->
+                </select>
+                <label for="timeframeSelect">Select Timeframe:</label>
+                <select id="timeframeSelect">
+                    <option value="hour">Hourly</option>
+                    <option value="day">Daily</option>
+                    <option value="week">Weekly</option>
+                    <option value="month">Monthly</option>
+                </select>
+                
+                <h3 class="chart-title" id="chartTitle">Consumption Rate Over Time</h3>
+                <canvas id="consumptionChart"></canvas>
+            </div>
 
     </div>
 
@@ -164,6 +171,8 @@
         <button id="cancelBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
     </div>
 </div>
+
+
 
 
 <!-- Vue Application Code should be outside the template -->
